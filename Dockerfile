@@ -1,4 +1,4 @@
-FROM debian:jessie
+FROM resin/raspberrypi3-debian:jessie
 
 MAINTAINER kfei <kfei@kfei.net>
 
