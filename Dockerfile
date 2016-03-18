@@ -12,7 +12,8 @@ RUN apt-get update && apt-get install -q -y --no-install-recommends \
 # Copy and scripts
 COPY script/* /usr/local/bin/ 
 
-EXPOSE 8081
+EXPOSE 9090
+EXPOSE 9091
  
 VOLUME ["/var/lib/motion"]
  
