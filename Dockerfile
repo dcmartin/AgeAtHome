@@ -11,8 +11,8 @@ RUN apt-get update && apt-get install -q -y --no-install-recommends \
 
 # Copy and scripts
 COPY script/* /usr/local/bin/ 
-COPY conf/motion.conf /etc/motion/motion.conf
-COPY conf/ssmtp.conf.gmail /root/.muttrc
+COPY config/motion.conf /etc/motion/motion.conf
+COPY config/ssmtp.conf.gmail /root/.muttrc
 
 EXPOSE 8080 8081
  
