@@ -12,11 +12,11 @@ RUN apt-get update && apt-get install -q -y --no-install-recommends \
 # Copy and scripts
 COPY script/* /usr/local/bin/ 
 
-EXPOSE 9090
-EXPOSE 9091
+EXPOSE 80
+EXPOSE 81
  
 VOLUME ["/var/lib/motion"]
  
 WORKDIR /var/lib/motion
  
-ENTRYPOINT ["/usr/local/bin/dockmotion"]
+CMD ["/usr/local/bin/dockmotion"]
