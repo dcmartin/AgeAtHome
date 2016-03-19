@@ -30,6 +30,17 @@ if [ -n "${STREAM_PORT}" ]; then
     sed -i "s/^stream_port\s[0-9]\+/stream_port ${STREAM_PORT}/g" /etc/motion/motion.conf
 fi
 
+# Override GMAIL configuration
+if [ -n "${GMAIL_USER}" ]; then
+    echo "Set GMAIL user to ${GMAIL_USER}"
+    sed -i "s/^root=.*/root=${GMAIL_USER}/g" /etc/motion/ssmtp.conf.gmail
+    sed -i "s/^AuthUser=.*/AuthUser=${GMAIL_USER}/g" /etc/motion/ssmtp.conf.gmail
+fi
+if [ -n "${GMAIL_PASS}" ]; then
+    echo "Set GMAIL user to ${GMAIL_PASS}"
+    sed -i "s/^AuthPass=.*/AuthPass=${GMAIL_PASS}/g" /etc/motion/ssmtp.conf.gmail
+fi
+
 # Override threshold, event_gap for Motion
 [ -n "${MOTION_THRESHOLD}" ] && \
     sed -i "s/^threshold\s[0-9]\+/threshold ${MOTION_THRESHOLD}/g" /etc/motion/motion.conf
@@ -38,6 +49,7 @@ fi
 
 # Timelapse mode
 if [ -n "${MOTION_TIMELAPSE}" ]; then
+    echo "Timelapse mode enabled"
     IFS=',' read -a timelapse<<< "${MOTION_TIMELAPSE}"
     interval=${timelapse[0]}
     duration=${timelapse[1]}
