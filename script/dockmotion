@@ -33,12 +33,11 @@ fi
 # Override GMAIL configuration
 if [ -n "${GMAIL_USER}" ]; then
     echo "Set GMAIL user to ${GMAIL_USER}"
-    sed -i "s/^root=.*/root=${GMAIL_USER}/g" /etc/motion/ssmtp.conf.gmail
-    sed -i "s/^AuthUser=.*/AuthUser=${GMAIL_USER}/g" /etc/motion/ssmtp.conf.gmail
+    sed -i "s/^root=.*/root=${GMAIL_USER}/g" ~/.muttrc
+    sed -i "s/^AuthUser=.*/AuthUser=${GMAIL_USER}/g" ~/.muttrc
 fi
 if [ -n "${GMAIL_PASS}" ]; then
-    echo "Set GMAIL user to ${GMAIL_PASS}"
-    sed -i "s/^AuthPass=.*/AuthPass=${GMAIL_PASS}/g" /etc/motion/ssmtp.conf.gmail
+    sed -i "s/^AuthPass=.*/AuthPass=${GMAIL_PASS}/g" ~/.muttrc
 fi
 
 # Override threshold, event_gap for Motion
@@ -63,9 +62,6 @@ if [ -n "${MOTION_TIMELAPSE}" ]; then
     sed -i "s/^ffmpeg_output_movies off/ffmpeg_output_movies on/g" /etc/motion/motion.conf
     sed -i "s/^ffmpeg_timelapse\s[0-9]\+/ffmpeg_timelapse ${interval}/g" /etc/motion/motion.conf
 fi
-
-# Set the sender's name in notify email
-echo 'set realname="Motion Detector"' > /root/.muttrc
 
 # Run motion
 exec motion -n -l /dev/stderr
