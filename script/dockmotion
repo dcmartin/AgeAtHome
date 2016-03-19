@@ -20,6 +20,16 @@ if [ -n "${MOTION_PIXELS}" ]; then
     sed -i "s/^height\s[0-9]\+/height ${HEIGHT}/g" /etc/motion/motion.conf
 fi
 
+# Override control and video ports
+if [ -n "${WEBCONTROL_PORT}" ]; then
+    echo "Set webcontrol_port to ${WEBCONTROL_PORT}"
+    sed -i "s/^webcontrol_port\s[0-9]\+/webcontrol_port ${WEBCONTROL_PORT}/g" /etc/motion/motion.conf
+fi
+if [ -n "${STREAM_PORT}" ]; then
+    echo "Set stream_port to ${STREAM_PORT}"
+    sed -i "s/^stream_port\s[0-9]\+/stream_port ${STREAM_PORT}/g" /etc/motion/motion.conf
+fi
+
 # Override threshold, event_gap for Motion
 [ -n "${MOTION_THRESHOLD}" ] && \
     sed -i "s/^threshold\s[0-9]\+/threshold ${MOTION_THRESHOLD}/g" /etc/motion/motion.conf
