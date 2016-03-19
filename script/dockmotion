@@ -46,4 +46,4 @@ fi
 echo 'set realname="Motion Detector"' > /root/.muttrc
 
 # Run motion
-exec motion
+exec sudo motion -l /dev/stderr

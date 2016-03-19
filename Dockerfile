@@ -1,6 +1,6 @@
 FROM resin/raspberrypi3-debian:jessie
 
-MAINTAINER kfei <kfei@kfei.net>
+MAINTAINER dcmartin <github@dcmartin.com>
 
 RUN apt-get update && apt-get install -q -y --no-install-recommends \
     bsd-mailx \
@@ -12,8 +12,7 @@ RUN apt-get update && apt-get install -q -y --no-install-recommends \
 # Copy and scripts
 COPY script/* /usr/local/bin/ 
 
-EXPOSE 80
-EXPOSE 81
+EXPOSE 80 81
  
 VOLUME ["/var/lib/motion"]
  
