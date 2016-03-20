@@ -1,7 +1,31 @@
-# dockmotion
+# AgeAtHome
 
-A surveillance solution base on
-[Motion](http://www.lavrsen.dk/foswiki/bin/view/Motion/WebHome) and Docker.
+A cognitive surveillance solution deployed via resin.io to RaspberryPi based on 
+[dockmotion](http://www.github.com/kfei/dockmotion)
+which is a Dockerization of a surveillance solution:
+[Motion](http://www.lavrsen.dk/foswiki/bin/view/Motion/WebHome)
+
+The deliverable can be deployed using resin.io to any RaspberryPi2/3 with attached
+Playstation3 Eye camera (via USB cable).
+
+Modifications have been made to the [dockmotion] repository to address
+considerations for resin.io operational semantics, e.g. requiring motion(1) to
+NOT run in daemon mode to keep the "application" (resin.io terminology) active.
+
+Environment variables control various aspects of operation:
+
+1) MAILTO - (default null) address to send notifications of motion
+2) CONTROL_PORT, STREAM_PORT - (default 8080, 8001) port access to control UI and video stream
+3) TIMEZONE - (defaulto America/Los_Angeles) timezone of installation
+
+A) ADDITIONAL OPTIONS
+  - `MOTION_PIXELS` to specify the capture size of image, e.g., `1280x720`.
+  - `MOTION_THRESHOLD` for `threshold`.
+  - `MOTION_EVENT_GAP` for `event_gap`.
+  - `MOTION_TIMELAPSE` for the time-lapse mode
+B) MOTION_TIMELAPSE
+  ="600,86400" - Motion will capture images every 10 minutes within 24 hours
+  	Note that in time-lapse mode, the motion detection will be disabled.
 
 It's easy and ready to use. Just plug in a webcam and run dockmotion, then
 videos and images will be saved once a motion is detected while a notification
@@ -10,13 +34,18 @@ that, the webcam can be accessed anytime via HTTP live streaming.
 
 ## Quick Start
 
-Clone this project then `cd` into it:
-```bash
-git clone https://github.com/kfei/dockmotion
-cd dockmotion
-```
+1) Copy this repository to your local GIT directory using the desktop GitHub application
+	https://github.com/dcmartin/AgeAtHome.git
+2) Setup resin.io
+	https://dashboard.resin.io/signup
+	- Create application (team setup TBD)
+	- Configure and download image to flash RaspberryPi (n.b. note selection of WiFi to specify SSID and password)
+3) Add resin as "push" target for repository
+	git remote add resin <your_resinid>@git.resin.io:<your_resinid>/ageathome.git
+4) Push master to resin
+	git push resin master
 
-### Build or pull the image
+### Build or pull the image (OLD)
 
 Then build your own dockmotion Docker image:
 ```bash
@@ -28,7 +57,7 @@ Note that a pre-built image is also available:
 docker pull kfei/dockmotion
 ```
 
-### Custom settings
+### Custom settings (OLD)
 
 Modify the [sample](config/motion.conf?raw=true) `motion.conf` to
 suit your webcam, e.g., videodevice, v4l2_palette, etc.
@@ -36,9 +65,8 @@ suit your webcam, e.g., videodevice, v4l2_palette, etc.
 If using Gmail, change account and password settings in the
 [sample](config/ssmtp.conf.gmail?raw=true) and save it as `ssmtp.conf`.
 
-### Run
+### Run (OLD)
 
-Run the container with configs , e.g.,
 ```bash
 docker run -it --device=/dev/video0
     -p 8081:8081 \
@@ -59,7 +87,7 @@ Note that:
   - Mount a volume to `/var/lib/motion` for container since there might be lots
     of images and videos produced by Motion.
 
-## Runtime Configs
+## Runtime Configs (OLD)
 
 There are some environment variables can be supplied at run time:
   - `TIMEZONE` is for correct time stamp when motion detected. Check
@@ -69,12 +97,11 @@ There are some environment variables can be supplied at run time:
     you set up this correctly.
 
 Settings in `motion.conf` can be overridden:
-  - `MOTION_PIXELS` to specify the capture size of image, e.g., `1280x720`.
     Note that the size must be supported by your webcam.
+  - `MOTION_PIXELS` to specify the capture size of image, e.g., `1280x720`.
   - `MOTION_THRESHOLD` for `threshold`.
   - `MOTION_EVENT_GAP` for `event_gap`.
-  - `MOTION_TIMELAPSE` for the time-lapse mode, e.g., `600,86400`. Please see
-    below for further explanation.
+  - `MOTION_TIMELAPSE` for the time-lapse mode, e.g., `600,86400`. Please see below for further explanation.
 
 ## The Time-lapse Mode
 
