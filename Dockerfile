@@ -74,8 +74,8 @@ RUN apt-get install -y \
 # Change default PA configuration for use of PS3Eye Camera
 #
 # RUN cp -pf /etc/asound.conf /etc/asound.conf.ORIG 
-COPY config/asound.conf /etc/asound.conf
-# RUN echo "pcm.pulse { type pulse } ctl.pulse { type pulse } pcm.!default { type pulse } ctl.!default { type pulse }" > /etc/asound.conf
+# COPY config/asound.conf /etc/asound.conf
+RUN echo "pcm.pulse { type pulse } ctl.pulse { type pulse } pcm.!default { type pulse } ctl.!default { type pulse }" > /etc/asound.conf
 
 RUN cp -pf /etc/libao.conf /etc/libao.conf.ORIG
 RUN sed -i "s,default_driver=alsa,default_driver=pulse,g" /etc/libao.conf 
