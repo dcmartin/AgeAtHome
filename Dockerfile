@@ -75,16 +75,18 @@ RUN apt-get install -y \
 #
 # RUN cp -pf /etc/asound.conf /etc/asound.conf.ORIG 
 # COPY config/asound.conf /etc/asound.conf
-# RUN echo "pcm.pulse { type pulse } ctl.pulse { type pulse } pcm.!default { type pulse } ctl.!default { type pulse }" > /etc/asound.conf
+RUN echo "pcm.pulse { type pulse } ctl.pulse { type pulse } pcm.!default { type pulse } ctl.!default { type pulse }" > /etc/asound.conf
 
 # RUN cp -pf /etc/libao.conf /etc/libao.conf.ORIG
-RUN sed -i "s,default_driver=alsa,default_driver=pulse,g" /etc/libao.conf 
+# RUN sed -i "s,default_driver=alsa,default_driver=pulse,g" /etc/libao.conf 
+RUN echo "default_driver=pulse" > /etc/libao.conf 
 
 # RUN cp -pf /etc/modules /etc/modules.ORIG
-RUN echo "snd-bcm2835" >> /etc/modules
+RUN echo "snd-bcm2835" > /etc/modules
 
 # RUN cp -pf /etc/default/pulseaudio /etc/default/pulseaudio.ORIG
-RUN sed -i "s,DISALLOW_MODULE_LOADING=1,DISALLOW_MODULE_LOADING=0,g" /etc/default/pulseaudio
+# RUN sed -i "s,DISALLOW_MODULE_LOADING=1,DISALLOW_MODULE_LOADING=0,g" /etc/default/pulseaudio
+RUN echo "DISALLOW_MODULE_LOADING=0" > /etc/default/pulseaudio
 
 # RUN cp -fvp /etc/pulse/system.pa /etc/pulse/system.pa.ORIG
 RUN echo "load-module module-native-protocol-tcp auth-ip-acl=127.0.0.1;192.168.0.0/24 auth-anonymous=1" >> /etc/pulse/system.pa
