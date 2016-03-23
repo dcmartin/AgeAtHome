@@ -5,6 +5,6 @@ UseSTARTTLS=YES
 FromLineOverride=YES
 
 # Your Gmail account
-root=CHANGEME@gmail.com
-AuthUser=CHANGEME@gmail.com
-AuthPass=CHANGEME
+root=GMAIL_USER@gmail.com
+AuthUser=GMAIL_USER@gmail.com
+AuthPass=GMAIL_PASS

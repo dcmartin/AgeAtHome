@@ -20,9 +20,17 @@ COPY script/* /usr/local/bin/
 # 
 # Copy configuration files (specialized via resin.io environment variables)
 #
-# MAILTO
-# TIMEZONE
-# ..
+# MAILTO (default: none)
+# GMAIL_USER (default: none)
+# GMAIL_PASS (default: none)
+# TIMEZONE (default: America/Los_Angeles)
+# MOTION_PIXELS (default: 640x480)
+# MOTION_THRESHOLD (default: 1500)
+# MOTION_EVENT_GAP (default: 10)
+# MOTION_TIMELAPSE (default: unset)
+# WEBCONTROL_PORT (default: 8080)
+# STREAM_PORT (default: 8081)
+# 
 #
 COPY config/motion.conf /etc/motion/motion.conf
 COPY config/ssmtp.conf.gmail /root/.muttrc
