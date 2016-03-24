@@ -1,7 +1,5 @@
 #!/bin/bash
 
-set -e
-
 EVENT=$1
 
 echo "SAVE: ${EVENT}" $(date +"%s") >> LOG
