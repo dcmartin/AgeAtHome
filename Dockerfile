@@ -9,7 +9,7 @@ RUN apt-get update && apt-get install -q -y --no-install-recommends \
     apt-utils \
     bsd-mailx \
     motion \
-    rsync \
+    rsync ssh \
     curl \
     mutt \
     ssmtp \
