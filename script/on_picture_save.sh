@@ -4,7 +4,7 @@ set -e
 
 EVENT=$1
 
-echo "SAVE: ${EVENT}" $(date +"%s") > LOG
+echo "SAVE: ${EVENT}" $(date +"%s") >> LOG
 
 IMAGE_FILE=$2
 IMAGE_TYPE=$3
