@@ -14,23 +14,22 @@ NOT run in daemon mode to keep the "application" (resin.io terminology) active.
 
 Environment variables control various aspects of operation:
 
-1) MAILTO - (default null) address to send notifications of motion
-2) CONTROL_PORT, STREAM_PORT - (default 8080, 8001) port access to control UI and video stream
-3) TIMEZONE - (defaulto America/Los_Angeles) timezone of installation
+1 MAILTO (default: none)
+2 GMAIL_USER (default: none)
+3 GMAIL_PASS (default: none)
+4 TIMEZONE (default: America/Los_Angeles)
+5 MOTION_PIXELS (default: 640x480)
+6 MOTION_THRESHOLD (default: 1500)
+7 MOTION_EVENT_GAP (default: 10)
+8 MOTION_TIMELAPSE (default: unset)
+9 WEBCONTROL_PORT (default: 8080)
+10 STREAM_PORT (default: 8081)
+11 VISUAL_USERNAME (default: none)
+12 VISUAL_PASSWORD (default: none)
+13 VISUAL_URL (default: none)
 
-A) ADDITIONAL OPTIONS
-  - `MOTION_PIXELS` to specify the capture size of image, e.g., `1280x720`.
-  - `MOTION_THRESHOLD` for `threshold`.
-  - `MOTION_EVENT_GAP` for `event_gap`.
-  - `MOTION_TIMELAPSE` for the time-lapse mode
-B) MOTION_TIMELAPSE
-  ="600,86400" - Motion will capture images every 10 minutes within 24 hours
-  	Note that in time-lapse mode, the motion detection will be disabled.
-
-It's easy and ready to use. Just plug in a webcam and run dockmotion, then
-videos and images will be saved once a motion is detected while a notification
-e-mail including the recorded video and a preview image will be sent. On top of
-that, the webcam can be accessed anytime via HTTP live streaming.
+These environment variables are defined for the application; some are defined
+only for the device (e.g. TIMEZONE).
 
 ## Quick Start
 

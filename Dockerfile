@@ -154,6 +154,16 @@ RUN apt-get install -y bison
 # sudo make install
 # cd -
 
+#
+# Alchemy Visual Insights
+#
+# ENVIRONMENT VARIABLES (resin.io)
+# Used in initialization script to edit configuration for API calls
+#
+# VISUAL_PASSWORD (default: none)
+# VISUAL_URL (default: none)
+# VISUAL_USERNAME (default: none)
+#
  
 #
 # set working directory

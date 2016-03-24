@@ -1,13 +1,21 @@
 #!/bin/bash
 
-# Check e-mail setting
-if [ -z "${MAILTO}" ]; then
-    echo "The \$MAILTO environment variable is not set, skip e-mail notification."
-fi
-
 # Set the correct timezone
 if [ -n "${TIMEZONE}" ]; then
     cp /usr/share/zoneinfo/${TIMEZONE} /etc/localtime
+fi
+
+# Check e-mail setting
+if [ -z "${MAILTO}" ]; then
+    echo "The \$MAILTO environment variable is not set, skip e-mail notification."
+elif [ -n "${GMAIL_USER}" ]; then
+    # Setup MUTT configuration
+    echo "Set GMAIL user to ${GMAIL_USER}"
+    sed -i "s/^root=.*/root=${GMAIL_USER}/g" ~/.muttrc
+    sed -i "s/^AuthUser=.*/AuthUser=${GMAIL_USER}/g" ~/.muttrc
+    if [ -n "${GMAIL_PASS}" ]; then
+	sed -i "s/^AuthPass=.*/AuthPass=${GMAIL_PASS}/g" ~/.muttrc
+    fi
 fi
 
 # Override capture size for Motion
@@ -28,16 +36,6 @@ fi
 if [ -n "${STREAM_PORT}" ]; then
     echo "Set stream_port to ${STREAM_PORT}"
     sed -i "s/^stream_port\s[0-9]\+/stream_port ${STREAM_PORT}/g" /etc/motion/motion.conf
-fi
-
-# Override GMAIL configuration
-if [ -n "${GMAIL_USER}" ]; then
-    echo "Set GMAIL user to ${GMAIL_USER}"
-    sed -i "s/^root=.*/root=${GMAIL_USER}/g" ~/.muttrc
-    sed -i "s/^AuthUser=.*/AuthUser=${GMAIL_USER}/g" ~/.muttrc
-fi
-if [ -n "${GMAIL_PASS}" ]; then
-    sed -i "s/^AuthPass=.*/AuthPass=${GMAIL_PASS}/g" ~/.muttrc
 fi
 
 # Override threshold, event_gap for Motion
@@ -61,6 +59,20 @@ if [ -n "${MOTION_TIMELAPSE}" ]; then
     sed -i "s/^threshold\s[0-9]\+/threshold 0/g" /etc/motion/motion.conf
     sed -i "s/^ffmpeg_output_movies off/ffmpeg_output_movies on/g" /etc/motion/motion.conf
     sed -i "s/^ffmpeg_timelapse\s[0-9]\+/ffmpeg_timelapse ${interval}/g" /etc/motion/motion.conf
+fi
+
+# Setup WATSON configuration
+if [ -z "${VISUAL_USERNAME}" ]; then
+    echo "The \$VISUAL_USERNAME environment variable is not set; Alchemy will not be enabled."
+    export ALCHEMY_API="OFF"
+elif [ -n "${VISUAL_USERNAME}" ]; then
+    echo "Set WATSON username to ${VISUAL_USERNAME}"
+    echo "Set WATSON password to ${VISUAL_PASSWORD}"
+    echo "Set WATSON url to ${VISUAL_URL}"
+    echo "username: ${VISUAL_USERNAME}" >> ~/.alchemyrc
+    echo "password: ${VISUAL_PASSWORD}" >> ~/.alchemyrc
+    echo "url: ${VISUAL_URL}" >> ~/.alchemyrc
+    export ALCHEMY_API="ON"
 fi
 
 # Run motion
