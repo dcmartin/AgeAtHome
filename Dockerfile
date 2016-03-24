@@ -9,6 +9,7 @@ RUN apt-get update && apt-get install -q -y --no-install-recommends \
     apt-utils \
     bsd-mailx \
     motion \
+    curl \
     mutt \
     ssmtp \
     x264
