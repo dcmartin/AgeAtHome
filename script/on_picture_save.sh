@@ -16,6 +16,6 @@ if [ -n "${VISUAL_USERNAME}" ]; then
 fi
 if [ -n "${ALCHEMY_API_URL}" ]; then
     if [ -n "${ALCHEMY_API_KEY}" ]; then
-	curl -X POST --data-binary "@${IMAGE}" "${ALCHEMY_API_URL}?apikey=${ALCHEMY_API_KEY}&imagePostMode=raw&outputMode=json" > "${EVENT}-alchemy.json"
+	curl -X POST --data-binary "@${IMAGE_FILE}" "${ALCHEMY_API_URL}?apikey=${ALCHEMY_API_KEY}&imagePostMode=raw&outputMode=json" > "${EVENT}-alchemy.json"
     fi
 fi
