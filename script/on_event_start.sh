@@ -2,4 +2,4 @@
 
 EVENT=$1
 
-echo "START: ${EVENT}" $(date +"%s") > LOG
+echo "START: ${EVENT}" $(date +"%s") >> LOG
