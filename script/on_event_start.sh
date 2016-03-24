@@ -1,4 +1,5 @@
 #!/bin/bash
 
 EVENT=$1
-echo $(date +"%s") > ${EVENT}-start-time.log
+
+echo "START: ${EVENT}" $(date +"%s") > LOG
