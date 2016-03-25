@@ -9,10 +9,9 @@ RUN apt-get update && apt-get install -q -y --no-install-recommends \
     apt-utils \
     bsd-mailx \
     motion \
+    imagemagick \
     rsync ssh \
     curl \
-    mutt \
-    ssmtp \
     x264
 
 #
@@ -35,7 +34,6 @@ COPY script/* /usr/local/bin/
 # 
 #
 COPY config/motion.conf /etc/motion/motion.conf
-COPY config/ssmtp.conf.gmail /root/.muttrc
 #
 # Ports for motion (control and stream)
 #
