@@ -17,7 +17,7 @@ if [ -n "${MOTION_MIDX}" ]; then
 	    if [ -n "${MOTION_HEIGHT}" ]; then
                 (( MOTION_X = ${MOTION_MIDX} - ${MOTION_WIDTH} / 2 ))
                 (( MOTION_Y = ${MOTION_MIDY} - ${MOTION_HEIGHT} / 2 ))
-		IMAGE_CROP = "${IMAGE_FILE%.*}=${MOTION_WIDTH}x${MOTION_HEIGHT}+${MOTION_X}+${MOTION_Y}".jpg
+		IMAGE_CROP="${IMAGE_FILE%.*}=${MOTION_WIDTH}x${MOTION_HEIGHT}+${MOTION_X}+${MOTION_Y}".jpg
 		echo convert -crop "${MOTION_WIDTH}x${MOTION_HEIGHT}+${MOTION_X}+${MOTION_Y}" "${IMAGE_FILE}" "${IMAGE_CROP}"
                 convert -crop "${MOTION_WIDTH}x${MOTION_HEIGHT}+${MOTION_X}+${MOTION_Y}" "${IMAGE_FILE}" "${IMAGE_CROP}"
 	    fi
