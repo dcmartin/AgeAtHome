@@ -5,19 +5,6 @@ if [ -n "${TIMEZONE}" ]; then
     cp /usr/share/zoneinfo/${TIMEZONE} /etc/localtime
 fi
 
-# Check e-mail setting
-if [ -z "${MAILTO}" ]; then
-    echo "The \$MAILTO environment variable is not set, skip e-mail notification."
-elif [ -n "${GMAIL_USER}" ]; then
-    # Setup MUTT configuration
-    echo "Set GMAIL user to ${GMAIL_USER}"
-    sed -i "s/^root=.*/root=${GMAIL_USER}/g" ~/.muttrc
-    sed -i "s/^AuthUser=.*/AuthUser=${GMAIL_USER}/g" ~/.muttrc
-    if [ -n "${GMAIL_PASS}" ]; then
-	sed -i "s/^AuthPass=.*/AuthPass=${GMAIL_PASS}/g" ~/.muttrc
-    fi
-fi
-
 # Override capture size for Motion
 if [ -n "${MOTION_PIXELS}" ]; then
     echo "Set capture size to ${MOTION_PIXELS}"
@@ -43,37 +30,6 @@ fi
     sed -i "s/^threshold\s[0-9]\+/threshold ${MOTION_THRESHOLD}/g" /etc/motion/motion.conf
 [ -n "${MOTION_EVENT_GAP}" ] && \
     sed -i "s/^event_gap\s[0-9]\+/event_gap ${MOTION_EVENT_GAP}/g" /etc/motion/motion.conf
-
-# Timelapse mode
-if [ -n "${MOTION_TIMELAPSE}" ]; then
-    echo "Timelapse mode enabled"
-    IFS=',' read -a timelapse<<< "${MOTION_TIMELAPSE}"
-    interval=${timelapse[0]}
-    duration=${timelapse[1]}
-    ofile="/tmp/timelapse-start-time.log"
-    # Record the time-lapse start time
-    echo $(date +"%s") > ${ofile}
-    # Send the timer to background
-    /usr/local/bin/timelapse.sh ${ofile} ${interval} ${duration} &
-    # Settings for running Motion on time-lapse mode
-    sed -i "s/^threshold\s[0-9]\+/threshold 0/g" /etc/motion/motion.conf
-    sed -i "s/^ffmpeg_output_movies off/ffmpeg_output_movies on/g" /etc/motion/motion.conf
-    sed -i "s/^ffmpeg_timelapse\s[0-9]\+/ffmpeg_timelapse ${interval}/g" /etc/motion/motion.conf
-fi
-
-# Setup WATSON configuration
-if [ -z "${VISUAL_USERNAME}" ]; then
-    echo "The \$VISUAL_USERNAME environment variable is not set; Alchemy will not be enabled."
-    export ALCHEMY_API="OFF"
-elif [ -n "${VISUAL_USERNAME}" ]; then
-    echo "Set WATSON username to ${VISUAL_USERNAME}"
-    echo "Set WATSON password to ${VISUAL_PASSWORD}"
-    echo "Set WATSON url to ${VISUAL_URL}"
-    echo "username: ${VISUAL_USERNAME}" >> ~/.alchemyrc
-    echo "password: ${VISUAL_PASSWORD}" >> ~/.alchemyrc
-    echo "url: ${VISUAL_URL}" >> ~/.alchemyrc
-    export ALCHEMY_API="ON"
-fi
 
 # Run motion
 exec motion -n -l /dev/stderr

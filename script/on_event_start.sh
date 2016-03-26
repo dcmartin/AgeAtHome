@@ -1,5 +1,2 @@
 #!/bin/bash
-
-EVENT=$1
-
-echo "START: ${EVENT}" $(date +"%s") >> LOG
+echo "$0: $*" $(date) >&2
