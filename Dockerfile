@@ -7,7 +7,7 @@ MAINTAINER dcmartin <github@dcmartin.com>
 #
 RUN apt-get update && apt-get install -q -y --no-install-recommends \
     apt-utils \
-    bsd-mailx \
+    jq \
     motion \
     imagemagick \
     rsync ssh \

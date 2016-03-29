@@ -34,8 +34,14 @@ if [ -z "${VISUAL_OFF}" ]; then
 	    if [ -n "${VISUAL_URL}" ]; then
 		if [ -n "${IMAGE_CROP}" ]; then
 		    curl -q -u "${VISUAL_USERNAME}":"${VISUAL_PASSWORD}" -X POST -F "images_file=@${IMAGE_CROP}" "${VISUAL_URL}" > "${IMAGE_CROP%.*}-visual.json"
+		    if [ -n "${CLOUDANT_URL}" ] && [ -n ${DEVICE_NAME} ]; then
+			curl -q -H "Content-type: application/json" -X POST "$CLOUDANT_URL/${DEVICE_NAME}/${IMAGE_CROP##*/}-visual" -d "@${IMAGE_CROP%.*}-alchemy.json"
+		    fi
 		fi
 		curl -q -u "${VISUAL_USERNAME}":"${VISUAL_PASSWORD}" -X POST -F "images_file=@${IMAGE_FILE}" "${VISUAL_URL}" > "${IMAGE_FILE%.*}-visual.json"
+		if [ -n "${CLOUDANT_URL}" ] && [ -n ${DEVICE_NAME} ]; then
+		    curl -q -H "Content-type: application/json" -X POST "$CLOUDANT_URL/${DEVICE_NAME}/${IMAGE_FILE##*/}-visual" -d "@${IMAGE_FILE%.*}-alchemy.json"
+		fi
 	    fi
 	fi
     fi
@@ -54,8 +60,14 @@ if [ -z "${ALCHEMY_OFF}" ]; then
 	if [ -n "${ALCHEMY_API_KEY}" ]; then
 	    if [ -n "${IMAGE_CROP}" ]; then
 		curl -q -X POST --data-binary "@${IMAGE_CROP}" "${ALCHEMY_API_URL}?apikey=${ALCHEMY_API_KEY}&imagePostMode=raw&outputMode=json" > "${IMAGE_CROP%.*}-alchemy.json"
+		if [ -n "${CLOUDANT_URL}" ] && [ -n ${DEVICE_NAME} ]; then
+		    curl -q -H "Content-type: application/json" -X POST "$CLOUDANT_URL/${DEVICE_NAME}/${IMAGE_CROP##*/}-alchemy" -d "@${IMAGE_CROP%.*}-alchemy.json"
+		fi
 	    fi
 	    curl -q -X POST --data-binary "@${IMAGE_FILE}" "${ALCHEMY_API_URL}?apikey=${ALCHEMY_API_KEY}&imagePostMode=raw&outputMode=json" > "${IMAGE_FILE%.*}-alchemy.json"
+	    if [ -n "${CLOUDANT_URL}" ] && [ -n ${DEVICE_NAME} ]; then
+		curl -q -H "Content-type: application/json" -X POST "$CLOUDANT_URL/${DEVICE_NAME}/${IMAGE_FILE##*/}-alchemy" -d "@${IMAGE_FILE%.*}-alchemy.json"
+	    fi
 	fi
     fi
 fi
