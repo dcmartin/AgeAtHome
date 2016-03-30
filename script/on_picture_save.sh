@@ -29,7 +29,7 @@ if [ -n "${MOTION_MIDX}" ]; then
 fi
 
 # check for CLOUDANT db
-if [ -z ${CLOUDANT_OFF} ] && -n "${CLOUDANT_URL}" ] && [ -n ${DEVICE_NAME} ]; then
+if [ -z ${CLOUDANT_OFF} ] && [ -n "${CLOUDANT_URL}" ] && [ -n ${DEVICE_NAME} ]; then
     DEVICE_DB=`curl -q -X GET "${CLOUDANT_URL}/_all_dbs" | egrep "${DEVICE_NAME}"`
     if [ -z "${DEVICE_DB}" ]; then
         # create DB
