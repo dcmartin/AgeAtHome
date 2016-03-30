@@ -67,9 +67,6 @@ else
     OUTPUT=""
 fi
 
-# debugging
-echo -n "INITIAL: "; jq . "${OUTPUT}"
-
 # calculate imagebox
 if [ -n "${MOTION_MIDX}" ]; then
     if [ -n "${MOTION_MIDY}" ]; then
