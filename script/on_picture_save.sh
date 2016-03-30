@@ -164,6 +164,7 @@ if [ -z "${ALCHEMY_OFF}" ]; then
 	    cat "${OUTPUT}" | sed 's/^{/{ "imagebox:" "IMAGE_BOX",/' | sed "s/IMAGE_BOX/${IMAGE_BOX}/" > /tmp/OUTPUT.$$
 	    mv /tmp/OUTPUT.$$ "${OUTPUT}"
 	fi
+	cat "${OUTPUT}"
 
 	# Cloudant
 	if [ -n ${CLOUDANT_URL} ] && [ -n ${DEVICE_NAME} ]; then
