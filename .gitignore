@@ -1,5 +1,4 @@
 DATA
-ENV
 .cloudant_id.json
 .visual_insights_id.json
 .object-storage_id.json

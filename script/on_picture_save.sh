@@ -10,6 +10,19 @@ MOTION_MIDY=$5
 MOTION_WIDTH=$6
 MOTION_HEIGHT=$7
 
+# calculate imagebox
+if [ -n "${MOTION_MIDX}" ]; then
+    if [ -n "${MOTION_MIDY}" ]; then
+	if [ -n "${MOTION_WIDTH}" ]; then
+	    if [ -n "${MOTION_HEIGHT}" ]; then
+		# calculate X,Y start from mid-point and extant
+		(( MOTION_X = ${MOTION_MIDX} - ${MOTION_WIDTH} / 2 ))
+		(( MOTION_Y = ${MOTION_MIDY} - ${MOTION_HEIGHT} / 2 ))
+		IMAGE_BOX="${MOTION_WIDTH}x${MOTION_HEIGHT}+${MOTION_X}+${MOTION_Y}"
+	    fi
+	fi
+    fi
+fi
 
 # proceed if VISUAL_OFF is zero length or undefined
 if [ -z "${VISUAL_OFF}" ] && [ -n "${VISUAL_USERNAME}" ] && [ -n "${VISUAL_PASSWORD}" ] && [ -n "${VISUAL_URL}" ]; then
@@ -51,34 +64,25 @@ fi
 # CLOUDANT
 #
 
+# Prepare output
 OUTPUT="${IMAGE_FILE%.*}.json"
-if [ -n "${VISUAL_OUTPUT}" ]; then
-    if [ -n "${ALCHEMY_OUTPUT}" ]; then
-	# merge JSON
-	jq -s . "${VISUAL_OUTPUT}" "${ALCHEMY_OUTPUT}" > "${OUTPUT}"
-	rm "${VISUAL_OUTPUT}" "${ALCHEMY_OUTPUT}"
+# test which outputs exist; merge if possible into single JSON object
+if [ -n "${ALCHEMY_OUTPUT}" ]; then
+    if [ -n "${VISUAL_OUTPUT}" ]; then
+	# pull out alchemy (first) and visual insights (second) -- ORDER MATTERS !!
+	jq -c '.imageKeywords[0]' "${ALCHEMY_OUTPUT}" | sed 's/\(.*\)\}/\{ "alchemy": \1 \},/' > "${OUTPUT}.$$"
+	jq -c '.images[0]' "${VISUAL_OUTPUT}" | sed 's/^{\(.*\)/"visual":{ \1 \}/' >> "${OUTPUT}.$$"
+	jq -c '.' "${OUTPUT}.$$" > "${OUTPUT}"
+	# remove tmp & originals
+	rm "${OUTPUT}.$$" "${VISUAL_OUTPUT}" "${ALCHEMY_OUTPUT}"
     else
-        mv "${VISUAL_OUTPUT}" "${OUTPUT}"
+	mv "${ALCHEMY_OUTPUT}" "${OUTPUT}"
     fi
-elif [ -n "${ALCHEMY_OUTPUT}" ]; then
-    mv "${ALCHEMY_OUTPUT}" "${OUTPUT}"
+elif [ -n "${VISUAL_OUTPUT}" ]; then
+    mv "${VISUAL_OUTPUT}" "${OUTPUT}"
 else
     echo "*** ERROR: $0 - NO OUTPUT"
     OUTPUT=""
-fi
-
-# calculate imagebox
-if [ -n "${MOTION_MIDX}" ]; then
-    if [ -n "${MOTION_MIDY}" ]; then
-	if [ -n "${MOTION_WIDTH}" ]; then
-	    if [ -n "${MOTION_HEIGHT}" ]; then
-		# calculate X,Y start from mid-point and extant
-		(( MOTION_X = ${MOTION_MIDX} - ${MOTION_WIDTH} / 2 ))
-		(( MOTION_Y = ${MOTION_MIDY} - ${MOTION_HEIGHT} / 2 ))
-		IMAGE_BOX="${MOTION_WIDTH}x${MOTION_HEIGHT}+${MOTION_X}+${MOTION_Y}"
-	    fi
-	fi
-    fi
 fi
 
 if [ -n "${OUTPUT}" ]; then
@@ -90,18 +94,20 @@ if [ -n "${OUTPUT}" ]; then
     # add datetime and bounding box information
     if [ -n "${IMAGE_ID}" ] && [ -n "${IMAGE_BOX}" ]; then
 	DATE_TIME=`echo "${IMAGE_ID}" | sed "s/\(.*\)-.*-.*-.*/\1/"`
-	cat "${OUTPUT}" | sed 's/^\[/[ { "datetime": "DATE_TIME", "imagebox": "IMAGE_BOX"  },/' | sed "s/DATE_TIME/${DATE_TIME}/" | sed "s/IMAGE_BOX/${IMAGE_BOX}/" > /tmp/OUTPUT.$$
+	cat "${OUTPUT}" | sed 's/^{/{ "datetime": "DATE_TIME", "imagebox": "IMAGE_BOX",/' | sed "s/DATE_TIME/${DATE_TIME}/" | sed "s/IMAGE_BOX/${IMAGE_BOX}/" > /tmp/OUTPUT.$$
 	mv /tmp/OUTPUT.$$ "${OUTPUT}"
     fi
 fi
 
 # Cloudant
-if [ -z ${CLOUDANT_OFF} ] && [ -n "${OUTPUT}" ] && [ -n "${CLOUDANT_URL}" ] && [ -n ${DEVICE_NAME} ]; then
-    DEVICE_DB=`curl -q -X GET "${CLOUDANT_URL}/_all_dbs" | egrep "${DEVICE_NAME}"`
-    if [ -z "${DEVICE_DB}" ]; then
-	DEVICE_DB=`curl -q -X PUT "${CLOUDANT_URL}/${DEVICE_NAME}" | egrep "ok"`
-	if [ -z "${DEVICE_DB}" ]; then
-	    # force off 
+if [ -z "${CLOUDANT_OFF}" ] && [ -n "${OUTPUT}" ] && [ -n "${CLOUDANT_URL}" ] && [ -n ${DEVICE_NAME} ]; then
+    DEVICE_DB=`curl -q -X GET "${CLOUDANT_URL}/${DEVICE_NAME}" | jq '.db_name'`
+    if [ "${DEVICE_DB}" == "null" ]; then
+	# create DB
+	DEVICE_DB=`curl -q -X PUT "${CLOUDANT_URL}/${DEVICE_NAME}" | jq '.ok'`
+	# test for success
+	if [ "${DEVICE_DB}" != "true" ]; then
+	    # failure
 	    CLOUDANT_OFF=TRUE
         fi
     fi
