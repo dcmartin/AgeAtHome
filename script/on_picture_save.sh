@@ -66,7 +66,7 @@ if [ -z "${VISUAL_OFF}" ]; then
 	    # add date and time information
 	    if [ -n "${IMAGE_ID}" ]; then
 		DATE_TIME=`echo "${IMAGE_ID}" | sed "s/\(.*\)-.*--.*-.*/\1/"`
-		cat "${OUTPUT}" | sed 's/^{/{ "datetime:" "DATE_TIME",/' | sed "s/DATE_TIME/${DATE_TIME}/" > /tmp/OUTPUT.$$
+		cat "${OUTPUT}" | sed 's/^{/{ "datetime": "DATE_TIME",/' | sed "s/DATE_TIME/${DATE_TIME}/" > /tmp/OUTPUT.$$
 		mv /tmp/OUTPUT.$$ "${OUTPUT}"
 	    fi
 
@@ -89,12 +89,12 @@ if [ -z "${VISUAL_OFF}" ]; then
 	# add date and time information
 	if [ -n "${IMAGE_ID}" ]; then
 	    DATE_TIME=`echo "${IMAGE_ID}" | sed "s/\(.*\)-.*--.*-.*/\1/"`
-	    cat "${OUTPUT}" | sed 's/^{/{ "datetime:" "DATE_TIME",/' | sed "s/DATE_TIME/${DATE_TIME}/" > /tmp/OUTPUT.$$
+	    cat "${OUTPUT}" | sed 's/^{/{ "datetime": "DATE_TIME",/' | sed "s/DATE_TIME/${DATE_TIME}/" > /tmp/OUTPUT.$$
 	    mv /tmp/OUTPUT.$$ "${OUTPUT}"
 	fi
 	# add bounding box to JSON
 	if [ -n "${IMAGE_BOX}" ]; then
-	    cat "${OUTPUT}" | sed 's/^{/{ "imagebox:" "IMAGE_BOX",/' | sed "s/IMAGE_BOX/${IMAGE_BOX}/" > /tmp/OUTPUT.$$
+	    cat "${OUTPUT}" | sed 's/^{/{ "imagebox": "IMAGE_BOX",/' | sed "s/IMAGE_BOX/${IMAGE_BOX}/" > /tmp/OUTPUT.$$
 	    mv /tmp/OUTPUT.$$ "${OUTPUT}"
 	fi
 
@@ -133,7 +133,7 @@ if [ -z "${ALCHEMY_OFF}" ]; then
 	    # add date and time information
 	    if [ -n "${IMAGE_ID}" ]; then
 		DATE_TIME=`echo "${IMAGE_ID}" | sed "s/\(.*\)-.*--.*-.*/\1/"`
-		cat "${OUTPUT}" | sed 's/^{/{ "datetime:" "DATE_TIME",/' | sed "s/DATE_TIME/${DATE_TIME}/" > /tmp/OUTPUT.$$
+		cat "${OUTPUT}" | sed 's/^{/{ "datetime": "DATE_TIME",/' | sed "s/DATE_TIME/${DATE_TIME}/" > /tmp/OUTPUT.$$
 		mv /tmp/OUTPUT.$$ "${OUTPUT}"
 	    fi
 
@@ -156,12 +156,12 @@ if [ -z "${ALCHEMY_OFF}" ]; then
 	# add date and time information
 	if [ -n "${IMAGE_ID}" ]; then
 	    DATE_TIME=`echo "${IMAGE_ID}" | sed "s/\(.*\)-.*--.*-.*/\1/"`
-	    cat "${OUTPUT}" | sed 's/^{/{ "datetime:" "DATE_TIME",/' | sed "s/DATE_TIME/${DATE_TIME}/" > /tmp/OUTPUT.$$
+	    cat "${OUTPUT}" | sed 's/^{/{ "datetime": "DATE_TIME",/' | sed "s/DATE_TIME/${DATE_TIME}/" > /tmp/OUTPUT.$$
 	    mv /tmp/OUTPUT.$$ "${OUTPUT}"
 	fi
 	# add bounding box to JSON
 	if [ -n "${IMAGE_BOX}" ]; then
-	    cat "${OUTPUT}" | sed 's/^{/{ "imagebox:" "IMAGE_BOX",/' | sed "s/IMAGE_BOX/${IMAGE_BOX}/" > /tmp/OUTPUT.$$
+	    cat "${OUTPUT}" | sed 's/^{/{ "imagebox": "IMAGE_BOX",/' | sed "s/IMAGE_BOX/${IMAGE_BOX}/" > /tmp/OUTPUT.$$
 	    mv /tmp/OUTPUT.$$ "${OUTPUT}"
 	fi
 	cat "${OUTPUT}"
