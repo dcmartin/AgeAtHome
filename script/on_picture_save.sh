@@ -60,7 +60,7 @@ if [ -z "${VISUAL_OFF}" ]; then
 		    if [ -n "${CLOUDANT_URL}" ] && [ -n ${DEVICE_NAME} ]; then
 			IMAGE_ID=`echo "${IMAGE_CROP##*/}"`
 			IMAGE_ID=`echo "${IMAGE_ID%.*}-visual"`
-			curl -q -H "Content-type: application/json" -X POST "$CLOUDANT_URL/${DEVICE_NAME}/${IMAGE_ID}-visual" -d "@${IMAGE_CROP%.*}-alchemy.json"
+			curl -q -H "Content-type: application/json" -X PUT "$CLOUDANT_URL/${DEVICE_NAME}/${IMAGE_ID}-visual" -d "@${IMAGE_CROP%.*}-alchemy.json"
 		    fi
 		fi
 		# full image
@@ -68,7 +68,7 @@ if [ -z "${VISUAL_OFF}" ]; then
 		if [ -n ${CLOUDANT_URL} ] && [ -n ${DEVICE_NAME} ]; then
 		    IMAGE_ID=`echo "${IMAGE_FILE##*/}"`
 		    IMAGE_ID=`echo "${IMAGE_ID%.*}-visual"`
-		    curl -q -H "Content-type: application/json" -X POST "$CLOUDANT_URL/${DEVICE_NAME}/${IMAGE_ID}" -d "@${IMAGE_FILE%.*}-visual.json"
+		    curl -q -H "Content-type: application/json" -X PUT "$CLOUDANT_URL/${DEVICE_NAME}/${IMAGE_ID}" -d "@${IMAGE_FILE%.*}-visual.json"
 		fi
 	    fi
 	fi
@@ -91,14 +91,14 @@ if [ -z "${ALCHEMY_OFF}" ]; then
 		if [ -n "${CLOUDANT_URL}" ] && [ -n ${DEVICE_NAME} ]; then
 		    IMAGE_ID=`echo "${IMAGE_CROP##*/}"`
 		    IMAGE_ID=`echo "${IMAGE_ID%.*}-alchemy"`
-		    curl -q -H "Content-type: application/json" -X POST "$CLOUDANT_URL/${DEVICE_NAME}/${IMAGE_ID}" -d "@${IMAGE_CROP%.*}-alchemy.json"
+		    curl -q -H "Content-type: application/json" -X PUT "$CLOUDANT_URL/${DEVICE_NAME}/${IMAGE_ID}" -d "@${IMAGE_CROP%.*}-alchemy.json"
 		fi
 	    fi
 	    curl -q -X POST --data-binary "@${IMAGE_FILE}" "${ALCHEMY_API_URL}?apikey=${ALCHEMY_API_KEY}&imagePostMode=raw&outputMode=json" > "${IMAGE_FILE%.*}-alchemy.json"
 	    if [ -n ${CLOUDANT_URL} ] && [ -n ${DEVICE_NAME} ]; then
 		IMAGE_ID=`echo "${IMAGE_FILE##*/}"`
 		IMAGE_ID=`echo "${IMAGE_ID%.*}-alchemy"`
-		curl -q -H "Content-type: application/json" -X POST "$CLOUDANT_URL/${DEVICE_NAME}/${IMAGE_ID}" -d "@${IMAGE_FILE%.*}-alchemy.json"
+		curl -q -H "Content-type: application/json" -X PUT "$CLOUDANT_URL/${DEVICE_NAME}/${IMAGE_ID}" -d "@${IMAGE_FILE%.*}-alchemy.json"
 	    fi
 	fi
     fi
