@@ -51,24 +51,6 @@ fi
 # CLOUDANT
 #
 
-# check for CLOUDANT db
-if [ -z ${CLOUDANT_OFF} ] && [ -n "${CLOUDANT_URL}" ] && [ -n ${DEVICE_NAME} ]; then
-    DEVICE_DB=`curl -q -X GET "${CLOUDANT_URL}/_all_dbs" | egrep "${DEVICE_NAME}"`
-    if [ -z "${DEVICE_DB}" ]; then
-	DEVICE_DB=`curl -q -X PUT "${CLOUDANT_URL}/${DEVICE_NAME}" | egrep "ok"`
-	if [ -z "${DEVICE_DB}" ]; then
-	    # force off 
-	    CLOUDANT_OFF=TRUE
-        fi
-    fi
-    if [ -z "${CLOUDANT_OFF}" ]; then
-	DEVICE_DB=`curl -q -X GET "${CLOUDANT_URL}/${DEVICE_NAME}"`
-    fi
-else
-    # off or failure
-    CLOUDANT_OFF=TRUE
-fi
-
 OUTPUT="${IMAGE_FILE%.*}.json"
 if [ -n "${VISUAL_OUTPUT}" ]; then
     if [ -n "${ALCHEMY_OUTPUT}" ]; then
@@ -114,12 +96,19 @@ if [ -n "${OUTPUT}" ]; then
 	cat "${OUTPUT}" | sed 's/^\[/[ { "datetime": "DATE_TIME", "imagebox": "IMAGE_BOX"  },/' | sed "s/DATE_TIME/${DATE_TIME}/" | sed "s/IMAGE_BOX/${IMAGE_BOX}/" > /tmp/OUTPUT.$$
 	mv /tmp/OUTPUT.$$ "${OUTPUT}"
     fi
+fi
 
-    # debugging
-    echo -n "AFTER SED: "; jq . "${OUTPUT}"
-
-    # Cloudant
-    if [ -z "${CLOUDANT_OFF}" ] && [ -n "${CLOUDANT_URL}" ] && [ -n "${DEVICE_NAME}" ]; then
+# Cloudant
+if [ -z ${CLOUDANT_OFF} ] && [ -n "${OUTPUT}" ] && [ -n "${CLOUDANT_URL}" ] && [ -n ${DEVICE_NAME} ]; then
+    DEVICE_DB=`curl -q -X GET "${CLOUDANT_URL}/_all_dbs" | egrep "${DEVICE_NAME}"`
+    if [ -z "${DEVICE_DB}" ]; then
+	DEVICE_DB=`curl -q -X PUT "${CLOUDANT_URL}/${DEVICE_NAME}" | egrep "ok"`
+	if [ -z "${DEVICE_DB}" ]; then
+	    # force off 
+	    CLOUDANT_OFF=TRUE
+        fi
+    fi
+    if [ -z "${CLOUDANT_OFF}" ]; then
 	curl -q -H "Content-type: application/json" -X PUT "$CLOUDANT_URL/${DEVICE_NAME}/${IMAGE_ID}" -d "@${OUTPUT}"
     fi
 fi
