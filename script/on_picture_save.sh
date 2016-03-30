@@ -34,16 +34,15 @@ if [ -z ${CLOUDANT_OFF} ] && -n "${CLOUDANT_URL}" ] && [ -n ${DEVICE_NAME} ]; th
     if [ -z "${DEVICE_DB}" ]; then
         # create DB
 	DEVICE_DB=`curl -q -X PUT "${CLOUDANT_URL}/${DEVICE_NAME}" | egrep "ok"`
-	if [ -z "${DEVICE_DB} ]; then
+	if [ -z "${DEVICE_DB}" ]; then
 	    # DB create failed
 	    echo "DB CREATE FAILURE ${DEVICE_NAME}" >&2
 	    # force off 
 	    CLOUDANT_OFF=TRUE
-	else
         fi
     fi
     if [ -z "${CLOUDANT_OFF}" ]; then
-	DEVICE_DB=`curl -q -X GET "${CLOUDANT_URL}/${DEVICE_NAME}"
+	DEVICE_DB=`curl -q -X GET "${CLOUDANT_URL}/${DEVICE_NAME}"`
     fi
 else
     # off or failure
@@ -66,7 +65,7 @@ if [ -z "${VISUAL_OFF}" ]; then
 		fi
 		# full image
 		curl -q -u "${VISUAL_USERNAME}":"${VISUAL_PASSWORD}" -X POST -F "images_file=@${IMAGE_FILE}" "${VISUAL_URL}" > "${IMAGE_FILE%.*}-visual.json"
-		if [ -n "${CLOUDANT_URL}" ] && [ -n ${DEVICE_NAME} ]; then
+		if [ -n ${CLOUDANT_URL} ] && [ -n ${DEVICE_NAME} ]; then
 		    IMAGE_ID=`echo "${IMAGE_FILE##*/}"`
 		    IMAGE_ID=`echo "${IMAGE_ID%.*}-visual"`
 		    curl -q -H "Content-type: application/json" -X POST "$CLOUDANT_URL/${DEVICE_NAME}/${IMAGE_ID}" -d "@${IMAGE_FILE%.*}-visual.json"
@@ -96,7 +95,7 @@ if [ -z "${ALCHEMY_OFF}" ]; then
 		fi
 	    fi
 	    curl -q -X POST --data-binary "@${IMAGE_FILE}" "${ALCHEMY_API_URL}?apikey=${ALCHEMY_API_KEY}&imagePostMode=raw&outputMode=json" > "${IMAGE_FILE%.*}-alchemy.json"
-	    if [ -n "${CLOUDANT_URL}" ] && [ -n ${DEVICE_NAME} ]; then
+	    if [ -n ${CLOUDANT_URL} ] && [ -n ${DEVICE_NAME} ]; then
 		IMAGE_ID=`echo "${IMAGE_FILE##*/}"`
 		IMAGE_ID=`echo "${IMAGE_ID%.*}-alchemy"`
 		curl -q -H "Content-type: application/json" -X POST "$CLOUDANT_URL/${DEVICE_NAME}/${IMAGE_ID}" -d "@${IMAGE_FILE%.*}-alchemy.json"
