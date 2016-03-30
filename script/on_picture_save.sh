@@ -51,55 +51,123 @@ fi
 
 # proceed if VISUAL_OFF is zero length or undefined
 if [ -z "${VISUAL_OFF}" ]; then
-    if [ -n "${VISUAL_USERNAME}" ]; then
-	if [ -n "${VISUAL_PASSWORD}" ]; then
-	    if [ -n "${VISUAL_URL}" ]; then
-		if [ -z "${CROP_OFF}" ]; then
-		    # cropped image
-		    curl -q -u "${VISUAL_USERNAME}":"${VISUAL_PASSWORD}" -X POST -F "images_file=@${IMAGE_CROP}" "${VISUAL_URL}" > "${IMAGE_CROP%.*}-visual.json"
-		    if [ -n "${CLOUDANT_URL}" ] && [ -n ${DEVICE_NAME} ]; then
-			IMAGE_ID=`echo "${IMAGE_CROP##*/}"`
-			IMAGE_ID=`echo "${IMAGE_ID%.*}-visual"`
-			curl -q -H "Content-type: application/json" -X PUT "$CLOUDANT_URL/${DEVICE_NAME}/${IMAGE_ID}-visual" -d "@${IMAGE_CROP%.*}-alchemy.json"
-		    fi
-		fi
-		# full image
-		curl -q -u "${VISUAL_USERNAME}":"${VISUAL_PASSWORD}" -X POST -F "images_file=@${IMAGE_FILE}" "${VISUAL_URL}" > "${IMAGE_FILE%.*}-visual.json"
-		if [ -n ${CLOUDANT_URL} ] && [ -n ${DEVICE_NAME} ]; then
-		    IMAGE_ID=`echo "${IMAGE_FILE##*/}"`
-		    IMAGE_ID=`echo "${IMAGE_ID%.*}-visual"`
-		    curl -q -H "Content-type: application/json" -X PUT "$CLOUDANT_URL/${DEVICE_NAME}/${IMAGE_ID}" -d "@${IMAGE_FILE%.*}-visual.json"
-		fi
+    if [ -n "${VISUAL_USERNAME}" ] && [ -n "${VISUAL_PASSWORD}" ] && [ -n "${VISUAL_URL}" ]; then
+	if [ -z "${CROP_OFF}" ]; then
+	    # cropped image
+	    OUTPUT="${IMAGE_CROP%.*}-visual.json"
+	    # drop prefix path
+	    IMAGE_ID=`echo "${OUTPUT##*/}"`
+	    # drop extension
+	    IMAGE_ID=`echo "${IMAGE_ID%.*}"`
+
+	    # VisualInsights
+	    curl -q -u "${VISUAL_USERNAME}":"${VISUAL_PASSWORD}" -X POST -F "images_file=@${IMAGE_CROP}" "${VISUAL_URL}" > "${OUTPUT}"
+
+	    # add date and time information
+	    if [ -n "${IMAGE_ID}" ]; then
+		DATE_TIME=`echo "${IMAGE_ID}" | sed "s/\(.*\)-.*--.*-.*/\1/"`
+		cat "${OUTPUT}" | sed 's/^{/{ "datetime:" "DATE_TIME",/' | sed "s/DATE_TIME/${DATE_TIME}/" > /tmp/OUTPUT.$$
+		mv /tmp/OUTPUT.$$ "${OUTPUT}"
 	    fi
+
+	    # Cloudant
+	    if [ -n "${CLOUDANT_URL}" ] && [ -n ${DEVICE_NAME} ]; then
+		curl -q -H "Content-type: application/json" -X PUT "$CLOUDANT_URL/${DEVICE_NAME}/${IMAGE_ID}-visual" -d "@${OUTPUT}"
+	    fi
+	fi
+
+	# full image
+	OUTPUT="${IMAGE_FILE%.*}-visual.json"
+	# drop prefix path
+	IMAGE_ID=`echo "${OUTPUT##*/}"`
+	# drop extension
+	IMAGE_ID=`echo "${IMAGE_ID%.*}"`
+
+	# VisualInsights
+	curl -q -u "${VISUAL_USERNAME}":"${VISUAL_PASSWORD}" -X POST -F "images_file=@${IMAGE_FILE}" "${VISUAL_URL}" > "${OUTPUT}"
+
+	# add date and time information
+	if [ -n "${IMAGE_ID}" ]; then
+	    DATE_TIME=`echo "${IMAGE_ID}" | sed "s/\(.*\)-.*--.*-.*/\1/"`
+	    cat "${OUTPUT}" | sed 's/^{/{ "datetime:" "DATE_TIME",/' | sed "s/DATE_TIME/${DATE_TIME}/" > /tmp/OUTPUT.$$
+	    mv /tmp/OUTPUT.$$ "${OUTPUT}"
+	fi
+	# add bounding box to JSON
+	if [ -n "${IMAGE_BOX}" ]; then
+	    cat "${OUTPUT}" | sed 's/^{/{ "imagebox:" "IMAGE_BOX",/' | sed "s/IMAGE_BOX/${IMAGE_BOX}/" > /tmp/OUTPUT.$$
+	    mv /tmp/OUTPUT.$$ "${OUTPUT}"
+	fi
+
+	# Cloudant
+	if [ -n ${CLOUDANT_URL} ] && [ -n ${DEVICE_NAME} ]; then
+	    curl -q -H "Content-type: application/json" -X PUT "$CLOUDANT_URL/${DEVICE_NAME}/${IMAGE_ID}" -d "@${OUTPUT}"
 	fi
     fi
 fi
 
-# proceed if ALCHEMY_OFF is zero length or undefined
+# test if OFF 
 if [ -z "${ALCHEMY_OFF}" ]; then
-    if [ -n "${ALCHEMY_API_URL}" ]; then
-        AMPM=`date +%p`
-	if [ ${AMPM} == AM ] && [ -n ${ALCHEMY_API_KEY_AM} ]; then
-	    ALCHEMY_API_KEY=${ALCHEMY_API_KEY_AM}
-	fi
-	if [ ${AMPM} == PM ] && [ -n ${ALCHEMY_API_KEY_PM} ]; then
-	    ALCHEMY_API_KEY=${ALCHEMY_API_KEY_PM}
-	fi
-	if [ -n "${ALCHEMY_API_KEY}" ]; then
-	    if [ -z "${CROP_OFF}" ]; then
-		curl -q -X POST --data-binary "@${IMAGE_CROP}" "${ALCHEMY_API_URL}?apikey=${ALCHEMY_API_KEY}&imagePostMode=raw&outputMode=json" > "${IMAGE_CROP%.*}-alchemy.json"
-		if [ -n "${CLOUDANT_URL}" ] && [ -n ${DEVICE_NAME} ]; then
-		    IMAGE_ID=`echo "${IMAGE_CROP##*/}"`
-		    IMAGE_ID=`echo "${IMAGE_ID%.*}-alchemy"`
-		    curl -q -H "Content-type: application/json" -X PUT "$CLOUDANT_URL/${DEVICE_NAME}/${IMAGE_ID}" -d "@${IMAGE_CROP%.*}-alchemy.json"
-		fi
+
+    # use two API keys (morning and evening)
+    AMPM=`date +%p`
+    if [ ${AMPM} == AM ] && [ -n ${ALCHEMY_API_KEY_AM} ]; then
+	ALCHEMY_API_KEY=${ALCHEMY_API_KEY_AM}
+    fi
+    if [ ${AMPM} == PM ] && [ -n ${ALCHEMY_API_KEY_PM} ]; then
+	ALCHEMY_API_KEY=${ALCHEMY_API_KEY_PM}
+    fi
+
+    # check if configured
+    if [ -n "${ALCHEMY_API_KEY}" ] && [ -n "${ALCHEMY_API_URL}" ]; then
+	if [ -z "${CROP_OFF}" ]; then
+	    # cropped image
+	    OUTPUT="${IMAGE_CROP%.*}-alchemy.json"
+	    # drop prefix path
+	    IMAGE_ID=`echo "${OUTPUT##*/}"`
+	    # drop extension
+	    IMAGE_ID=`echo "${IMAGE_ID%.*}"`
+
+	    # Alchemy
+	    curl -q -X POST --data-binary "@${IMAGE_CROP}" "${ALCHEMY_API_URL}?apikey=${ALCHEMY_API_KEY}&imagePostMode=raw&outputMode=json" > "${OUTPUT}"
+
+	    # add date and time information
+	    if [ -n "${IMAGE_ID}" ]; then
+		DATE_TIME=`echo "${IMAGE_ID}" | sed "s/\(.*\)-.*--.*-.*/\1/"`
+		cat "${OUTPUT}" | sed 's/^{/{ "datetime:" "DATE_TIME",/' | sed "s/DATE_TIME/${DATE_TIME}/" > /tmp/OUTPUT.$$
+		mv /tmp/OUTPUT.$$ "${OUTPUT}"
 	    fi
-	    curl -q -X POST --data-binary "@${IMAGE_FILE}" "${ALCHEMY_API_URL}?apikey=${ALCHEMY_API_KEY}&imagePostMode=raw&outputMode=json" > "${IMAGE_FILE%.*}-alchemy.json"
-	    if [ -n ${CLOUDANT_URL} ] && [ -n ${DEVICE_NAME} ]; then
-		IMAGE_ID=`echo "${IMAGE_FILE##*/}"`
-		IMAGE_ID=`echo "${IMAGE_ID%.*}-alchemy"`
-		curl -q -H "Content-type: application/json" -X PUT "$CLOUDANT_URL/${DEVICE_NAME}/${IMAGE_ID}" -d "@${IMAGE_FILE%.*}-alchemy.json"
+
+	    # Cloudant
+	    if [ -n "${CLOUDANT_URL}" ] && [ -n ${DEVICE_NAME} ]; then
+		curl -q -H "Content-type: application/json" -X PUT "$CLOUDANT_URL/${DEVICE_NAME}/${IMAGE_ID}" -d "@${OUTPUT}"
 	    fi
+	fi
+
+	# full  image
+	OUTPUT="${IMAGE_FILE%.*}-alchemy.json"
+	# drop prefix path
+	IMAGE_ID=`echo "${OUTPUT##*/}"`
+	# drop extension
+	IMAGE_ID=`echo "${IMAGE_ID%.*}"`
+
+	# Alchemy
+	curl -q -X POST --data-binary "@${IMAGE_FILE}" "${ALCHEMY_API_URL}?apikey=${ALCHEMY_API_KEY}&imagePostMode=raw&outputMode=json" > "${OUTPUT}"
+
+	# add date and time information
+	if [ -n "${IMAGE_ID}" ]; then
+	    DATE_TIME=`echo "${IMAGE_ID}" | sed "s/\(.*\)-.*--.*-.*/\1/"`
+	    cat "${OUTPUT}" | sed 's/^{/{ "datetime:" "DATE_TIME",/' | sed "s/DATE_TIME/${DATE_TIME}/" > /tmp/OUTPUT.$$
+	    mv /tmp/OUTPUT.$$ "${OUTPUT}"
+	fi
+	# add bounding box to JSON
+	if [ -n "${IMAGE_BOX}" ]; then
+	    cat "${OUTPUT}" | sed 's/^{/{ "imagebox:" "IMAGE_BOX",/' | sed "s/IMAGE_BOX/${IMAGE_BOX}/" > /tmp/OUTPUT.$$
+	    mv /tmp/OUTPUT.$$ "${OUTPUT}"
+	fi
+
+	# Cloudant
+	if [ -n ${CLOUDANT_URL} ] && [ -n ${DEVICE_NAME} ]; then
+	    curl -q -H "Content-type: application/json" -X PUT "$CLOUDANT_URL/${DEVICE_NAME}/${IMAGE_ID}" -d "@${OUTPUT}"
 	fi
     fi
 fi
