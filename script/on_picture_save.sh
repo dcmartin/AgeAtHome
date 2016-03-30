@@ -33,6 +33,7 @@ if [ -z ${CLOUDANT_OFF} ] && [ -n "${CLOUDANT_URL}" ] && [ -n ${DEVICE_NAME} ]; 
     DEVICE_DB=`curl -q -X GET "${CLOUDANT_URL}/_all_dbs" | egrep "${DEVICE_NAME}"`
     if [ -z "${DEVICE_DB}" ]; then
         # create DB
+	echo "DB CREATE ${DEVICE_NAME}" >&2
 	DEVICE_DB=`curl -q -X PUT "${CLOUDANT_URL}/${DEVICE_NAME}" | egrep "ok"`
 	if [ -z "${DEVICE_DB}" ]; then
 	    # DB create failed
@@ -43,6 +44,7 @@ if [ -z ${CLOUDANT_OFF} ] && [ -n "${CLOUDANT_URL}" ] && [ -n ${DEVICE_NAME} ]; 
     fi
     if [ -z "${CLOUDANT_OFF}" ]; then
 	DEVICE_DB=`curl -q -X GET "${CLOUDANT_URL}/${DEVICE_NAME}"`
+	echo "${DEVICE_DB}" >&2
     fi
 else
     # off or failure
