@@ -43,65 +43,64 @@ EXPOSE 8080 8081
 #
 VOLUME ["/var/lib/motion"]
 
-
 #
 # install packages for Pulse Audio
 #
-# RUN apt-get install -y \
-#    gstreamer0.10-pulseaudio \
-#    libao4 \
-#    libasound2-plugins \
-#    libgconfmm-2.6-1c2 \
-#    libglademm-2.4-1c2a \
-#    libpulse-dev \
-#    libpulse-mainloop-glib0 \
-#    libpulse-mainloop-glib0-dbg \
-#    libpulse0 \
-#    libpulse0-dbg \
-#    libsox-fmt-pulse \
-#    paman \
-#    paprefs \
-#    pavucontrol \
-#    pavumeter \
-#    pulseaudio \
-#    pulseaudio-dbg \
-#    pulseaudio-esound-compat \
-#    pulseaudio-esound-compat-dbg \
-#    pulseaudio-module-bluetooth \
-#    pulseaudio-module-gconf \
-#    pulseaudio-module-jack \
-#    pulseaudio-module-lirc \
-#    pulseaudio-module-lirc-dbg \
-#    pulseaudio-module-x11 \
-#    pulseaudio-module-zeroconf \
-#    pulseaudio-module-zeroconf-dbg \
-#    pulseaudio-utils \
-#    oss-compat
+RUN apt-get install -y \
+   gstreamer0.10-pulseaudio \
+   libao4 \
+   libasound2-plugins \
+   libgconfmm-2.6-1c2 \
+   libglademm-2.4-1c2a \
+   libpulse-dev \
+   libpulse-mainloop-glib0 \
+   libpulse-mainloop-glib0-dbg \
+   libpulse0 \
+   libpulse0-dbg \
+   libsox-fmt-pulse \
+   paman \
+   paprefs \
+   pavucontrol \
+   pavumeter \
+   pulseaudio \
+   pulseaudio-dbg \
+   pulseaudio-esound-compat \
+   pulseaudio-esound-compat-dbg \
+   pulseaudio-module-bluetooth \
+   pulseaudio-module-gconf \
+   pulseaudio-module-jack \
+   pulseaudio-module-lirc \
+   pulseaudio-module-lirc-dbg \
+   pulseaudio-module-x11 \
+   pulseaudio-module-zeroconf \
+   pulseaudio-module-zeroconf-dbg \
+   pulseaudio-utils \
+   oss-compat
 
 #
 # Change default PA configuration for use of PS3Eye Camera
 #
 # RUN cp -pf /etc/asound.conf /etc/asound.conf.ORIG 
 # COPY config/asound.conf /etc/asound.conf
-# RUN echo "pcm.pulse { type pulse } ctl.pulse { type pulse } pcm.!default { type pulse } ctl.!default { type pulse }" > /etc/asound.conf
+RUN echo "pcm.pulse { type pulse } ctl.pulse { type pulse } pcm.!default { type pulse } ctl.!default { type pulse }" > /etc/asound.conf
 
 # RUN cp -pf /etc/libao.conf /etc/libao.conf.ORIG
 # RUN sed -i "s,default_driver=alsa,default_driver=pulse,g" /etc/libao.conf 
-# RUN echo "default_driver=pulse" > /etc/libao.conf 
+RUN echo "default_driver=pulse" > /etc/libao.conf 
 
 # RUN cp -pf /etc/modules /etc/modules.ORIG
-# RUN echo "snd-bcm2835" > /etc/modules
+RUN echo "snd-bcm2835" > /etc/modules
 
 # RUN cp -pf /etc/default/pulseaudio /etc/default/pulseaudio.ORIG
 # RUN sed -i "s,DISALLOW_MODULE_LOADING=1,DISALLOW_MODULE_LOADING=0,g" /etc/default/pulseaudio
-# RUN echo "DISALLOW_MODULE_LOADING=0" > /etc/default/pulseaudio
+RUN echo "DISALLOW_MODULE_LOADING=0" > /etc/default/pulseaudio
 
-# RUN cp -fvp /etc/pulse/system.pa /etc/pulse/system.pa.ORIG
-# RUN echo "load-module module-native-protocol-tcp auth-ip-acl=127.0.0.1;192.168.0.0/24 auth-anonymous=1" >> /etc/pulse/system.pa
-# RUN echo "load-module module-zeroconf-publish" >> /etc/pulse/system.pa
+RUN cp -fvp /etc/pulse/system.pa /etc/pulse/system.pa.ORIG
+RUN echo "load-module module-native-protocol-tcp auth-ip-acl=127.0.0.1;192.168.0.0/24 auth-anonymous=1" >> /etc/pulse/system.pa
+RUN echo "load-module module-zeroconf-publish" >> /etc/pulse/system.pa
 
-# RUN echo "load-module module-native-protocol-tcp auth-ip-acl=127.0.0.1;192.168.0.0/24 auth-anonymous=1" >> /etc/pulse/default.pa
-# RUN echo "load-module module-zeroconf-publish" >> /etc/pulse/default.pa
+RUN echo "load-module module-native-protocol-tcp auth-ip-acl=127.0.0.1;192.168.0.0/24 auth-anonymous=1" >> /etc/pulse/default.pa
+RUN echo "load-module module-zeroconf-publish" >> /etc/pulse/default.pa
 
 #
 # daemon settings according to Pi-Musicbox ( https://github.com/woutervanwijk/Pi-MusicBox )
