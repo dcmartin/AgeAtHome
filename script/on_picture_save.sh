@@ -93,7 +93,7 @@ if [ -n "${OUTPUT}" ]; then
 
     # add datetime and bounding box information
     if [ -n "${IMAGE_ID}" ] && [ -n "${IMAGE_BOX}" ]; then
-	DATE_TIME=`echo "${IMAGE_ID}" | sed "s/\(.*\)-.*-.*.jpg/\1/"`
+	DATE_TIME=`echo "${IMAGE_ID}" | sed "s/\(.*\)-.*-.*\.jpg/\1/"`
 	cat "${OUTPUT}" | sed 's/^{/{ "datetime": "DATE_TIME", "imagebox": "IMAGE_BOX",/' | sed "s/DATE_TIME/${DATE_TIME}/" | sed "s/IMAGE_BOX/${IMAGE_BOX}/" > /tmp/OUTPUT.$$
 	mv /tmp/OUTPUT.$$ "${OUTPUT}"
     fi
