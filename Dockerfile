@@ -46,7 +46,7 @@ VOLUME ["/var/lib/motion"]
 #
 # install packages for Pulse Audio
 #
-RUN apt-get install -y \
+RUN apt-get install -q -y --no-install-recommends \
    gstreamer0.10-pulseaudio \
    libao4 \
    libasound2-plugins \
@@ -91,9 +91,9 @@ RUN echo "default_driver=pulse" > /etc/libao.conf
 RUN cp -fvp /etc/modules /etc/modules.ORIG
 RUN echo "snd-bcm2835" >> /etc/modules
 
-RUN cp -fvp /etc/default/pulseaudio /etc/default/pulseaudio.ORIG
-RUN sed -i "s,DISALLOW_MODULE_LOADING=1,DISALLOW_MODULE_LOADING=0,g" /etc/default/pulseaudio
-# RUN echo "DISALLOW_MODULE_LOADING=0" > /etc/default/pulseaudio
+# RUN cp -fvp /etc/default/pulseaudio /etc/default/pulseaudio.ORIG
+# RUN sed -i "s,DISALLOW_MODULE_LOADING=1,DISALLOW_MODULE_LOADING=0,g" /etc/default/pulseaudio
+RUN echo "DISALLOW_MODULE_LOADING=0" > /etc/default/pulseaudio
 
 RUN cp -fvp /etc/pulse/system.pa /etc/pulse/system.pa.ORIG
 RUN echo "load-module module-native-protocol-tcp auth-ip-acl=127.0.0.1;192.168.0.0/24 auth-anonymous=1" >> /etc/pulse/system.pa
