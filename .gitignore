@@ -2,3 +2,14 @@ DATA
 .cloudant_id.json
 .visual_insights_id.json
 .object-storage_id.json
+.text-to-speed_id.json
+.dialog_id.json
+.cloudant_id.json
+.dashDB_id.json
+.dialog_id.json
+.object-storage_id.json
+.spark_id.json
+.speech-to-text.json
+.text-to-speech_id.json
+.visual_insights_id.json
+

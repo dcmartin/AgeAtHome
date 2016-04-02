@@ -93,8 +93,27 @@ if [ -n "${OUTPUT}" ]; then
 
     # add datetime and bounding box information
     if [ -n "${IMAGE_ID}" ] && [ -n "${IMAGE_BOX}" ]; then
-	DATE_TIME=`echo "${IMAGE_ID}" | sed "s/\(.*\)-.*-.*\.jpg/\1/"`
-	cat "${OUTPUT}" | sed 's/^{/{ "datetime": "DATE_TIME", "imagebox": "IMAGE_BOX",/' | sed "s/DATE_TIME/${DATE_TIME}/" | sed "s/IMAGE_BOX/${IMAGE_BOX}/" > /tmp/OUTPUT.$$
+	DATE_TIME=`echo "${IMAGE_ID}" | sed "s/\(.*\)-.*-.*/\1/"`
+	YEAR=`echo "${DATE_TIME}" | sed "s/^\(....\).*/\1/"`
+	MONTH=`echo "${DATE_TIME}" | sed "s/^....\(..\).*/\1/"`
+	DAY=`echo "${DATE_TIME}" | sed "s/^......\(..\).*/\1/"`
+	HOUR=`echo "${DATE_TIME}" | sed "s/^........\(..\).*/\1/"`
+	MINUTE=`echo "${DATE_TIME}" | sed "s/^..........\(..\).*/\1/"`
+	SECOND=`echo "${DATE_TIME}" | sed "s/^............\(..\).*/\1/"`
+	WEEKDAY=`date -j -f "%Y%m%d%H%M%S" "${YEAR}${MONTH}${DAY}${HOUR}${MINUTE}${SECOND}" +%A`
+	EPOCH=`date -j -f "%Y%m%d%H%M%S" "${YEAR}${MONTH}${DAY}${HOUR}${MINUTE}${SECOND}" +%s`
+	cat "${OUTPUT}" | \
+	    sed 's/^{/{"epoch":"EPOCH","year":"YEAR","month":"MONTH","day":,"DAY","hour":"HOUR","minute":,"MINUTE","second":"SECOND","weekday":"WEEKDAY","imagebox":"IMAGE_BOX",/' | \
+	    sed "s/EPOCH/${EPOCH}/" | \
+	    sed "s/YEAR/${YEAR}/" | \
+	    sed "s/MONTH/${MONTH}/" | \
+	    sed "s/DAY/${DAY}/" | \
+	    sed "s/HOUR/${HOUR}/" | \
+	    sed "s/MINUTE/${MINUTE}/" | \
+	    sed "s/SECOND/${SECOND}/" | \
+	    sed "s/DAY/${DAY}/" | \
+	    sed "s/WEEKDAY/${WEEKDAY}/" | \
+	    sed "s/IMAGE_BOX/${IMAGE_BOX}/" > /tmp/OUTPUT.$$
 	mv /tmp/OUTPUT.$$ "${OUTPUT}"
     fi
 fi
