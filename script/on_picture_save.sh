@@ -100,8 +100,8 @@ if [ -n "${OUTPUT}" ]; then
 	HOUR=`echo "${DATE_TIME}" | sed "s/^........\(..\).*/\1/"`
 	MINUTE=`echo "${DATE_TIME}" | sed "s/^..........\(..\).*/\1/"`
 	SECOND=`echo "${DATE_TIME}" | sed "s/^............\(..\).*/\1/"`
-	WEEKDAY=`date -j -f "%Y%m%d%H%M%S" "${YEAR}${MONTH}${DAY}${HOUR}${MINUTE}${SECOND}" +%A`
-	EPOCH=`date -j -f "%Y%m%d%H%M%S" "${YEAR}${MONTH}${DAY}${HOUR}${MINUTE}${SECOND}" +%s`
+	WEEKDAY=`date -d @"${MONTH}${DAY}${HOUR}${MINUTE}${YEAR}.${SECOND}" "+%A"`
+	EPOCH=`date -d @"${MONTH}${DAY}${HOUR}${MINUTE}${YEAR}.${SECOND}" "+%s"`
 	cat "${OUTPUT}" | \
 	    sed 's/^{/{"epoch":"EPOCH","year":"YEAR","month":"MONTH","day":,"DAY","hour":"HOUR","minute":,"MINUTE","second":"SECOND","weekday":"WEEKDAY","imagebox":"IMAGE_BOX",/' | \
 	    sed "s/EPOCH/${EPOCH}/" | \
