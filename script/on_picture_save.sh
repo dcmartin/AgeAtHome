@@ -103,7 +103,7 @@ if [ -n "${OUTPUT}" ]; then
 	# WEEKDAY=`date -d @"${MONTH}${DAY}${HOUR}${MINUTE}${YEAR}.${SECOND}" "+%A"`
 	# EPOCH=`date -d @"${MONTH}${DAY}${HOUR}${MINUTE}${YEAR}.${SECOND}" "+%s"`
 	cat "${OUTPUT}" | \
-	    # sed 's/^{/{"epoch":"EPOCH","year":"YEAR","month":"MONTH","day":,"DAY","hour":"HOUR","minute":,"MINUTE","second":"SECOND","weekday":"WEEKDAY","imagebox":"IMAGE_BOX",/' | \
+	    # sed 's/^{/{"epoch":"EPOCH","year":"YEAR","month":"MONTH","day":"DAY","hour":"HOUR","minute":,"MINUTE","second":"SECOND","weekday":"WEEKDAY","imagebox":"IMAGE_BOX",/' | \
 	    sed 's/^{/{"year":"YEAR","month":"MONTH","day":,"DAY","hour":"HOUR","minute":,"MINUTE","second":"SECOND","imagebox":"IMAGE_BOX",/' | \
 	#    sed "s/EPOCH/${EPOCH}/" | \
 	    sed "s/YEAR/${YEAR}/" | \
