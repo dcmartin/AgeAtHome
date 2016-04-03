@@ -119,8 +119,10 @@ if [ -n "${OUTPUT}" ]; then
     fi
 fi
 
+cat "${OUTPUT}"
+
 # Cloudant
-if [ -z "${CLOUDANT_OFF}" ] && [ -n "${OUTPUT}" ] && [ -n "${CLOUDANT_URL}" ] && [ -n ${DEVICE_NAME} ]; then
+if [ -z "${CLOUDANT_OFF}" ] && [ -n "${OUTPUT}" ] && [ -n "${CLOUDANT_URL}" ] && [ -n "${DEVICE_NAME}" ]; then
     DEVICE_DB=`curl -q -X GET "${CLOUDANT_URL}/${DEVICE_NAME}" | jq '.db_name'`
     if [ "${DEVICE_DB}" == "null" ]; then
 	# create DB

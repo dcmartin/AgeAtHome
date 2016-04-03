@@ -70,6 +70,7 @@ RUN apt-get install -q -y --no-install-recommends \
    pulseaudio-module-zeroconf \
    pulseaudio-utils \
    oss-compat
+
 # removed debugging
    # pulseaudio-esound-compat-dbg \
    # libpulse-mainloop-glib0-dbg \
