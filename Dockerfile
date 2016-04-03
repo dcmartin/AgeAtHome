@@ -54,28 +54,29 @@ RUN apt-get install -q -y --no-install-recommends \
    libglademm-2.4-1c2a \
    libpulse-dev \
    libpulse-mainloop-glib0 \
-   libpulse-mainloop-glib0-dbg \
    libpulse0 \
-   libpulse0-dbg \
    libsox-fmt-pulse \
    paman \
    paprefs \
    pavucontrol \
    pavumeter \
    pulseaudio \
-   pulseaudio-dbg \
    pulseaudio-esound-compat \
-   pulseaudio-esound-compat-dbg \
    pulseaudio-module-bluetooth \
    pulseaudio-module-gconf \
    pulseaudio-module-jack \
    pulseaudio-module-lirc \
-   pulseaudio-module-lirc-dbg \
    pulseaudio-module-x11 \
    pulseaudio-module-zeroconf \
-   pulseaudio-module-zeroconf-dbg \
    pulseaudio-utils \
    oss-compat
+# removed debugging
+   # pulseaudio-esound-compat-dbg \
+   # libpulse-mainloop-glib0-dbg \
+   # libpulse0-dbg \
+   # pulseaudio-dbg \
+   # pulseaudio-module-lirc-dbg \
+   # pulseaudio-module-zeroconf-dbg \
 
 #
 # Change default PA configuration for use of PS3Eye Camera

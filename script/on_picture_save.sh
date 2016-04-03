@@ -100,11 +100,12 @@ if [ -n "${OUTPUT}" ]; then
 	HOUR=`echo "${DATE_TIME}" | sed "s/^........\(..\).*/\1/"`
 	MINUTE=`echo "${DATE_TIME}" | sed "s/^..........\(..\).*/\1/"`
 	SECOND=`echo "${DATE_TIME}" | sed "s/^............\(..\).*/\1/"`
-	WEEKDAY=`date -d @"${MONTH}${DAY}${HOUR}${MINUTE}${YEAR}.${SECOND}" "+%A"`
-	EPOCH=`date -d @"${MONTH}${DAY}${HOUR}${MINUTE}${YEAR}.${SECOND}" "+%s"`
+	# WEEKDAY=`date -d @"${MONTH}${DAY}${HOUR}${MINUTE}${YEAR}.${SECOND}" "+%A"`
+	# EPOCH=`date -d @"${MONTH}${DAY}${HOUR}${MINUTE}${YEAR}.${SECOND}" "+%s"`
 	cat "${OUTPUT}" | \
-	    sed 's/^{/{"epoch":"EPOCH","year":"YEAR","month":"MONTH","day":,"DAY","hour":"HOUR","minute":,"MINUTE","second":"SECOND","weekday":"WEEKDAY","imagebox":"IMAGE_BOX",/' | \
-	    sed "s/EPOCH/${EPOCH}/" | \
+	    # sed 's/^{/{"epoch":"EPOCH","year":"YEAR","month":"MONTH","day":,"DAY","hour":"HOUR","minute":,"MINUTE","second":"SECOND","weekday":"WEEKDAY","imagebox":"IMAGE_BOX",/' | \
+	    sed 's/^{/{"year":"YEAR","month":"MONTH","day":,"DAY","hour":"HOUR","minute":,"MINUTE","second":"SECOND","imagebox":"IMAGE_BOX",/' | \
+	#    sed "s/EPOCH/${EPOCH}/" | \
 	    sed "s/YEAR/${YEAR}/" | \
 	    sed "s/MONTH/${MONTH}/" | \
 	    sed "s/DAY/${DAY}/" | \
@@ -112,7 +113,7 @@ if [ -n "${OUTPUT}" ]; then
 	    sed "s/MINUTE/${MINUTE}/" | \
 	    sed "s/SECOND/${SECOND}/" | \
 	    sed "s/DAY/${DAY}/" | \
-	    sed "s/WEEKDAY/${WEEKDAY}/" | \
+	#    sed "s/WEEKDAY/${WEEKDAY}/" | \
 	    sed "s/IMAGE_BOX/${IMAGE_BOX}/" > /tmp/OUTPUT.$$
 	mv /tmp/OUTPUT.$$ "${OUTPUT}"
     fi
