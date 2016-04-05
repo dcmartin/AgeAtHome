@@ -119,7 +119,8 @@ if [ -n "${OUTPUT}" ]; then
     fi
 fi
 
-cat "${OUTPUT}"
+# DEBUG
+# cat "${OUTPUT}"
 
 # Cloudant
 if [ -z "${CLOUDANT_OFF}" ] && [ -n "${OUTPUT}" ] && [ -n "${CLOUDANT_URL}" ] && [ -n "${DEVICE_NAME}" ]; then
