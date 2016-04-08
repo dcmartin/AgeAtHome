@@ -123,7 +123,7 @@ VOLUME ["/var/lib/motion"]
 # RUN echo "export PKG_CONFIG_PATH=/usr/local/lib/pkgconfig" >> ~/.bashrc
 
 # install python dev packages
-# RUN apt-get install -y python2.7-dev
+RUN apt-get install -y python2.7-dev
 
 # sphinxbase install ( required to install pocketsphinx )
 # RUN apt-get install -y bison
