@@ -1,6 +1,5 @@
 #!/bin/bash
 
-
 # Set the correct timezone
 if [ -n "${TIMEZONE}" ]; then
     cp /usr/share/zoneinfo/${TIMEZONE} /etc/localtime
@@ -35,5 +34,22 @@ fi
 # Run motion (as daemon; datadog runs last)
 motion -l /dev/stderr
 
-# install datadog
-sh -c "$(curl -L https://raw.githubusercontent.com/DataDog/dd-agent/master/packaging/datadog-agent/source/setup_agent.sh)"
+if [[ $DD_API_KEY ]];
+then
+    sed -i -e "s/^.*api_key:.*$/api_key: ${DD_API_KEY}/" ~/.datadog-agent/agent/datadog.conf
+else
+    echo "You must set DD_API_KEY environment variable to run the Datadog Agent container"
+    exit 1
+fi
+
+if [[ $DD_TAGS ]]; then
+	sed -i -e "s/^#tags:.*$/tags: ${DD_TAGS}/" ~/.datadog-agent/agent/datadog.conf
+fi
+
+if [[ $DD_LOG_LEVEL ]]; then
+    sed -i -e"s/^.*log_level:.*$/log_level: ${DD_LOG_LEVEL}/" ~/.datadog-agent/agent/datadog.conf
+fi
+
+# The agent needs to be executed with the current working directory set datadog-agent directory
+cd /root/.datadog-agent
+./bin/agent start

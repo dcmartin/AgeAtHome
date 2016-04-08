@@ -14,6 +14,15 @@ RUN apt-get update && apt-get install -q -y --no-install-recommends \
     curl \
     x264
 
+# install data-dog
+RUN sh -c "$(curl -L https://raw.githubusercontent.com/DataDog/dd-agent/master/packaging/datadog-agent/source/setup_agent.sh)"
+
+RUN mv ~/.datadog-agent/agent/datadog.conf.example ~/.datadog-agent/agent/datadog.conf \
+    && sed -i -e"s/^.*non_local_traffic:.*$/non_local_traffic: yes/" ~/.datadog-agent/agent/datadog.conf \
+    && sed -i -e"s/^.*log_to_syslog:.*$/log_to_syslog: no/" ~/.datadog-agent/agent/datadog.conf \
+    && sed -i "/user=dd-agent/d" ~/.datadog-agent/supervisord/supervisord.conf \
+    && rm ~/.datadog-agent/agent/conf.d/network.yaml.default
+
 #
 # Copy "motion" scripts 
 #
