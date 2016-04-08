@@ -181,7 +181,7 @@ WORKDIR /var/lib/motion
 #
 # invoke motion detection script (AS daemon; re-direct logging to STDERR)
 #
-CMD ["/usr/local/bin/dockmotion"]
+RUN /usr/local/bin/dockmotion
 
 #
 # install DataDog from source
