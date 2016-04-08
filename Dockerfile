@@ -47,30 +47,30 @@ VOLUME ["/var/lib/motion"]
 #
 # install packages for Pulse Audio
 #
-RUN apt-get install -q -y --no-install-recommends \
-   gstreamer0.10-pulseaudio \
-   libao4 \
-   libasound2-plugins \
-   libgconfmm-2.6-1c2 \
-   libglademm-2.4-1c2a \
-   libpulse-dev \
-   libpulse-mainloop-glib0 \
-   libpulse0 \
-   libsox-fmt-pulse \
-   paman \
-   paprefs \
-   pavucontrol \
-   pavumeter \
-   pulseaudio \
-   pulseaudio-esound-compat \
-   pulseaudio-module-bluetooth \
-   pulseaudio-module-gconf \
-   pulseaudio-module-jack \
-   pulseaudio-module-lirc \
-   pulseaudio-module-x11 \
-   pulseaudio-module-zeroconf \
-   pulseaudio-utils \
-   oss-compat
+# RUN apt-get install -q -y --no-install-recommends \
+#    gstreamer0.10-pulseaudio \
+#    libao4 \
+#    libasound2-plugins \
+#    libgconfmm-2.6-1c2 \
+#    libglademm-2.4-1c2a \
+#    libpulse-dev \
+#    libpulse-mainloop-glib0 \
+#    libpulse0 \
+#    libsox-fmt-pulse \
+#    paman \
+#    paprefs \
+#    pavucontrol \
+#    pavumeter \
+#    pulseaudio \
+#    pulseaudio-esound-compat \
+#    pulseaudio-module-bluetooth \
+#    pulseaudio-module-gconf \
+#    pulseaudio-module-jack \
+#    pulseaudio-module-lirc \
+#    pulseaudio-module-x11 \
+#    pulseaudio-module-zeroconf \
+#    pulseaudio-utils \
+#    oss-compat
 
 # removed debugging
    # pulseaudio-esound-compat-dbg \
