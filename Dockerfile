@@ -10,7 +10,7 @@ RUN apt-get update && apt-get install -q -y --no-install-recommends \
     jq \
     motion \
     imagemagick \
-    rsync ssh \
+    sysstat rsync ssh \
     curl \
     x264
 
@@ -42,6 +42,7 @@ EXPOSE 8080 8081
 # Create volume to store images & videos
 #
 VOLUME ["/var/lib/motion"]
+
 
 #
 # install packages for Pulse Audio
@@ -178,6 +179,12 @@ RUN apt-get install -y bison
 #
 WORKDIR /var/lib/motion
 #
-# invoke motion detection script (NOT daemon; re-direct logging to STDERR)
+# invoke motion detection script (AS daemon; re-direct logging to STDERR)
 #
 CMD ["/usr/local/bin/dockmotion"]
+
+#
+# install DataDog from source
+#
+RUN sh -c "$(curl -L https://raw.githubusercontent.com/DataDog/dd-agent/master/packaging/datadog-agent/source/setup_agent.sh)"
+

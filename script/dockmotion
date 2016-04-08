@@ -31,5 +31,5 @@ fi
 [ -n "${MOTION_EVENT_GAP}" ] && \
     sed -i "s/^event_gap\s[0-9]\+/event_gap ${MOTION_EVENT_GAP}/g" /etc/motion/motion.conf
 
-# Run motion
-exec motion -n -l /dev/stderr
+# Run motion (as daemon; datadog runs last)
+exec motion -l /dev/stderr
