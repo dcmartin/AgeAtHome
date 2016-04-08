@@ -1,5 +1,6 @@
 #!/bin/bash
 
+
 # Set the correct timezone
 if [ -n "${TIMEZONE}" ]; then
     cp /usr/share/zoneinfo/${TIMEZONE} /etc/localtime
@@ -32,4 +33,7 @@ fi
     sed -i "s/^event_gap\s[0-9]\+/event_gap ${MOTION_EVENT_GAP}/g" /etc/motion/motion.conf
 
 # Run motion (as daemon; datadog runs last)
-exec motion -l /dev/stderr
+motion -l /dev/stderr
+
+# install datadog
+sh -c "$(curl -L https://raw.githubusercontent.com/DataDog/dd-agent/master/packaging/datadog-agent/source/setup_agent.sh)"

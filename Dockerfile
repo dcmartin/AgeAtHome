@@ -179,12 +179,6 @@ RUN apt-get install -y python2.7-dev
 #
 WORKDIR /var/lib/motion
 #
-# invoke motion detection script (AS daemon; re-direct logging to STDERR)
+# invoke motion detection script (NOT as daemon; re-direct logging to STDERR)
 #
-RUN /usr/local/bin/dockmotion
-
-#
-# install DataDog from source
-#
-RUN sh -c "$(curl -L https://raw.githubusercontent.com/DataDog/dd-agent/master/packaging/datadog-agent/source/setup_agent.sh)"
-
+CMD [ "/usr/local/bin/dockmotion" ]
