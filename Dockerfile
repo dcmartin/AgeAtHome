@@ -12,6 +12,7 @@ RUN apt-get update && apt-get install -q -y --no-install-recommends \
     imagemagick \
     sysstat rsync ssh \
     curl \
+    python2.7-dev \
     x264
 
 # install data-dog
@@ -130,9 +131,6 @@ VOLUME ["/var/lib/motion"]
 # setup PATHs in bash(1)
 # RUN echo "export LD_LIBRARY_PATH=/usr/local/lib" >> ~/.bashrc
 # RUN echo "export PKG_CONFIG_PATH=/usr/local/lib/pkgconfig" >> ~/.bashrc
-
-# install python dev packages
-RUN apt-get install -y python2.7-dev
 
 # sphinxbase install ( required to install pocketsphinx )
 # RUN apt-get install -y bison
