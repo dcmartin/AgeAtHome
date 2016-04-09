@@ -31,15 +31,9 @@ fi
 [ -n "${MOTION_EVENT_GAP}" ] && \
     sed -i "s/^event_gap\s[0-9]\+/event_gap ${MOTION_EVENT_GAP}/g" /etc/motion/motion.conf
 
-# cleanup LOCKFILE and PIDFILE for IoT Foundation sample
-rm -f /opt/.iot.*
-
-# check and start IoT daemon
+# restart, check status, getdeviceid
+service iot restart
 service iot status
-service iot start
-service iot status
-
-# get device ID
 service iot getdeviceid
 
 # Run motion (as _NOT_ daemon; runs last)
