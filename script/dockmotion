@@ -52,7 +52,7 @@ cd /root/.datadog-agent
 ./bin/agent start &
 
 # cleanup LOCKFILE and PIDFILE for IoT Foundation sample
-RUN rm -f /opt/.iot.*
+rm -f /opt/.iot.*
 
 service iot start
 service iot getdeviceid
