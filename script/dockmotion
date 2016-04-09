@@ -31,26 +31,6 @@ fi
 [ -n "${MOTION_EVENT_GAP}" ] && \
     sed -i "s/^event_gap\s[0-9]\+/event_gap ${MOTION_EVENT_GAP}/g" /etc/motion/motion.conf
 
-if [[ $DD_API_KEY ]];
-then
-    sed -i -e "s/^.*api_key:.*$/api_key: ${DD_API_KEY}/" ~/.datadog-agent/agent/datadog.conf
-else
-    echo "You must set DD_API_KEY environment variable to run the Datadog Agent container"
-    exit 1
-fi
-
-if [[ $DD_TAGS ]]; then
-	sed -i -e "s/^#tags:.*$/tags: ${DD_TAGS}/" ~/.datadog-agent/agent/datadog.conf
-fi
-
-if [[ $DD_LOG_LEVEL ]]; then
-    sed -i -e"s/^.*log_level:.*$/log_level: ${DD_LOG_LEVEL}/" ~/.datadog-agent/agent/datadog.conf
-fi
-
-# The agent needs to be executed with the current working directory set datadog-agent directory
-cd /root/.datadog-agent
-./bin/agent start &
-
 # cleanup LOCKFILE and PIDFILE for IoT Foundation sample
 rm -f /opt/.iot.*
 
