@@ -31,9 +31,6 @@ fi
 [ -n "${MOTION_EVENT_GAP}" ] && \
     sed -i "s/^event_gap\s[0-9]\+/event_gap ${MOTION_EVENT_GAP}/g" /etc/motion/motion.conf
 
-# Run motion (as daemon; datadog runs last)
-motion -l /dev/stderr
-
 if [[ $DD_API_KEY ]];
 then
     sed -i -e "s/^.*api_key:.*$/api_key: ${DD_API_KEY}/" ~/.datadog-agent/agent/datadog.conf
@@ -52,4 +49,10 @@ fi
 
 # The agent needs to be executed with the current working directory set datadog-agent directory
 cd /root/.datadog-agent
-./bin/agent start
+./bin/agent start &
+
+service iot status
+service iot getdeviceid
+
+# Run motion (as _NOT_ daemon; runs last)
+motion -n -l /dev/stderr
