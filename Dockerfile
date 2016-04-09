@@ -15,20 +15,26 @@ RUN apt-get update && apt-get install -q -y --no-install-recommends \
     python2.7-dev \
     x264
 
+#
 # install data-dog
+#
 RUN sh -c "$(curl -L https://raw.githubusercontent.com/DataDog/dd-agent/master/packaging/datadog-agent/source/setup_agent.sh)"
-
-RUN echo "#! /bin/sh\nexit 0" > /usr/sbin/policy-rc.d
-
-# install IBM IoTF quickstart
-RUN curl -LO https://github.com/ibm-messaging/iot-raspberrypi/releases/download/1.0.2.1/iot_1.0-2_armhf.deb
-RUN dpkg -i iot_1.0-2_armhf.deb
-
 RUN mv ~/.datadog-agent/agent/datadog.conf.example ~/.datadog-agent/agent/datadog.conf \
     && sed -i -e"s/^.*non_local_traffic:.*$/non_local_traffic: yes/" ~/.datadog-agent/agent/datadog.conf \
     && sed -i -e"s/^.*log_to_syslog:.*$/log_to_syslog: no/" ~/.datadog-agent/agent/datadog.conf \
     && rm ~/.datadog-agent/agent/conf.d/network.yaml.default
     # && sed -i "/user=dd-agent/d" ~/.datadog-agent/supervisord/supervisord.conf \
+
+
+#
+# install IBM IoTF quickstart
+#
+RUN echo "#! /bin/sh\nexit 0" > /usr/sbin/policy-rc.d
+RUN curl -LO https://github.com/ibm-messaging/iot-raspberrypi/releases/download/1.0.2.1/iot_1.0-2_armhf.deb
+RUN dpkg -i iot_1.0-2_armhf.deb
+# cleanup LOCKFILE and PIDFILE for IoT Foundation sample
+RUN rm -f /opt/.iot.*
+
 
 #
 # Copy "motion" scripts 
