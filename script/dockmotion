@@ -54,7 +54,12 @@ cd /root/.datadog-agent
 # cleanup LOCKFILE and PIDFILE for IoT Foundation sample
 rm -f /opt/.iot.*
 
+# check and start IoT daemon
+service iot status
 service iot start
+service iot status
+
+# get device ID
 service iot getdeviceid
 
 # Run motion (as _NOT_ daemon; runs last)
