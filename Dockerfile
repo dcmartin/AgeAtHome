@@ -32,9 +32,6 @@ RUN mv ~/.datadog-agent/agent/datadog.conf.example ~/.datadog-agent/agent/datado
 RUN echo "#! /bin/sh\nexit 0" > /usr/sbin/policy-rc.d
 RUN curl -LO https://github.com/ibm-messaging/iot-raspberrypi/releases/download/1.0.2.1/iot_1.0-2_armhf.deb
 RUN dpkg -i iot_1.0-2_armhf.deb
-# cleanup LOCKFILE and PIDFILE for IoT Foundation sample
-RUN rm -f /opt/.iot.*
-
 
 #
 # Copy "motion" scripts 
