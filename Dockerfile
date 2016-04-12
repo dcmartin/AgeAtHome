@@ -178,17 +178,6 @@ VOLUME ["/var/lib/motion"]
 # RUN pocketsphinx_continuous -lm /home/pi/scarlettPi/config/speech/lm/scarlett.lm -dict /home/pi/scarlettPi/config/speech/dict/scarlett.dic -hmm /home/pi/scarlettPi/config/speech/model/hmm/en_US/hub4wsj_sc_8k -silprob  0.1 -wip 1e-4 -bestpath 0
 
 #
-# Alchemy Visual Insights
-#
-# ENVIRONMENT VARIABLES (resin.io)
-# Used in initialization script to edit configuration for API calls
-#
-# VISUAL_PASSWORD (default: none)
-# VISUAL_URL (default: none)
-# VISUAL_USERNAME (default: none)
-#
- 
-#
 # set working directory
 #
 WORKDIR /var/lib/motion

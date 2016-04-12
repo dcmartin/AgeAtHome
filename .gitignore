@@ -13,3 +13,7 @@ DATA
 .text-to-speech_id.json
 .visual_insights_id.json
 
+
+.language-classifier_id.json
+
+.speech-to-text_id.json
