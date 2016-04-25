@@ -7,6 +7,7 @@ fi
 
 # Override capture size for Motion
 if [ -n "${MOTION_PIXELS}" ]; then
+    # added comment
     echo "Set capture size to ${MOTION_PIXELS}"
     IFS='x' read -a wxh<<< "${MOTION_PIXELS}"
     WIDTH=${wxh[0]}
@@ -25,9 +26,10 @@ if [ -n "${STREAM_PORT}" ]; then
     sed -i "s/^stream_port\s[0-9]\+/stream_port ${STREAM_PORT}/g" /etc/motion/motion.conf
 fi
 
-# Override threshold, event_gap for Motion
+# Override MOTION_THRESHOLD (pixels changed) default 1500
 [ -n "${MOTION_THRESHOLD}" ] && \
     sed -i "s/^threshold\s[0-9]\+/threshold ${MOTION_THRESHOLD}/g" /etc/motion/motion.conf
+# Override MOTION_EVENT_GAP (seconds) default 15 (formerly 60)
 [ -n "${MOTION_EVENT_GAP}" ] && \
     sed -i "s/^event_gap\s[0-9]\+/event_gap ${MOTION_EVENT_GAP}/g" /etc/motion/motion.conf
 
