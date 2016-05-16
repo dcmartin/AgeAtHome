@@ -189,7 +189,7 @@ VOLUME ["/var/lib/motion"]
 #
 # start Node.Red
 #
-RUN node-red-start
+# RUN node-red-start
 
 #
 # set working directory
