@@ -10,7 +10,7 @@ RUN apt-get update && apt-get install -q -y --no-install-recommends \
     csh \
     git \
     jq \
-    tcsh \
+    csh \
     bc \
     gawk \
     motion \
