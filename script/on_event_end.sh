@@ -1,4 +1,4 @@
-#!/bin/tcsh
+#!/bin/csh
 set WWW="http://www.dcmartin.com/CGI"
 set APP="aah"
 set API="stats"
