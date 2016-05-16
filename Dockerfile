@@ -22,7 +22,7 @@ RUN apt-get install -q -y --no-install-recommends \
     python-pip \
     x264
 
-RUN git clone https://github.com/wireservice/csvkit; cd csv kit; pip install .
+RUN git clone https://github.com/wireservice/csvkit; cd csvkit; pip install .
 
 #
 # install data-dog
