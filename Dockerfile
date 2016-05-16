@@ -5,7 +5,8 @@ MAINTAINER dcmartin <github@dcmartin.com>
 #
 # install packages for "motion" and mail support
 #
-RUN apt-get update && apt-get install -q -y --no-install-recommends \
+RUN apt-get update 
+RUN apt-get install -q -y --no-install-recommends \
     apt-utils \
     csh \
     git \
