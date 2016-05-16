@@ -31,9 +31,14 @@ if [ -z "${VISUAL_OFF}" ] && [ -n "${VISUAL_USERNAME}" ] && [ -n "${VISUAL_PASSW
     OUTPUT="${IMAGE_FILE%.*}-visual.json"
 
     # VisualInsights
-    curl -q -u "${VISUAL_USERNAME}":"${VISUAL_PASSWORD}" -X POST -F "images_file=@${IMAGE_FILE}" "${VISUAL_URL}" > "${OUTPUT}"
+    curl -q -s -u "${VISUAL_USERNAME}":"${VISUAL_PASSWORD}" -X POST -F "images_file=@${IMAGE_FILE}" "${VISUAL_URL}" > "${OUTPUT}"
+    if ($status == 0) then
+	VISUAL_OUTPUT="${OUTPUT}"
+    else
+	VISUAL_OUTPUT=""
+    fi
+fi
 
-    VISUAL_OUTPUT="${OUTPUT}"
 fi
 
 #
@@ -55,9 +60,12 @@ if [ -z "${ALCHEMY_OFF}" ] && [ -n "${ALCHEMY_API_KEY}" ] && [ -n "${ALCHEMY_API
     OUTPUT="${IMAGE_FILE%.*}-alchemy.json"
 
     # Alchemy
-    curl -q -X POST --data-binary "@${IMAGE_FILE}" "${ALCHEMY_API_URL}?apikey=${ALCHEMY_API_KEY}&imagePostMode=raw&outputMode=json" > "${OUTPUT}"
-
-    ALCHEMY_OUTPUT="${OUTPUT}"
+    curl -q -s -X POST --data-binary "@${IMAGE_FILE}" "${ALCHEMY_API_URL}?apikey=${ALCHEMY_API_KEY}&imagePostMode=raw&outputMode=json" > "${OUTPUT}"
+    if ($status == 0) then
+	ALCHEMY_OUTPUT="${OUTPUT}"
+    else
+        ALCHEMY_OUTPUT=""
+    fi
 fi
 
 #
@@ -103,9 +111,7 @@ if [ -n "${OUTPUT}" ]; then
 	# WEEKDAY=`date -d @"${MONTH}${DAY}${HOUR}${MINUTE}${YEAR}.${SECOND}" "+%A"`
 	# EPOCH=`date -d @"${MONTH}${DAY}${HOUR}${MINUTE}${YEAR}.${SECOND}" "+%s"`
 	cat "${OUTPUT}" | \
-	    # sed 's/^{/{"epoch":"EPOCH","year":"YEAR","month":"MONTH","day":"DAY","hour":"HOUR","minute":"MINUTE","second":"SECOND","weekday":"WEEKDAY","imagebox":"IMAGE_BOX",/' | \
 	    sed 's/^{/{"year":"YEAR","month":"MONTH","day":"DAY","hour":"HOUR","minute":"MINUTE","second":"SECOND","imagebox":"IMAGE_BOX",/' | \
-	#    sed "s/EPOCH/${EPOCH}/" | \
 	    sed "s/YEAR/${YEAR}/" | \
 	    sed "s/MONTH/${MONTH}/" | \
 	    sed "s/DAY/${DAY}/" | \
@@ -113,7 +119,6 @@ if [ -n "${OUTPUT}" ]; then
 	    sed "s/MINUTE/${MINUTE}/" | \
 	    sed "s/SECOND/${SECOND}/" | \
 	    sed "s/DAY/${DAY}/" | \
-	#    sed "s/WEEKDAY/${WEEKDAY}/" | \
 	    sed "s/IMAGE_BOX/${IMAGE_BOX}/" > /tmp/OUTPUT.$$
 	mv /tmp/OUTPUT.$$ "${OUTPUT}"
     fi
@@ -124,10 +129,10 @@ fi
 
 # Cloudant
 if [ -z "${CLOUDANT_OFF}" ] && [ -n "${OUTPUT}" ] && [ -n "${CLOUDANT_URL}" ] && [ -n "${DEVICE_NAME}" ]; then
-    DEVICE_DB=`curl -q -X GET "${CLOUDANT_URL}/${DEVICE_NAME}" | jq '.db_name'`
+    DEVICE_DB=`curl -q -s -X GET "${CLOUDANT_URL}/${DEVICE_NAME}" | jq '.db_name'`
     if [ "${DEVICE_DB}" == "null" ]; then
 	# create DB
-	DEVICE_DB=`curl -q -X PUT "${CLOUDANT_URL}/${DEVICE_NAME}" | jq '.ok'`
+	DEVICE_DB=`curl -q -s -X PUT "${CLOUDANT_URL}/${DEVICE_NAME}" | jq '.ok'`
 	# test for success
 	if [ "${DEVICE_DB}" != "true" ]; then
 	    # failure
@@ -135,7 +140,7 @@ if [ -z "${CLOUDANT_OFF}" ] && [ -n "${OUTPUT}" ] && [ -n "${CLOUDANT_URL}" ] &&
         fi
     fi
     if [ -z "${CLOUDANT_OFF}" ]; then
-	curl -q -H "Content-type: application/json" -X PUT "$CLOUDANT_URL/${DEVICE_NAME}/${IMAGE_ID}" -d "@${OUTPUT}"
+	curl -q -s -H "Content-type: application/json" -X PUT "$CLOUDANT_URL/${DEVICE_NAME}/${IMAGE_ID}" -d "@${OUTPUT}"
     fi
 fi
 

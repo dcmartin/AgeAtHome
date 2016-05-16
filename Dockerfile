@@ -7,13 +7,23 @@ MAINTAINER dcmartin <github@dcmartin.com>
 #
 RUN apt-get update && apt-get install -q -y --no-install-recommends \
     apt-utils \
+    csh \
+    git \
     jq \
+    tcsh \
+    bc \
+    gawk \
     motion \
+    nodered \
+    npm \
     imagemagick \
     sysstat rsync ssh \
     curl \
     python2.7-dev \
+    python-pip
     x264
+
+RUN git clone https://github.com/wireservice/csvkit; cd csv kit; pip install .
 
 #
 # install data-dog
@@ -176,6 +186,11 @@ VOLUME ["/var/lib/motion"]
 #
 # RUN /usr/bin/pulseaudio --start --log-target=syslog --system=false
 # RUN pocketsphinx_continuous -lm /home/pi/scarlettPi/config/speech/lm/scarlett.lm -dict /home/pi/scarlettPi/config/speech/dict/scarlett.dic -hmm /home/pi/scarlettPi/config/speech/model/hmm/en_US/hub4wsj_sc_8k -silprob  0.1 -wip 1e-4 -bestpath 0
+
+#
+# start Node.Red
+#
+RUN node-red-start
 
 #
 # set working directory
