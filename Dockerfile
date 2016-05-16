@@ -19,7 +19,7 @@ RUN apt-get install -q -y --no-install-recommends \
     sysstat rsync ssh \
     curl \
     python2.7-dev \
-    python-pip
+    python-pip \
     x264
 
 RUN git clone https://github.com/wireservice/csvkit; cd csv kit; pip install .
