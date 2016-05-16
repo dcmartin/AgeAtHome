@@ -11,7 +11,7 @@ RUN apt-get install -q -y --no-install-recommends \
     csh \
     git \
     jq \
-    csh \
+    tcsh \
     bc \
     gawk \
     motion \
