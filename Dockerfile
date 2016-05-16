@@ -14,8 +14,6 @@ RUN apt-get update && apt-get install -q -y --no-install-recommends \
     bc \
     gawk \
     motion \
-    nodered \
-    npm \
     imagemagick \
     sysstat rsync ssh \
     curl \
