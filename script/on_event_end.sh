@@ -11,6 +11,7 @@ echo "+++ BEGIN: $0 $*" `date` >& /dev/stderr
 
 if (! $?DEVICE_NAME) then
     echo "+++ STATUS: $0" `date` "no DEVICE_NAME specified">& /dev/stderr
+    exit
 endif
 
 #
@@ -36,12 +37,12 @@ set EVENT_ID = ( `echo "$YEAR $MONTH $DAY $HOUR $MINUTE $SECOND $SEQNO" | awk '{
 
 set EVENT = ( `ls -1t "$DIR/$EVENT_ID"-*.json` )
 
-echo "+++ STATUS: $0" `date` "events = $EVENT" >& /dev/stderr
+echo "+++ STATUS: $0" `date` "EVENT_ID: $EVENT_ID events = $EVENT" >& /dev/stderr
 
 if ($#EVENT > 0) then
     set EVENT = $EVENT[1]
 else
-    echo "*** ERROR: $0" `date` "No EVENT ($EVENT)" >& /dev/stderr
+    echo "*** ERROR: $0" `date` "NO EVENT ($EVENT)" >& /dev/stderr
     exit
 endif
 
