@@ -1,4 +1,7 @@
 #!/bin/tcsh
+if ($?DEVICE_NAME == 0) then
+    setenv DEVICE_NAME "rough-fog"
+endif
 set WWW="http://www.dcmartin.com/CGI"
 set APP="aah"
 set API="stats"
@@ -21,7 +24,7 @@ set DATE = `echo $SECONDS \/ $TTL \* $TTL | bc`
 #
 # CLI arguments
 #
-set EVENT_ID = $argv[1]
+set SEQNO = $argv[1]
 set YEAR = $argv[2]
 set MONTH = $argv[3]
 set DAY = $argv[4]
@@ -29,7 +32,18 @@ set HOUR = $argv[5]
 set MINUTE = $argv[6]
 set SECOND = $argv[7]
 
-set EVENT = "$DIR/$EVENT_ID.json"
+set EVENT_ID = ( `echo "$YEAR $MONTH $DAY $HOUR $MINUTE $SECOND $SEQNO" | awk '{ printf("%04d%02d%02d%02d%02d%02d-%02d", $1, $2, $3, $4, $5, $6, $7) }'` )
+
+set EVENT = ( `ls -1t "$DIR/$EVENT_ID"-*.json` )
+
+echo "+++ STATUS: $0" `date` "events = $EVENT" >& /dev/stderr
+
+if ($#EVENT > 0) then
+    set EVENT = $EVENT[1]
+else
+    echo "*** ERROR: $0" `date` "No EVENT ($EVENT)" >& /dev/stderr
+    exit
+endif
 
 set INDEX = `echo "$YEAR" "$MONTH" "$DAY" "$HOUR" "$MINUTE" "$SECOND" | \
     gawk -v interval="$INTERVAL" '{ m=$4*60+$5; m/=interval; \
@@ -49,8 +63,75 @@ set week = `echo "$INDEX" | jq '.week' | sed 's/"//g'`
 set day = `echo "$INDEX" | jq '.day' | sed 's/"//g'`
 
 #
-# get last X intervals velocity and acceleration
+# get prior events
 #
+
+echo "+++ STATUS: $0" `date` "EVENT = $EVENT" >& /dev/stderr
+
+set PRIOR_ID = ( `echo "$YEAR $MONTH $DAY $HOUR" | awk '{ printf("%04d%02d%02d%02d", $1, $2, $3, $4) }'` )
+
+set PRIOR = ( `ls -1t "$DIR/$PRIOR_ID"*.json | sed "s|$DIR/\(.*\)-.*-.*.json|\1|" | sort -nr` )
+
+echo "+++ STATUS: $0" `date` "PRIOR = ( $PRIOR )" >& /dev/stderr
+
+@ count = 0
+set prior = ()
+set eic = ()
+foreach k ( $PRIOR )
+   set json = $DIR/$k-*-*.json
+   set h = `jq '.hour' $json | sed 's/"//g'`
+   set m = `jq '.minute' $json | sed 's/"//g'`
+   set t = `echo "($h*60+$m)/15" | bc`
+   set d = `echo $MINUTE - $m | bc`
+
+   if ($t == $interval && $d > 0) then
+       # echo " $json [$t $h $m]($d)"
+
+       set l = $DIR/$DEVICE_NAME-$k-*-*.json
+       if (-e $l) then
+	   set prior = ( $prior $json )
+	   set eic = ( $eic $l )
+       endif
+
+       @ count++
+   endif
+end
+set class = `jq -c '.alchemy.text' $EVENT | sed 's/"//g'`
+@ e = 1
+foreach t ( $prior )
+    set tc = `jq -c '.alchemy.text' $t | sed 's/"//g'`
+
+    if ($tc == $class) then
+	echo `jq '.alchemy.score' $t | sed 's/"//g'` >>! "/tmp/$0.$$"
+	set dow = `jq '.day' $eic[$e] | sed 's/"//g'`
+	set int = `jq '.interval' $eic[$e] | sed 's/"//g'`
+	if ($int != $interval) then
+	    echo "ERROR - mismatch interval ($int != $interval)"
+	    exit
+	endif
+
+    endif
+    @ e++
+end
+if (-e "/tmp/$0.$$") then
+    set cstats  = `awk 'BEGIN { c=0; s=0; m=0; vs=0; v=0 } { c++; s+=$1; m=s/c; vs+=($1-m)^2; v=vs/c } END { sd=sqrt(v); printf("%d %f %f",c,m,sd) }' "/tmp/$0.$$"`
+    rm "/tmp/$0.$$"
+
+    set models = ( `ls -1t $DIR/$DEVICE_NAME-$class.*.json | sed "s|$DIR/$DEVICE_NAME-$class\.\(.*\).*\.json|\1|" | sort -nr` )
+    if ($#models > 0) then
+	set model =  $DIR/$DEVICE_NAME-$class.$models[1].json
+	set mstats = `jq '.days[].intervals['$interval'].count' $model | sed 's/"//g' | awk 'BEGIN { c=0; s=0; m=0; v=0; vs=0 } { c++; s+=$1; m=s/c; vs+=($1-m)^2; v=vs/c } END { sd=sqrt(v); printf("%d %f %f",c,m,sd) }'`
+	set count = `jq '.days['$dow'].intervals['$interval'].count'  $model | sed 's/"//g'`
+	set mean = `jq '.days['$dow'].intervals['$interval'].mean' $model | sed 's/"//g'`
+	set stdev = `jq '.days['$dow'].intervals['$interval'].stdev' $model | sed 's/"//g'`
+
+	# echo $model
+	echo day=$dow interval=$interval \( $cstats \) $count \( $mstats \) $mean $stdev
+    else
+	echo "No model: $models"
+    endif
+endif
+# jq -c '.' $eic
 
 #
 # get classifiers & scores
@@ -141,7 +222,7 @@ foreach CLASS ( $CLASSES )
 end
 echo ']}' >> "$EIC"
 
-cat "$EIC"
+jq -c . "$EIC"
 
 #
 # test condtionals
