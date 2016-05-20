@@ -36,7 +36,7 @@ fi
 # setup IBM IOTF
 if [ -n "${IOTF_ORG_ID}" ]; then
     IOTF_CONFIG_FILE="/etc/iotsample-raspberrypi/device.cfg"
-    echo "#Device configuration file" >! "${IOTF_CONFIG_FILE}"
+    echo "#Device configuration file" > "${IOTF_CONFIG_FILE}"
     echo "org = ${IOTF_ORG_ID}" >> "${IOTF_CONFIG_FILE}"
     echo "type = ${IOTF_DEVICE_TYPE}" >> "${IOTF_CONFIG_FILE}"
     echo "id = ${IOTF_DEVICE_ID}" >> "${IOTF_CONFIG_FILE}"
