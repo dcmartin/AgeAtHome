@@ -25,6 +25,10 @@ if [ -n "${STREAM_PORT}" ]; then
     echo "Set stream_port to ${STREAM_PORT}"
     sed -i "s/^stream_port\s[0-9]\+/stream_port ${STREAM_PORT}/g" /etc/motion/motion.conf
 fi
+if [ -n "${MOTION_IMAGE_ROTATE}" ]; then
+    echo "Set image rotation to ${MOTION_IMAGE_ROTATE} degress"
+    sed -i "s/^rotate\s[0-9]\+/rotate ${MOTION_IMAGE_ROTATE}/g" /etc/motion/motion.conf
+fi
 
 # Override MOTION_THRESHOLD (pixels changed) default 1500
 [ -n "${MOTION_THRESHOLD}" ] && \
