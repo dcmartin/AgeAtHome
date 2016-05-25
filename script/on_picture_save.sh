@@ -30,6 +30,7 @@ if [ -z "${VISUAL_OFF}" ] && [ -n "${VISUAL_USERNAME}" ] && [ -n "${VISUAL_PASSW
     # full image
     OUTPUT="${IMAGE_FILE%.*}-visual.json"
 
+    echo "+++ $0 PROCESSING VISUAL_INSIGHTS ${IMAGE_FILE}"
     # VisualInsights
     curl -q -s -u "${VISUAL_USERNAME}":"${VISUAL_PASSWORD}" -X POST -F "images_file=@${IMAGE_FILE}" "${VISUAL_URL}" > "${OUTPUT}"
     VISUAL_OUTPUT="${OUTPUT}"
@@ -52,6 +53,8 @@ fi
 if [ -z "${ALCHEMY_OFF}" ] && [ -n "${ALCHEMY_API_KEY}" ] && [ -n "${ALCHEMY_API_URL}" ]; then
     # full  image
     OUTPUT="${IMAGE_FILE%.*}-alchemy.json"
+    
+    echo "+++ $0 PROCESSING ALCHEMY ${IMAGE_FILE}"
 
     # Alchemy
     curl -q -s -X POST --data-binary "@${IMAGE_FILE}" "${ALCHEMY_API_URL}?apikey=${ALCHEMY_API_KEY}&imagePostMode=raw&outputMode=json" > "${OUTPUT}"
