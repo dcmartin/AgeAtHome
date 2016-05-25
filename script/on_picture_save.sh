@@ -25,7 +25,7 @@ if [ -n "${MOTION_MIDX}" ]; then
 fi
 
 # proceed if VISUAL_OFF is zero length or undefined
-if [ -z "${VISUAL_OFF}" ] && [ -v "${VISUAL_USERNAME}" ] && [ -v "${VISUAL_PASSWORD}" ] && [ -v "${VISUAL_URL}" ]; then
+if [ -z "${VISUAL_OFF}" ] && [ -n "${VISUAL_USERNAME}" ] && [ -n "${VISUAL_PASSWORD}" ] && [ -n "${VISUAL_URL}" ]; then
 
     # full image
     OUTPUT="${IMAGE_FILE%.*}-visual.json"
@@ -43,15 +43,15 @@ fi
 
 # use two API keys (morning and evening)
 AMPM=`date +%p`
-if [ ${AMPM} == AM ] && [ -v ${ALCHEMY_API_KEY_AM} ]; then
+if [ ${AMPM} == AM ] && [ -n ${ALCHEMY_API_KEY_AM} ]; then
     ALCHEMY_API_KEY=${ALCHEMY_API_KEY_AM}
 fi
-if [ ${AMPM} == PM ] && [ -v ${ALCHEMY_API_KEY_PM} ]; then
+if [ ${AMPM} == PM ] && [ -n ${ALCHEMY_API_KEY_PM} ]; then
     ALCHEMY_API_KEY=${ALCHEMY_API_KEY_PM}
 fi
 
 # test if OFF or unconfigured
-if [ -z "${ALCHEMY_OFF}" ] && [ -v "${ALCHEMY_API_KEY}" ] && [ -v "${ALCHEMY_API_URL}" ]; then
+if [ -z "${ALCHEMY_OFF}" ] && [ -n "${ALCHEMY_API_KEY}" ] && [ -n "${ALCHEMY_API_URL}" ]; then
     # full  image
     OUTPUT="${IMAGE_FILE%.*}-alchemy.json"
     
