@@ -30,7 +30,7 @@ endif
 
 # control IFF perform motion conditional testing
 if ($?ON_MOTION_DETECT == 0) then
-    echo "*** ON_MOTION_DETECT OFF - EXIT ***
+    echo "*** ON_MOTION_DETECT OFF - EXIT ***"
     exit
 endif
 
@@ -150,12 +150,13 @@ foreach EVENT ( $prior )
 	set score = `jq -c '.classifiers['$i'].score' "$EIC" | sed 's/"//g'`
 	set model_mean = `jq -c '.classifiers['$i'].model.mean' "$EIC" | sed 's/"//g'`
 	set model_stdev = `jq -c '.classifiers['$i'].model.stdev' "$EIC" | sed 's/"//g'`
-	echo "$CLASS : $class $score $model_mean $model_stdev $model_mean"
+	echo "$CLASS : $class $score $model_mean $model_stdev $model_mean" >& /dev/stderr
 	@ i++
     end
 end
 
 done:
-    set seconds = `date +%s`
-    set elapsed = ( `echo "$seconds - $SECONDS" | bc` )
-    echo "+++ END: $0 ($$)" `date` " elapsed $elapsed" >& /dev/stderr
+
+set seconds = `date +%s`
+set elapsed = ( `echo "$seconds - $SECONDS" | bc` )
+echo "+++ END: $0 ($$)" `date` "elapsed $elapsed" >& /dev/stderr
