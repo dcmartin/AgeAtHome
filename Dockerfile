@@ -20,7 +20,8 @@ RUN apt-get install -q -y --no-install-recommends \
     curl \
     python2.7-dev \
     python-pip \
-    x264
+    x264 \
+    gcc
 
 RUN git clone https://github.com/wireservice/csvkit; cd csvkit; pip install .
 
