@@ -1,4 +1,4 @@
-#!/bin/csh -f
+#!/bin/csh -fb
 echo "+++ BEGIN: $0 $* ($$)" `date` >& /dev/stderr
 # get start
 set SECONDS = `date +%s`
@@ -20,9 +20,9 @@ if ($?DEVICE_NAME == 0) then
 endif
 
 # test periodicity - only process motion detection events every INTERVAL seconds
-if (-e /tmp/$0:t.$PERIOD && $?PERIOD_TEST) then
+if (-e /tmp/$0:t.$PERIOD) then
     echo "*** TOO SOON ($PERIOD) ***"
-    exit
+    if ($?PERIOD_TEST) exit
 else
     rm -f /tmp/$0:t.*
     touch /tmp/$0:t.$PERIOD
@@ -30,7 +30,7 @@ endif
 
 # control IFF perform motion conditional testing
 if ($?ON_MOTION_DETECT == 0) then
-    echo "*** ON_MOTION_DETECT OFF - EXIT ***"
+    echo "*** STATUS: $0 ($$) ON_MOTION_DETECT" >& /dev/stderr
     exit
 endif
 
