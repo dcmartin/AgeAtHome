@@ -1,5 +1,7 @@
 # AgeAtHome
 
+[![Join the chat at https://gitter.im/dcmartin/AgeAtHome](https://badges.gitter.im/dcmartin/AgeAtHome.svg)](https://gitter.im/dcmartin/AgeAtHome?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 A cognitive surveillance solution deployed via resin.io to RaspberryPi based on 
 [dockmotion](http://www.github.com/kfei/dockmotion)
 which is a Dockerization of a surveillance solution:
