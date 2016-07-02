@@ -30,9 +30,14 @@ endif
 
 # control IFF perform motion conditional testing
 if ($?ON_MOTION_DETECT == 0) then
-    echo "*** STATUS: $0 ($$) ON_MOTION_DETECT" >& /dev/stderr
+    echo "*** STATUS: $0 ($$) ON_MOTION_DETECT is off; quitting" >& /dev/stderr
+    goto done
     exit
 endif
+
+#
+# ACTUAL WORK STARTS HERE
+#
 
 # server CGI (don't think we use them)
 set WWW="http://www.dcmartin.com/CGI"

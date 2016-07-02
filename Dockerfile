@@ -21,9 +21,34 @@ RUN apt-get install -q -y --no-install-recommends \
     python2.7-dev \
     python-pip \
     x264 \
-    gcc
+    unzip \
+    gcc \
+    alsa-utils
 
+#
+# ALSA (http://julius.sourceforge.jp/forum/viewtopic.php?f=9&t=66)
+#
+RUN echo 'pcm.array { type hw card 1 }' >! ~/.asoundrc
+RUN echo 'pcm.array_gain { type softvol slave { pcm "array" } control { name "Mic Gain" count 2 } min_dB -10.0 max_dB 5.0 }' >> ~/.asoundrc
+RUN echo 'pcm.cap { type plug slave { pcm "array_gain" channels 4 } route_policy sum }' >> ~/.asoundrc
+
+#
+# get CSV KIT
+#
 RUN git clone https://github.com/wireservice/csvkit; cd csvkit; pip install .
+
+#
+# get QUARKS
+#
+RUN curl -LO "https://github.com/apache/incubator-quarks/archive/master.zip"
+RUN unzip master.zip && cd incubator-quarks-master && ant
+RUN export QUARKS=/homes/myUser/incubator-quarks-master/target/java8
+
+#
+# get JAVA
+#
+RUN apt-get update
+RUN apt-get install ant
 
 #
 # install data-dog
