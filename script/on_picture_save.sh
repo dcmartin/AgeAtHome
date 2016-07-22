@@ -54,10 +54,8 @@ fi
 if [ ${AMPM} == PM ] && [ -n ${ALCHEMY_API_KEY_PM} ]; then
     ALCHEMY_API_KEY=${ALCHEMY_API_KEY_PM}
 fi
-ALCHEMY_OUTPUT=""
-
-# test if OFF or unconfigured
-if [ -z "${ALCHEMY_OFF}" ] && [ -n "${ALCHEMY_API_KEY}" ] && [ -n "${ALCHEMY_API_URL}" ]; then
+# test if ON and unconfigured -- ALCHEMY IS ALWAYS OFF NOW 2016-07-20
+if [ -z "${ALCHEMY_ON}" ] && [ -n "${ALCHEMY_API_KEY}" ] && [ -n "${ALCHEMY_API_URL}" ]; then
     # full  image
     OUTPUT="${IMAGE_FILE%.*}-alchemy.json"
     
@@ -78,23 +76,17 @@ fi
 
 # Prepare output
 OUTPUT="${IMAGE_FILE%.*}.json"
-# test which outputs exist; merge if possible into single JSON object
-if [ -s "${ALCHEMY_OUTPUT}" ]; then
-    if [ -s "${VISUAL_OUTPUT}" ]; then
-	# pull out alchemy (first) and visual insights (second) -- ORDER MATTERS !!
-	jq -c '.imageKeywords[0]' "${ALCHEMY_OUTPUT}" | sed 's/\(.*\)\}/\{ "alchemy": \1 \},/' > "${OUTPUT}.$$"
-	jq -c '.images[0]' "${VISUAL_OUTPUT}" | sed 's/^{\(.*\)/"visual":{ \1 \}/' >> "${OUTPUT}.$$"
-	jq -c '.' "${OUTPUT}.$$" > "${OUTPUT}"
-	# remove tmp & originals
-	rm "${OUTPUT}.$$" "${VISUAL_OUTPUT}" "${ALCHEMY_OUTPUT}"
-    else
-	mv "${ALCHEMY_OUTPUT}" "${OUTPUT}"
-    fi
-elif [ -n "${VISUAL_OUTPUT}" ]; then
-    mv "${VISUAL_OUTPUT}" "${OUTPUT}"
+if [ -s "${VISUAL_OUTPUT}" ]; then
+    # ALCHEMY is no more
+    echo '"alchemy":{"text":"NO_TAGS","score":""}' > "${OUTPUT}.$$"
+    # process VI results
+    jq -c '.images[0]' "${VISUAL_OUTPUT}" | sed 's/^{\(.*\)/"visual":{ \1 \}/' >> "${OUTPUT}.$$"
+    jq -c '.' "${OUTPUT}.$$" > "${OUTPUT}"
+    # remove tmp & originals
+    rm "${OUTPUT}.$$" "${VISUAL_OUTPUT}" "${ALCHEMY_OUTPUT}"
 else
     echo "*** ERROR: $0 - NO OUTPUT"
-    OUTPUT=""
+    exit
 fi
 
 if [ -s "${OUTPUT}" ]; then
