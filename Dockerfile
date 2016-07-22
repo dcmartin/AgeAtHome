@@ -22,9 +22,10 @@ RUN apt-get install -q -y --no-install-recommends \
     python-pip \
     x264 \
     unzip \
-    gcc \
-    alsa \
-    alsa-utils
+    gcc
+
+    # alsa \
+    # alsa-utils
 
 #
 # ALSA (http://julius.sourceforge.jp/forum/viewtopic.php?f=9&t=66)
