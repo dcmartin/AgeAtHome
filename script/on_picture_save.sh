@@ -37,6 +37,8 @@ if [ -z "${VISUAL_OFF}" ] && [ -n "${VISUAL_USERNAME}" ] && [ -n "${VISUAL_PASSW
     curl -q -s -L -u "${VISUAL_USERNAME}":"${VISUAL_PASSWORD}" -X POST -F "images_file=@${IMAGE_FILE}" "${VISUAL_URL}" > "${OUTPUT}"
     if [ -s "${OUTPUT}" ]; then
 	VISUAL_OUTPUT="${OUTPUT}"
+	# DEBUG
+	cat "${OUTPUT}"
     else
 	echo "+++ $0 FAILURE VISUAL_INSIGHTS ${IMAGE_FILE}"
     fi
@@ -122,9 +124,6 @@ else
     echo "*** ERROR: $0 - NO OUTPUT"
     exit
 fi
-
-# DEBUG
-cat "${OUTPUT}"
 
 # Cloudant
 if [ -z "${CLOUDANT_OFF}" ] && [ -s "${OUTPUT}" ] && [ -n "${CLOUDANT_URL}" ] && [ -n "${DEVICE_NAME}" ]; then
