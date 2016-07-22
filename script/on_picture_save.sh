@@ -97,7 +97,7 @@ else
     OUTPUT=""
 fi
 
-if [ -n "${OUTPUT}" ]; then
+if [ -s "${OUTPUT}" ]; then
     # drop prefix path
     IMAGE_ID=`echo "${OUTPUT##*/}"`
     # drop extension
@@ -126,13 +126,16 @@ if [ -n "${OUTPUT}" ]; then
 	    sed "s/IMAGE_BOX/${IMAGE_BOX}/" > /tmp/OUTPUT.$$
 	mv /tmp/OUTPUT.$$ "${OUTPUT}"
     fi
+else
+    echo "*** ERROR: $0 - NO OUTPUT"
+    exit
 fi
 
 # DEBUG
-# cat "${OUTPUT}"
+cat "${OUTPUT}"
 
 # Cloudant
-if [ -z "${CLOUDANT_OFF}" ] && [ -n "${OUTPUT}" ] && [ -n "${CLOUDANT_URL}" ] && [ -n "${DEVICE_NAME}" ]; then
+if [ -z "${CLOUDANT_OFF}" ] && [ -s "${OUTPUT}" ] && [ -n "${CLOUDANT_URL}" ] && [ -n "${DEVICE_NAME}" ]; then
     DEVICE_DB=`curl -q -s -X GET "${CLOUDANT_URL}/${DEVICE_NAME}" | jq '.db_name'`
     if [ "${DEVICE_DB}" == "null" ]; then
 	# create DB
