@@ -37,20 +37,20 @@ RUN echo 'pcm.cap { type plug slave { pcm "array_gain" channels 4 } route_policy
 #
 # get CSV KIT
 #
-RUN git clone https://github.com/wireservice/csvkit; cd csvkit; pip install .
+# RUN git clone https://github.com/wireservice/csvkit; cd csvkit; pip install .
 
 #
 # get QUARKS
 #
-RUN curl -LO "https://github.com/apache/incubator-quarks/archive/master.zip"
-RUN unzip master.zip && cd incubator-quarks-master && ant
-RUN export QUARKS=/homes/myUser/incubator-quarks-master/target/java8
+# RUN curl -LO "https://github.com/apache/incubator-quarks/archive/master.zip"
+# RUN unzip master.zip && cd incubator-quarks-master && ant
+# RUN export QUARKS=/homes/myUser/incubator-quarks-master/target/java8
 
 #
 # get JAVA
 #
-RUN apt-get update
-RUN apt-get install ant
+# RUN apt-get update
+# RUN apt-get install ant
 
 #
 # install data-dog
