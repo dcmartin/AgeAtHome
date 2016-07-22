@@ -25,6 +25,7 @@ if [ -n "${MOTION_MIDX}" ]; then
 fi
 
 # proceed if VISUAL_OFF is zero length or undefined
+VISUAL_OUTPUT=""
 if [ -z "${VISUAL_OFF}" ] && [ -n "${VISUAL_USERNAME}" ] && [ -n "${VISUAL_PASSWORD}" ] && [ -n "${VISUAL_URL}" ]; then
 
     # full image
@@ -36,6 +37,8 @@ if [ -z "${VISUAL_OFF}" ] && [ -n "${VISUAL_USERNAME}" ] && [ -n "${VISUAL_PASSW
     curl -q -s -L -u "${VISUAL_USERNAME}":"${VISUAL_PASSWORD}" -X POST -F "images_file=@${IMAGE_FILE}" "${VISUAL_URL}" > "${OUTPUT}"
     if [ -s "${OUTPUT}" ]; then
 	VISUAL_OUTPUT="${OUTPUT}"
+    else
+	echo "+++ $0 FAILURE VISUAL_INSIGHTS ${IMAGE_FILE}"
     fi
 fi
 
@@ -51,6 +54,7 @@ fi
 if [ ${AMPM} == PM ] && [ -n ${ALCHEMY_API_KEY_PM} ]; then
     ALCHEMY_API_KEY=${ALCHEMY_API_KEY_PM}
 fi
+ALCHEMY_OUTPUT=""
 
 # test if OFF or unconfigured
 if [ -z "${ALCHEMY_OFF}" ] && [ -n "${ALCHEMY_API_KEY}" ] && [ -n "${ALCHEMY_API_URL}" ]; then
@@ -63,6 +67,8 @@ if [ -z "${ALCHEMY_OFF}" ] && [ -n "${ALCHEMY_API_KEY}" ] && [ -n "${ALCHEMY_API
     curl -q -s -L -X POST --data-binary "@${IMAGE_FILE}" "${ALCHEMY_API_URL}?apikey=${ALCHEMY_API_KEY}&imagePostMode=raw&outputMode=json" > "${OUTPUT}"
     if [ -s "${OUTPUT}" ]; then
 	ALCHEMY_OUTPUT="${OUTPUT}"
+    else
+	echo "+++ $0 FAILURE ALCHEMY ${IMAGE_FILE}"
     fi
 fi
 
@@ -73,8 +79,8 @@ fi
 # Prepare output
 OUTPUT="${IMAGE_FILE%.*}.json"
 # test which outputs exist; merge if possible into single JSON object
-if [ -n "${ALCHEMY_OUTPUT}" ]; then
-    if [ -n "${VISUAL_OUTPUT}" ]; then
+if [ -s "${ALCHEMY_OUTPUT}" ]; then
+    if [ -s "${VISUAL_OUTPUT}" ]; then
 	# pull out alchemy (first) and visual insights (second) -- ORDER MATTERS !!
 	jq -c '.imageKeywords[0]' "${ALCHEMY_OUTPUT}" | sed 's/\(.*\)\}/\{ "alchemy": \1 \},/' > "${OUTPUT}.$$"
 	jq -c '.images[0]' "${VISUAL_OUTPUT}" | sed 's/^{\(.*\)/"visual":{ \1 \}/' >> "${OUTPUT}.$$"

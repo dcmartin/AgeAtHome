@@ -23,6 +23,7 @@ RUN apt-get install -q -y --no-install-recommends \
     x264 \
     unzip \
     gcc \
+    alsa \
     alsa-utils
 
 #
