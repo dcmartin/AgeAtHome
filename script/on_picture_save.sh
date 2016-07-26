@@ -96,6 +96,7 @@ elif [ -z "${ALCHEMY_OUTPUT}" ]; then
     jq -c '.images[1]' "${VISUAL_OUTPUT}" | sed 's/^{\(.*\)/"visual":{ \1 \}/' >> "${OUTPUT}.$$"
 elif [ -z "${VISUAL_OUTPUT}" ]; then
     echo "+++ $0 ALCHEMY ONLY"
+    jq '.' "${ALCHEMY_OUTPUT}"
     jq -c '.imageKeywords[0]' "${ALCHEMY_OUTPUT}" | sed 's/\(.*\)\}/\{ "alchemy": \1 \},/' > "${OUTPUT}.$$"
     echo '"visual":{"image":"'${IMAGE_ID}.jpg'","scores":[{"classifier_id":"NA","name":"NA","score":0}]' >> "${OUTPUT}.$$"
 else
@@ -106,8 +107,6 @@ else
 fi
 
 echo "}}" >> "${OUTPUT}.$$"
-
-cat "${OUTPUT}.$$"
 
 # create (and validate) output
 jq -c '.' "${OUTPUT}.$$" > "${OUTPUT}"
@@ -146,6 +145,8 @@ else
     echo "*** ERROR: $0 - NO OUTPUT"
     exit
 fi
+
+jq '.' "${OUTPUT}"
 
 #
 # CLOUDANT
