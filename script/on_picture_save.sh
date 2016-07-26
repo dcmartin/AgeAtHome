@@ -146,7 +146,7 @@ else
     exit
 fi
 
-jq '.' "${OUTPUT}"
+cat "${OUTPUT}"
 
 #
 # CLOUDANT
