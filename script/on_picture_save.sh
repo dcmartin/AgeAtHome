@@ -108,8 +108,6 @@ fi
 
 echo "}}" >> "${OUTPUT}.$$"
 
-cat "${OUTPUT}.$$"
-
 # create (and validate) output
 jq -c '.' "${OUTPUT}.$$" > "${OUTPUT}"
 
@@ -147,8 +145,6 @@ else
     echo "*** ERROR: $0 - NO OUTPUT"
     exit
 fi
-
-cat "${OUTPUT}"
 
 #
 # CLOUDANT
