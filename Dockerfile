@@ -22,10 +22,31 @@ RUN apt-get install -q -y --no-install-recommends \
     python-pip \
     x264 \
     unzip \
+    vsftpd \
     gcc
 
-    # alsa \
-    # alsa-utils
+RUN apt-get install -q -y --no-install-recommends \
+    bison \ 
+    alsa-base \
+    alsa-utils \
+    libasound2-dev \
+    libtool \
+    autoconf \
+    automake
+
+#
+# VSFTPD
+#
+RUN echo "anon_root=/var/lib/motion" >> /etc/vsftpd.conf \
+      && sed -i -e"s/^.*listen=.*$/listen=YES/" /etc/vsftpd.conf \
+      && sed -i -e"s/^.*listen_ipv6=.*$/listen_ipv6=NO/" /etc/vsftpd.conf \
+      && sed -i -e"s/^.*anonymous_enable=.*$/anonymous_enable=YES/" /etc/vsftpd.conf
+
+#
+# POCKET SPHINX
+#
+RUN curl -L "https://sourceforge.net/projects/cmusphinx/files/sphinxbase/5prealpha/sphinxbase-5prealpha.tar.gz/download" | tar xzvf - 
+RUN curl -L "https://sourceforge.net/projects/cmusphinx/files/pocketsphinx/5prealpha/pocketsphinx-5prealpha.tar.gz/download" | tar xzvf - 
 
 #
 # ALSA (http://julius.sourceforge.jp/forum/viewtopic.php?f=9&t=66)
