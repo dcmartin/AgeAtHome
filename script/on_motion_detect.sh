@@ -1,12 +1,18 @@
 #!/bin/csh -fb
+# control IFF perform motion conditional testing
+if ($?ON_MOTION_DETECT == 0) then
+    exit
+endif
+
 echo "+++ BEGIN: $0 $* ($$)" `date` >& /dev/stderr
 # get start
 set SECONDS = `date +%s`
 
 # activity interval (in minutes; of events; 96 per day)
 set INTERVAL = 15
+
 # conditional frequency (in seconds; test motion conditional(s) every FREQUENCY seconds)
-set FREQUENCY = 60
+set FREQUENCY = 300
 set PERIOD = `echo "($SECONDS/($FREQUENCY*60))*($FREQUENCY*60)" | bc`
 
 # cache'ing directives on results
@@ -22,17 +28,10 @@ endif
 # test periodicity - only process motion detection events every INTERVAL seconds
 if (-e /tmp/$0:t.$PERIOD) then
     echo "*** TOO SOON ($PERIOD) ***"
-    if ($?PERIOD_TEST) exit
+    if ($?PERIOD_TEST) goto done
 else
     rm -f /tmp/$0:t.*
     touch /tmp/$0:t.$PERIOD
-endif
-
-# control IFF perform motion conditional testing
-if ($?ON_MOTION_DETECT == 0) then
-    echo "*** STATUS: $0 ($$) ON_MOTION_DETECT is off; quitting" >& /dev/stderr
-    goto done
-    exit
 endif
 
 #

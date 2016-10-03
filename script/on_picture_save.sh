@@ -28,91 +28,72 @@ if [ -z "${IMAGE_BOX}" ]; then
     IMAGE_BOX="640x480+0+0"
 fi
 
+#
+# VISUAL RECOGNITION
+#
+# FACES
+# curl -L -o /tmp/$0:t.$$.json -X POST -F "images_file=@$IMAGE_FILE" -H "Accept-Language: en" "$TU/v3/detect_faces?api_key=$api_key&version=2016-05-20"
+# TEXT
+# curl -L -o /tmp/$0:t.$$.json -X POST -F "images_file=@$IMAGE_FILE" -H "Accept-Language: en" "$TU/v3/recognize_text?api_key=$api_key&version=2016-05-20"
+
+# create VR_OUTPUT JSON filename
+VR_OUTPUT="${IMAGE_FILE%.*}-vr.json"
 # proceed if VR_OFF is zero length or undefined
 if [ -z "${VR_OFF}" ] && [ -n "${VR_APIKEY}" ] && [ -n "${VR_VERSION}" ] && [ -n "${VR_DATE}" ] && [ -n "${VR_URL}" ]; then
-
-    # create OUTPUT JSON filename
-    OUTPUT="${IMAGE_FILE%.*}-vr.json"
-
     echo "+++ $0 PROCESSING visual-recognition ${IMAGE_FILE}"
-
-    echo "+++ $0 CLASSIFIERS +++"
-    curl -s -q -L -o "${OUTPUT}" -X POST -F "images_file=@$IMAGE_FILE" -H "Accept-Language: en" "$TU/$VR_VERSION/classify?api_key=$VR_APIKEY&classifier_ids=default&owners=IBM&threshold=0.000001&version=$VR_DATE"
-    # echo "+++ FACES +++"
-    # curl -L -o /tmp/$0:t.$$.json -X POST -F "images_file=@$IMAGE_FILE" -H "Accept-Language: en" "$TU/v3/detect_faces?api_key=$api_key&version=2016-05-20"
-    # echo "+++ TEXT +++"
-    # curl -L -o /tmp/$0:t.$$.json -X POST -F "images_file=@$IMAGE_FILE" -H "Accept-Language: en" "$TU/v3/recognize_text?api_key=$api_key&version=2016-05-20"
-
-    if [ -s "${OUTPUT}" ]; then
-	STATUS=(jq '.status' "${OUTPUT}")
+    curl -s -q -L -o "${VR_OUTPUT}" -X POST -F "images_file=@$IMAGE_FILE" -H "Accept-Language: en" "$TU/$VR_VERSION/classify?api_key=$VR_APIKEY&classifier_ids=default&owners=IBM&threshold=0.000001&version=$VR_DATE"
+    if [ -s "${VR_OUTPUT}" ]; then
+	STATUS=(jq '.status' "${VR_OUTPUT}")
 	echo  "+++ $0 SUCCESS visual-recognition ${IMAGE_FILE}"
-	VR_OUTPUT="${OUTPUT}"
     fi
     if [ -z "${VR_OUTPUT}" ]; then
 	echo "+++ $0 FAILURE visual-recognition ${IMAGE_FILE}"
-	echo '{"custom_classes":0,"images":[{"classifiers":[{"classes":[{"class":"FAIL","score":0,"type_hierarchy":"FAIL"}],"classifier_id":"default","name":"default"}],"image":"'"${IMAGE_FILE%.*}"'"}],"images_processed":0}' >! "${OUTPUT}"
-    fi
-fi
-if [ -z "${VR_OUTPUT}" ]; then
-    echo "+++ $0 OFF visual-recognition"
-    echo '{"custom_classes":0,"images":[{"classifiers":[{"classes":[{"class":"NA","score":0,"type_hierarchy":"NA"}],"classifier_id":"default","name":"default"}],"image":"'"${IMAGE_FILE%.*}"'"}],"images_processed":0}' >! "${OUTPUT}"
-    VR_OUPUT="${OUTPUT}"
-fi
-
-
-# proceed if VI_OFF is zero length or undefined
-if [ -z "${VI_OFF}" ] && [ -n "${VI_USERNAME}" ] && [ -n "${VI_PASSWORD}" ] && [ -n "${VI_URL}" ]; then
-
-    # full image
-    OUTPUT="${IMAGE_FILE%.*}-visual.json"
-
-    echo "+++ $0 PROCESSING visual-insights ${IMAGE_FILE}"
-
-    # VisualInsights
-    curl -q -s -L -u "${VI_USERNAME}":"${VI_PASSWORD}" -X POST -F "images_file=@${IMAGE_FILE}" "${VI_URL}" > "${OUTPUT}"
-    if [ -s "${OUTPUT}" ]; then
-	echo "+++ $0 SUCCESS visual-insights ${IMAGE_FILE}"
-	VI_OUTPUT="${OUTPUT}"
-    else
-	echo "+++ $0 FAILURE visual-insights ${IMAGE_FILE}"
-	echo '"visual":{"image":"'${IMAGE_ID}.jpg'","scores":[{"classifier_id":"FAIL","name":"FAIL","score":0}]' >> "${OUTPUT}"
-	VI_OUTPUT="${OUTPUT}"
     fi
 else
-    echo "+++ $0 OFF visual-insights"
-    echo '"visual":{"image":"'${IMAGE_ID}.jpg'","scores":[{"classifier_id":"NA","name":"NA","score":0}]' >> "${OUTPUT}"
-    VI_OUTPUT="${OUTPUT}"
+    echo "+++ $0 VISUAL-RECOGNITION - OFF"
+fi
+
+#
+# VISUAL INSIGHTS
+#
+
+# set VI_OUTPUT
+VI_OUTPUT="${IMAGE_FILE%.*}-visual.json"
+# proceed if VI_OFF is zero length or undefined
+if [ -z "${VI_OFF}" ] && [ -n "${VI_USERNAME}" ] && [ -n "${VI_PASSWORD}" ] && [ -n "${VI_URL}" ]; then
+    echo "+++ $0 PROCESSING visual-insights ${IMAGE_FILE}"
+    # VisualInsights
+    curl -q -s -L -u "${VI_USERNAME}":"${VI_PASSWORD}" -X POST -F "images_file=@${IMAGE_FILE}" "${VI_URL}" > "${VI_OUTPUT}"
+    if [ -s "${VI_OUTPUT}" ]; then
+	echo "+++ $0 SUCCESS visual-insights ${IMAGE_FILE}"
+    else
+	echo "+++ $0 FAILURE visual-insights ${IMAGE_FILE}"
+    fi
+else
+    echo "+++ $0 VISUAL-INSIGHTS - OFF"
 fi
 
 #
 # ALCHEMY
 #
-# echo "+++ ALCHEMY_OFF " [ -z "${ALCHEMY_OFF}" "ALCHEMY_API_KEY = " [ -n "${ALCHEMY_API_KEY}" ] "ALCHEMY_API_URL = " [ -n "${ALCHEMY_API_URL}" ]
+# FACES
+# curl -q -s -L -X POST --data-binary "@${IMAGE_FILE}" "${ALCHEMY_API_URL}/image/ImageGetRankedImageFaceTags?apikey=${ALCHEMY_API_KEY}&imagePostMode=raw&outputMode=json"
+#
+
+# set ALCHEMY_OUTPUT
+ALCHEMY_OUTPUT="${IMAGE_FILE%.*}-alchemy.json"
 # test if not OFF or not configured
 if [ -z "${ALCHEMY_OFF}" ] && [ -n "${ALCHEMY_API_KEY}" ] && [ -n "${ALCHEMY_API_URL}" ]; then
-
-    # full  image
-    OUTPUT="${IMAGE_FILE%.*}-alchemy.json"
-    
     echo "+++ $0 PROCESSING ALCHEMY ${IMAGE_FILE}"
-
     # ALCHEMY CLASSIFY
-    curl -q -s -L -X POST --data-binary "@${IMAGE_FILE}" "${ALCHEMY_API_URL}/image/ImageGetRankedImageKeywords?apikey=${ALCHEMY_API_KEY}&imagePostMode=raw&outputMode=json" > "${OUTPUT}"
-    if [ -s "${OUTPUT}" ]; then
-	# echo -n "+++ ALCHEMY == "; jq -c '.' "${OUTPUT}"
-	ALCHEMY_OUTPUT="${OUTPUT}"
+    curl -q -s -L -X POST --data-binary "@${IMAGE_FILE}" "${ALCHEMY_API_URL}/image/ImageGetRankedImageKeywords?apikey=${ALCHEMY_API_KEY}&imagePostMode=raw&outputMode=json" > "${ALCHEMY_OUTPUT}"
+    if [ -s "${ALCHEMY_OUTPUT}" ]; then
+	echo "+++ SUCCESS alchemy ${IMAGE_FILE}"
     else
 	echo "+++ $0 FAILURE ALCHEMY ${IMAGE_FILE}"
-	echo '{"status":"FAIL","usage":"","NOTICE":"","url":"'"${IMAGE_FILE%.*}"'","totalTransactions":"","imageKeywords":[{"text":"FAIL","score":""}]}
-	ALCHEMY_OUPUT="${OUTPUT}"
     fi
-    # ALCHEMY FACES
-    # curl -q -s -L -X POST --data-binary "@${IMAGE_FILE}" "${ALCHEMY_API_URL}/image/ImageGetRankedImageFaceTags?apikey=${ALCHEMY_API_KEY}&imagePostMode=raw&outputMode=json" > "${OUTPUT}"
 else
-if [ -z "${ALCHEMY_OUTPUT} ]; then
-    echo "+++ $0 OFF alchemy"
-    echo '{"status":"NA","usage":"","NOTICE":"","url":"'"${IMAGE_FILE%.*}"'","totalTransactions":"","imageKeywords":[{"text":"NA","score":""}]}
-    ALCHEMY_OUPUT="${OUTPUT}"
+    echo "+++ $0 ALCHEMY OFF"
 fi
 
 #
@@ -124,23 +105,23 @@ IMAGE_ID=`echo "${OUTPUT##*/}"`
 # drop extension
 IMAGE_ID=`echo "${IMAGE_ID%.*}"`
 
-if [ -z "${VI_OUTPUT}" ] && [ -z "${ALCHEMY_OUTPUT}" ]; then
-    echo "+++ $0 NEITHER"
-    echo '{ "alchemy":{"text":"NO_TAGS","score":0},' > "${OUTPUT}.$$"
-    echo '"visual":{"image":"'${IMAGE_ID}.jpg'","scores":[{"classifier_id":"NA","name":"NA","score":0}]' >> "${OUTPUT}.$$"
-elif [ -z "${ALCHEMY_OUTPUT}" ]; then
-    echo "+++ $0 VI_INSIGHTS ONLY"
-    echo '{ "alchemy":{"text":"NO_TAGS","score":0},' > "${OUTPUT}.$$"
-    jq -c '.images[1]' "${VI_OUTPUT}" | sed 's/^{\(.*\)/"visual":{ \1 \}/' >> "${OUTPUT}.$$"
-elif [ -z "${VI_OUTPUT}" ]; then
-    echo "+++ $0 ALCHEMY ONLY"
-    jq -c '.imageKeywords[0]' "${ALCHEMY_OUTPUT}" | sed 's/\(.*\)\}/\{ "alchemy": \1 \},/' > "${OUTPUT}.$$"
-    echo '"visual":{"image":"'${IMAGE_ID}.jpg'","scores":[{"classifier_id":"NA","name":"NA","score":0}]' >> "${OUTPUT}.$$"
-else
+if [ -s "${VI_OUTPUT}" ] && [ -s "${ALCHEMY_OUTPUT}" ]; then
     echo "+++ $0 BOTH"
     # order matters
     jq -c '.imageKeywords[0]' "${ALCHEMY_OUTPUT}" | sed 's/\(.*\)\}/\{ "alchemy": \1 \},/' > "${OUTPUT}.$$"
     jq -c '.images[0]' "${VI_OUTPUT}" | sed 's/^{\(.*\)/"visual":{ \1 \}/' >> "${OUTPUT}.$$"
+elif [ -s "${ALCHEMY_OUTPUT}" ]; then
+    echo "+++ $0 ALCHEMY ONLY"
+    jq -c '.imageKeywords[0]' "${ALCHEMY_OUTPUT}" | sed 's/\(.*\)\}/\{ "alchemy": \1 \},/' > "${OUTPUT}.$$"
+    echo '"visual":{"image":"'${IMAGE_ID}.jpg'","scores":[{"classifier_id":"NA","name":"NA","score":0}]' >> "${OUTPUT}.$$"
+elif [ -s "${VI_OUTPUT}" ]; then
+    echo "+++ $0 VI_INSIGHTS ONLY"
+    echo '{ "alchemy":{"text":"NO_TAGS","score":0},' > "${OUTPUT}.$$"
+    jq -c '.images[1]' "${VI_OUTPUT}" | sed 's/^{\(.*\)/"visual":{ \1 \}/' >> "${OUTPUT}.$$"
+else
+    echo "+++ $0 NEITHER"
+    echo '{ "alchemy":{"text":"NO_TAGS","score":0},' > "${OUTPUT}.$$"
+    echo '"visual":{"image":"'${IMAGE_ID}.jpg'","scores":[{"classifier_id":"NA","name":"NA","score":0}]' >> "${OUTPUT}.$$"
 fi
 
 echo "}}" >> "${OUTPUT}.$$"
@@ -149,7 +130,7 @@ echo "}}" >> "${OUTPUT}.$$"
 jq -c '.' "${OUTPUT}.$$" > "${OUTPUT}"
 
 # remove tmp & originals
-rm -f "${OUTPUT}.$$" "${VI_OUTPUT}" "${ALCHEMY_OUTPUT}"
+rm -f "${OUTPUT}.$$" "${VI_OUTPUT}" "${ALCHEMY_OUTPUT}" "${VR_OUTPUT}"
 
 #
 # add date and time
@@ -164,8 +145,7 @@ if [ -s "${OUTPUT}" ]; then
 	HOUR=`echo "${DATE_TIME}" | sed "s/^........\(..\).*/\1/"`
 	MINUTE=`echo "${DATE_TIME}" | sed "s/^..........\(..\).*/\1/"`
 	SECOND=`echo "${DATE_TIME}" | sed "s/^............\(..\).*/\1/"`
-	# WEEKDAY=`date -d @"${MONTH}${DAY}${HOUR}${MINUTE}${YEAR}.${SECOND}" "+%A"`
-	# EPOCH=`date -d @"${MONTH}${DAY}${HOUR}${MINUTE}${YEAR}.${SECOND}" "+%s"`
+
 	cat "${OUTPUT}" | \
 	    sed 's/^{/{"year":"YEAR","month":"MONTH","day":"DAY","hour":"HOUR","minute":"MINUTE","second":"SECOND","imagebox":"IMAGE_BOX",/' | \
 	    sed "s/YEAR/${YEAR}/" | \
