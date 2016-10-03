@@ -53,7 +53,7 @@ if [ -z "${VR_OFF}" ] && [ -n "${VR_APIKEY}" ] && [ -n "${VR_VERSION}" ] && [ -n
 	echo '{"custom_classes":0,"images":[{"classifiers":[{"classes":[{"class":"FAIL","score":0,"type_hierarchy":"FAIL"}],"classifier_id":"default","name":"default"}],"image":"'"${IMAGE_FILE%.*}"'"}],"images_processed":0}' >! "${OUTPUT}"
     fi
 fi
-if [ -z "${VR_OUTPUT} ]; then
+if [ -z "${VR_OUTPUT}" ]; then
     echo "+++ $0 OFF visual-recognition"
     echo '{"custom_classes":0,"images":[{"classifiers":[{"classes":[{"class":"NA","score":0,"type_hierarchy":"NA"}],"classifier_id":"default","name":"default"}],"image":"'"${IMAGE_FILE%.*}"'"}],"images_processed":0}' >! "${OUTPUT}"
     VR_OUPUT="${OUTPUT}"
