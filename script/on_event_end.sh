@@ -1,2 +1,2 @@
 #!/bin/bash
-echo "+++ EXECUTE $0: $*" $(date) >&2
+echo "+++ NO-OP $0: $*" $(date) >&2

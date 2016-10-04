@@ -44,9 +44,8 @@ if [ -z "${VR_OFF}" ] && [ -n "${VR_APIKEY}" ] && [ -n "${VR_VERSION}" ] && [ -n
     curl -s -q -L -o "${VR_OUTPUT}" -X POST -F "images_file=@$IMAGE_FILE" -H "Accept-Language: en" "$TU/$VR_VERSION/classify?api_key=$VR_APIKEY&classifier_ids=default&owners=IBM&threshold=0.000001&version=$VR_DATE"
     if [ -s "${VR_OUTPUT}" ]; then
 	STATUS=(jq '.status' "${VR_OUTPUT}")
-	echo  "+++ $0 SUCCESS visual-recognition ${IMAGE_FILE}"
-    fi
-    if [ -z "${VR_OUTPUT}" ]; then
+	echo  "+++ $0 ${STATUS} visual-recognition ${IMAGE_FILE}"
+    else
 	echo "+++ $0 FAILURE visual-recognition ${IMAGE_FILE}"
     fi
 else

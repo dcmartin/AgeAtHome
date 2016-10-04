@@ -53,6 +53,10 @@ if [ -e "${IOTF_CONFIG_FILE}" ]; then
     cat "${IOTF_CONFIG_FILE}"
 fi
 
+# VSFTPD
+service vsftpd restart
+service vsftpd status
+
 # restart, check status, getdeviceid
 service iot restart
 service iot status
