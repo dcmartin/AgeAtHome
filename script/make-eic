@@ -1,0 +1,170 @@
+#!/bin/csh -fb
+echo "+++ BEGIN: $0 $* ($$)" `date` >& /dev/stderr
+# interval time in minutes
+set INTERVAL = 15
+# cache'ing directives
+set TTL = 1800
+set SECONDS = `date +%s`
+set DATE = `echo $SECONDS \/ $TTL \* $TTL | bc`
+set PERIOD = `echo "($SECONDS/($INTERVAL*60))*($INTERVAL*60)" | bc`
+
+#
+if ($?DEVICE_NAME == 0) then
+    echo "+++ STATUS: $0 ($$)" `date` "no DEVICE_NAME specified" >& /dev/stderr
+    setenv DEVICE_NAME "rough-fog"
+endif
+
+set WWW="http://www.dcmartin.com/CGI"
+set APP="aah"
+set API="stats"
+set DIR="/var/lib/motion"
+
+#
+# CLI arguments
+#
+set EVENT = "$argv[1]"
+set EIC = "$argv[2]"
+
+if (!(-e "$EIC") || ((-M "$EVENT") > (-M "$EIC")))  then
+    echo "+++ STATUS: $0 ($$)" `date` "BUILDING EIC: $EIC" >& /dev/stderr
+    # get time series for EVENT
+    set year = `cat "$EVENT" | jq '.year' | sed 's/"//g'`
+    set month = `cat "$EVENT" | jq '.month' | sed 's/"//g'`
+    set day = `cat "$EVENT" | jq '.day' | sed 's/"//g'`
+    set hour = `cat "$EVENT" | jq '.hour' | sed 's/"//g'`
+    set minute = `cat "$EVENT" | jq '.minute' | sed 's/"//g'`
+    set second = `cat "$EVENT" | jq '.second' | sed 's/"//g'`
+
+    # calculate current time series
+    set index = `echo "$year" "$month" "$day" "$hour" "$minute" "$second" | \
+        gawk -v interval="$INTERVAL" '{ m=$4*60+$5; m/=interval; \
+        t=mktime(sprintf("%4d %2d %2d %2d %2d %2d", $1, $2, $3, $4, $5, $6)); \
+        printf "{ \"interval\":\"%d\",\"AMPM\":\"%s\",\"week\":\"%d\",\"day\":\"%s\" }", \
+            m, \
+            strftime("%p",t),\
+            strftime("%U",t),\
+            strftime("%w",t) }'`
+    echo "+++ STATUS: $0 ($$)" `date` "index = $index" >& /dev/stderr
+
+    set ampm = `echo "$index" | jq '.AMPM' | sed 's/"//g'`
+    set week = `echo "$index" | jq '.week' | sed 's/"//g'`
+    set day = `echo "$index" | jq '.day' | sed 's/"//g'`
+    set interval = `echo "$index" | jq '.interval' | sed 's/"//g'`
+
+    # get classifiers & scores from EVENT
+    set ACLASSES =( `jq '.alchemy|.text' "$EVENT" | sed 's/"//g'` )
+    set VCLASSES = ( `jq '.visual.scores[]|.name' "$EVENT" | sed 's/"//g'` )
+    set ASCORES = ( `jq '.alchemy|.score' "$EVENT" | sed 's/"//g'` )
+    set VSCORES = ( `jq '.visual.scores[]|.score' "$EVENT" | sed 's/"//g'` )
+    # union Alchemy and VisualInsights classifiers and scores
+    set CLASSES = ( $ACLASSES $VCLASSES )
+    set SCORES = ( $ASCORES $VSCORES )
+
+    # build EIC file
+    echo '{ "event":"'$EVENT'","week":"'$week'","AMPM":"'$ampm'","day":"'$day'","interval":"'$interval'","classifiers":[' >! "$EIC"
+    # iterate over all EVENT classifiers
+    @ i = 0
+    foreach CLASS ( $CLASSES )
+	# skip nulls
+	if ($CLASS == "NO_TAGS") continue;
+	if ($CLASS == \"\") continue;
+
+	echo "+++ STATUS: $0 ($$)" `date` "PROCESSING CLASS=$CLASS : $EIC" >& /dev/stderr
+
+	# keep track of index into SCORES
+	@ i++
+	# denote if comma separation is required for loop output
+	if ($?continue) echo ',' >> "$EIC"
+	set continue
+	# test iff environment variable specified
+	if ($?MINIMUM_CLASSIFIER_SCORE) then
+	    set TF = `echo "$SCORES[$i] < $MINIMUM_CLASSIFIER_SCORE" | bc`
+
+	    if ($TF) then
+		echo "+++ STATUS: $0 ($$)" `date` "$CLASS under minimum score ($SCORES[$i])" >& /dev/stderr
+		continue;
+	    endif
+	endif
+	#
+	# get statistical model for this classifier
+	#
+	set MODEL = "$DIR/$DEVICE_NAME-$CLASS.$DATE.json"
+	if ( ! -e "$MODEL" ) then
+	    # search for cache'd statistical model; newest first!
+	    set OLD_MODEL = ( `ls -1t "$DIR/$DEVICE_NAME-$CLASS".*.json` )
+	    # retrieve new/updated statistical model
+	    ( curl -o "$MODEL.$$" -s -L "$WWW/aah-stats.cgi?db=$DEVICE_NAME&id=$CLASS" ; mv "$MODEL.$$" "$MODEL" ) &
+	    # if there are no old models
+	    if ( $#OLD_MODEL == 0 ) then
+		echo "+++ STATUS: $0 ($$)" `date` "waiting on $MODEL" >& /dev/stderr
+		while ( ! -e "$MODEL" ) 
+		    sleep 5
+		end
+		set err = `jq '.error' "$MODEL" | sed 's/"//g'`
+		if ($err != "null") then
+		    echo "*** ERROR: $0 ($$)" `date` "FAILURE ($err) OF MODEL: $MODEL" >& /dev/stderr
+		    rm -f "$MODEL"
+		endif
+	    else
+		# use newest old model
+		set MODEL = "$OLD_MODEL[1]"
+		# remove olders model(s)
+		if ($#OLD_MODEL > 1) then
+		    echo "+++ STATUS: $0 ($$)" `date` "removing $OLD_MODEL[2-]" >& /dev/stderr
+		    rm -f $OLD_MODEL[2-]
+		endif
+	    endif
+	endif
+	# assert existing model
+	if (! -e "$MODEL" ) then
+	    echo "*** ASSERT: $0 ($$)" `date` "ASSERTION FAILURE (EXIST) FOR MODEL: $MODEL" >& /dev/stderr
+	    unset continue
+	    continue
+	endif
+	# assert good model
+	set err = `jq '.error' "$MODEL"`
+	if ($err == "not_found") then
+	    echo "*** ASSERT: $0 ($$)" `date` "BAD MODEL ($err) REMOVING: $MODEL" >& /dev/stderr
+	    rm -f "$MODEL"
+	    unset continue
+	    continue
+	endif
+
+	# 
+	# get entity context from MODEL (n.b. time-series statistical model over weeks of year, days of week and intervals of day)
+	#
+	echo "+++ STATUS: $0 ($$)" `date` ": CLASS=$CLASS SCORE=$SCORES[$i] MODEL=$MODEL" >& /dev/stderr
+	echo -n '{ "class":"'$CLASS'",' >> "$EIC"
+	echo -n '"score":"'$SCORES[$i]'",' >> "$EIC"
+	echo -n '"model":' `jq '.days['$day'].intervals['$interval']' "$MODEL"` ',' >> "$EIC"
+	echo -n '"weeks":' `jq '.days['$day'].weeks' "$MODEL"` ',' >> "$EIC"
+	echo -n '"nweek":' `jq '.days['$day'].nweek' "$MODEL"` ',' >> "$EIC"
+
+	#
+	# calculate counts for this classifier across all days and intervals
+	#
+	set CLASS_COUNTS = "$MODEL:r-$CLASS.json"
+	# test existence and modfication times for MODEL vs CLASS_COUNTS
+	if (!(-e "$CLASS_COUNTS") || (-z "$CLASS_COUNTS") || ((-M "$MODEL") > (-M "$CLASS_COUNTS"))) then
+	    echo "+++ STATUS: $0 ($$)" `date` "CALCULATING $CLASS COUNTS" >& /dev/stderr
+	    # list old count(s)
+	    ls -alt "$MODEL:r:r*-$CLASS.json"
+	    # (re)calculate population statistics for this CLASS across all days and all intervals of MODEL
+	    jq -c '.days[''].intervals[''].count' "$MODEL" | \
+		sed 's/"//g' | \
+		gawk 'BEGIN { t = 0; c = 0; s = 0 } { t++; if ($1 > 0) { c++; s += $1; m = s/c; vs += ($1 - m)^2; v=vs/c} } END { sd = sqrt(v/c); printf "{\"count\":\"%d\",\"non-zero\":\"%d\",\"sum\":\"%d\",\"mean\":\"%f\",\"stdev\":\"%f\"}\n", t, c, s, m, sd  }' > "$CLASS_COUNTS"
+	    if (-z "$CLASS_COUNTS") then
+	        echo "*** ZERO CLASS COUNTS $CLASS_COUNTS ***"
+	    endif
+	endif
+	# append classifier counts to EIC
+	echo -n '"intervals":"'$CLASS_COUNTS'" }' >> "$EIC"
+    end
+    # complete EIC for EVENT
+    echo ']}' >> "$EIC"
+endif
+
+done:
+    set seconds = `date +%s`
+    set elapsed = ( `echo "$seconds - $SECONDS" | bc` )
+    echo "+++ END: $0 ($$)" `date` " elapsed $elapsed" >& /dev/stderr
