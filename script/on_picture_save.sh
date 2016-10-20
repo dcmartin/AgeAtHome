@@ -83,9 +83,13 @@ fi
 ALCHEMY_OUTPUT="${IMAGE_FILE%.*}-alchemy.json"
 # test if not OFF or not configured
 if [ -z "${ALCHEMY_OFF}" ] && [ -n "${ALCHEMY_API_KEY}" ] && [ -n "${ALCHEMY_API_URL}" ]; then
-    echo "+++ $0 PROCESSING ALCHEMY ${IMAGE_FILE}"
+    API_KEY="${ALCHEMY_API_KEY}"
+    if [ $(date +%p) == "PM" ] && [ -n "${ALCHEMY_API_KEY_PM}" ]; then
+	API_KEY="${ALCHEMY_API_KEY_PM}"
+    fi
+    echo "+++ $0 PROCESSING ALCHEMY ${IMAGE_FILE} with ${API_KEY}"
     # ALCHEMY CLASSIFY
-    curl -q -s -L -X POST --data-binary "@${IMAGE_FILE}" "${ALCHEMY_API_URL}/image/ImageGetRankedImageKeywords?apikey=${ALCHEMY_API_KEY}&imagePostMode=raw&outputMode=json" > "${ALCHEMY_OUTPUT}"
+    curl -q -s -L -X POST --data-binary "@${IMAGE_FILE}" "${ALCHEMY_API_URL}/image/ImageGetRankedImageKeywords?apikey=${API_KEY}&imagePostMode=raw&outputMode=json" > "${ALCHEMY_OUTPUT}"
     if [ -s "${ALCHEMY_OUTPUT}" ]; then
 	echo "+++ SUCCESS alchemy ${IMAGE_FILE}"
     else
