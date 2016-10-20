@@ -111,6 +111,7 @@ if [ -s "${VI_OUTPUT}" ] && [ -s "${ALCHEMY_OUTPUT}" ]; then
     jq -c '.images[0]' "${VI_OUTPUT}" | sed 's/^{\(.*\)/"visual":{ \1 \}/' >> "${OUTPUT}.$$"
 elif [ -s "${ALCHEMY_OUTPUT}" ]; then
     echo "+++ $0 ALCHEMY ONLY"
+    echo `date` "$0 $$ -- " `jq -c . "${ALCHEMY_OUTPUT}"`
     jq -c '.imageKeywords[0]' "${ALCHEMY_OUTPUT}" | sed 's/\(.*\)\}/\{ "alchemy": \1 \},/' > "${OUTPUT}.$$"
     echo '"visual":{"image":"'${IMAGE_ID}.jpg'","scores":[{"classifier_id":"NA","name":"NA","score":0}]' >> "${OUTPUT}.$$"
 elif [ -s "${VI_OUTPUT}" ]; then
