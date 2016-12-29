@@ -31,6 +31,7 @@ RUN apt-get install -q -y --no-install-recommends \
     alsa-utils \
     libasound2-dev \
     libtool \
+    sox \
     autoconf \
     automake
 
@@ -240,6 +241,8 @@ VOLUME ["/var/lib/motion"]
 #
 # RUN node-red-start
 
+ENV AUDIODEV hw:1,0
+ENV AUDIODRIVER alsa
 #
 # set working directory
 #
