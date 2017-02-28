@@ -83,6 +83,7 @@ if [ -z "${VR_OFF}" ] && [ -n "${VR_APIKEY}" ] && [ -n "${VR_VERSION}" ] && [ -n
        # -f -s -q \
     if [ -s "${VR_OUTPUT}" ]; then
 	echo  "+++ $0 SUCCESS visual-recognition ${IMAGE_FILE}"
+	jq -c '.' "${VR_OUTPUT}"
     else
 	echo "+++ $0 FAILURE visual-recognition ${IMAGE_FILE}"
     fi
@@ -182,6 +183,7 @@ fi
 echo "}}" >> "${OUTPUT}.$$"
 
 # create (and validate) output
+cat "${OUTPUT}.$$"
 jq -c '.' "${OUTPUT}.$$" > "${OUTPUT}"
 
 # remove tmp & originals
