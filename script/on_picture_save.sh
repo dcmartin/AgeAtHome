@@ -178,9 +178,9 @@ else
     echo "+++ $0 NEITHER"
     echo '{ "alchemy":{"text":"NO_TAGS","score":0},' > "${OUTPUT}.$$"
     echo '"visual":{"image":"'${IMAGE_ID}.jpg'","scores":[{"classifier_id":"NA","name":"NA","score":0}]' >> "${OUTPUT}.$$"
+    echo "}}" >> "${OUTPUT}.$$"
 fi
 
-echo "}}" >> "${OUTPUT}.$$"
 
 # create (and validate) output
 cat "${OUTPUT}.$$"
