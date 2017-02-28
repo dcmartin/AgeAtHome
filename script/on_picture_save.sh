@@ -36,15 +36,53 @@ fi
 # TEXT
 # curl -L -o /tmp/$0:t.$$.json -X POST -F "images_file=@$IMAGE_FILE" -H "Accept-Language: en" "$TU/v3/recognize_text?api_key=$api_key&version=2016-05-20"
 
+#
+# CLASSIFICATION
+#
+# {
+#   "custom_classes": 0,
+#   "images": [
+#     {
+#       "classifiers": [
+#         {
+#           "classes": [
+#             {
+#               "class": "people",
+#               "score": 0.310026,
+#               "type_hierarchy": "/people"
+#             },
+#             {
+#               "class": "street",
+#               "score": 0.28905,
+#               "type_hierarchy": "/places/street"
+#             }
+#           ],
+#           "classifier_id": "default",
+#           "name": "default"
+#         }
+#       ],
+#       "image": "20160821203750-3027-00.jpg"
+#     }
+#   ],
+#   "images_processed": 1
+# }
+# 
+
 # create VR_OUTPUT JSON filename
 VR_OUTPUT="${IMAGE_FILE%.*}-vr.json"
 # proceed if VR_OFF is zero length or undefined
 if [ -z "${VR_OFF}" ] && [ -n "${VR_APIKEY}" ] && [ -n "${VR_VERSION}" ] && [ -n "${VR_DATE}" ] && [ -n "${VR_URL}" ]; then
-    echo "+++ $0 PROCESSING visual-recognition ${IMAGE_FILE}"
-    curl -s -q -L -o "${VR_OUTPUT}" -X POST -F "images_file=@$IMAGE_FILE" -H "Accept-Language: en" "$TU/$VR_VERSION/classify?api_key=$VR_APIKEY&classifier_ids=default&owners=IBM&threshold=0.000001&version=$VR_DATE"
+    echo "+++ $0 PROCESSING visual-recognition ${VR_VERSION} ${VR_DATE} ${VR_URL} ${IMAGE_FILE}"
+    if [ -z "${VR_CLASSIFIER}" ]; then
+	VR_CLASSIFIER="default"
+    fi
+    curl -L \
+        -F "images_file=@$IMAGE_FILE" \
+	-o "${VR_OUTPUT}" \
+	"$VR_URL/$VR_VERSION/classify?api_key=$VR_APIKEY&classifier_ids=$VR_CLASSIFIER&threshold=0.000001&version=$VR_DATE"
+       # -f -s -q \
     if [ -s "${VR_OUTPUT}" ]; then
-	STATUS=(jq '.status' "${VR_OUTPUT}")
-	echo  "+++ $0 ${STATUS} visual-recognition ${IMAGE_FILE}"
+	echo  "+++ $0 SUCCESS visual-recognition ${IMAGE_FILE}"
     else
 	echo "+++ $0 FAILURE visual-recognition ${IMAGE_FILE}"
     fi
@@ -109,19 +147,32 @@ IMAGE_ID=`echo "${OUTPUT##*/}"`
 IMAGE_ID=`echo "${IMAGE_ID%.*}"`
 
 if [ -s "${VI_OUTPUT}" ] && [ -s "${ALCHEMY_OUTPUT}" ]; then
-    echo "+++ $0 BOTH"
+    echo "+++ $0 VI and ALCHEMY"
     # order matters
     jq -c '.imageKeywords[0]' "${ALCHEMY_OUTPUT}" | sed 's/\(.*\)\}/\{ "alchemy": \1 \},/' > "${OUTPUT}.$$"
     jq -c '.images[0]' "${VI_OUTPUT}" | sed 's/^{\(.*\)/"visual":{ \1 \}/' >> "${OUTPUT}.$$"
+elif [ -s "${VR_OUTPUT}" ] && [ -s "${ALCHEMY_OUTPUT}" ]; then
+    echo "+++ $0 VR and ALCHEMY"
+    # order matters
+    jq -c '.imageKeywords[0]' "${ALCHEMY_OUTPUT}" | sed 's/\(.*\)\}/\{ "alchemy": \1 \},/' > "${OUTPUT}.$$"
+    # make it look like VI-type output
+    jq -c '.images[0]|{image:.image,scores:[.classifiers[].classes[]|{classifier_id:.class,name:.type_hierarchy,score:.score}]}' "${VR_OUTPUT}" \
+	| sed 's/^{\(.*\)/"visual":{ \1 \}/' >> "${OUTPUT}.$$"
 elif [ -s "${ALCHEMY_OUTPUT}" ]; then
     echo "+++ $0 ALCHEMY ONLY"
     echo `date` "$0 $$ -- " `jq -c . "${ALCHEMY_OUTPUT}"`
     jq -c '.imageKeywords[0]' "${ALCHEMY_OUTPUT}" | sed 's/\(.*\)\}/\{ "alchemy": \1 \},/' > "${OUTPUT}.$$"
     echo '"visual":{"image":"'${IMAGE_ID}.jpg'","scores":[{"classifier_id":"NA","name":"NA","score":0}]' >> "${OUTPUT}.$$"
+elif [ -s "${VR_OUTPUT}" ]; then
+    echo "+++ $0 VR ONLY"
+    echo '{ "alchemy":{"text":"NO_TAGS","score":0},' > "${OUTPUT}.$$"
+    # make it look like VI-type output
+    jq -c '.images[0]|{image:.image,scores:[.classifiers[].classes[]|{classifier_id:.class,name:.type_hierarchy,score:.score}]}' "${VR_OUTPUT}" \
+	| sed 's/^{\(.*\)/"visual":{ \1 \}/' >> "${OUTPUT}.$$"
 elif [ -s "${VI_OUTPUT}" ]; then
     echo "+++ $0 VI_INSIGHTS ONLY"
     echo '{ "alchemy":{"text":"NO_TAGS","score":0},' > "${OUTPUT}.$$"
-    jq -c '.images[1]' "${VI_OUTPUT}" | sed 's/^{\(.*\)/"visual":{ \1 \}/' >> "${OUTPUT}.$$"
+    jq -c '.images[0]' "${VI_OUTPUT}" | sed 's/^{\(.*\)/"visual":{ \1 \}/' >> "${OUTPUT}.$$"
 else
     echo "+++ $0 NEITHER"
     echo '{ "alchemy":{"text":"NO_TAGS","score":0},' > "${OUTPUT}.$$"
