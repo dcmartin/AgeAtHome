@@ -183,7 +183,8 @@ fi
 
 
 # create (and validate) output
-cat "${OUTPUT}.$$"
+echo -n "+++ OUTPUT" 
+jq '.' "${OUTPUT}.$$"
 jq -c '.' "${OUTPUT}.$$" > "${OUTPUT}"
 
 # remove tmp & originals
