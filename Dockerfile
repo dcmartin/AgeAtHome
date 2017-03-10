@@ -10,6 +10,7 @@ RUN apt-get install -q -y --no-install-recommends \
     apt-utils \
     csh \
     git \
+    make \
     jq \
     tcsh \
     bc \
