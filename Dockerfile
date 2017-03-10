@@ -44,10 +44,21 @@ RUN echo "anon_root=/var/lib/motion" >> /etc/vsftpd.conf \
       && sed -i -e"s/^.*anonymous_enable=.*$/anonymous_enable=YES/" /etc/vsftpd.conf
 
 #
+# H264
+#
+RUN cd /usr/src && git clone git://git.videolan.org/x264 && cd x264 && ./configure --host=arm-unknown-linux-gnueabi --enable-static --disable-opencl && make -j4 && make install
+
+#
+# FFMPEG
+# https://github.com/FFmpeg/FFmpeg.git (OLD)
+#
+cd /usr/src &&  git clone https://git.ffmpeg.org/ffmpeg.git ffmpeg && cd ffmpeg && ./configure --arch=armel --target-os=linux --enable-gpl --enable-libx264 --enable-nonfree && make -j4 && make install
+
+#
 # POCKET SPHINX
 #
-RUN curl -L "https://sourceforge.net/projects/cmusphinx/files/sphinxbase/5prealpha/sphinxbase-5prealpha.tar.gz/download" | tar xzvf - 
-RUN curl -L "https://sourceforge.net/projects/cmusphinx/files/pocketsphinx/5prealpha/pocketsphinx-5prealpha.tar.gz/download" | tar xzvf - 
+# RUN curl -L "https://sourceforge.net/projects/cmusphinx/files/sphinxbase/5prealpha/sphinxbase-5prealpha.tar.gz/download" | tar xzvf - 
+# RUN curl -L "https://sourceforge.net/projects/cmusphinx/files/pocketsphinx/5prealpha/pocketsphinx-5prealpha.tar.gz/download" | tar xzvf - 
 
 #
 # ALSA (http://julius.sourceforge.jp/forum/viewtopic.php?f=9&t=66)
@@ -55,33 +66,6 @@ RUN curl -L "https://sourceforge.net/projects/cmusphinx/files/pocketsphinx/5prea
 RUN echo 'pcm.array { type hw card 1 }' >! ~/.asoundrc
 RUN echo 'pcm.array_gain { type softvol slave { pcm "array" } control { name "Mic Gain" count 2 } min_dB -10.0 max_dB 5.0 }' >> ~/.asoundrc
 RUN echo 'pcm.cap { type plug slave { pcm "array_gain" channels 4 } route_policy sum }' >> ~/.asoundrc
-
-#
-# get CSV KIT
-#
-# RUN git clone https://github.com/wireservice/csvkit; cd csvkit; pip install .
-
-#
-# get QUARKS
-#
-# RUN curl -LO "https://github.com/apache/incubator-quarks/archive/master.zip"
-# RUN unzip master.zip && cd incubator-quarks-master && ant
-# RUN export QUARKS=/homes/myUser/incubator-quarks-master/target/java8
-
-#
-# get JAVA
-#
-# RUN apt-get update
-# RUN apt-get install ant
-
-#
-# install data-dog
-#
-# RUN sh -c "$(curl -L https://raw.githubusercontent.com/DataDog/dd-agent/master/packaging/datadog-agent/source/setup_agent.sh)"
-# RUN mv ~/.datadog-agent/agent/datadog.conf.example ~/.datadog-agent/agent/datadog.conf \
-#     && sed -i -e"s/^.*non_local_traffic:.*$/non_local_traffic: yes/" ~/.datadog-agent/agent/datadog.conf \
-#     && sed -i -e"s/^.*log_to_syslog:.*$/log_to_syslog: no/" ~/.datadog-agent/agent/datadog.conf \
-#     && rm ~/.datadog-agent/agent/conf.d/network.yaml.default
 
 #
 # install IBM IoTF quickstart
