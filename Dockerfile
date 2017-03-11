@@ -47,13 +47,13 @@ RUN echo "anon_root=/var/lib/motion" >> /etc/vsftpd.conf \
 #
 # H264
 #
-RUN cd /usr/src && git clone git://git.videolan.org/x264 && cd x264 && ./configure --host=arm-unknown-linux-gnueabi --enable-static --disable-opencl && make -j4 && make install
+RUN cd /usr/src && git clone git://git.videolan.org/x264 && cd x264 && ./configure --host=arm-unknown-linux-gnueabi --enable-static --disable-opencl && make install
 
 #
 # FFMPEG
 # https://github.com/FFmpeg/FFmpeg.git (OLD)
 #
-cd /usr/src &&  git clone https://git.ffmpeg.org/ffmpeg.git ffmpeg && cd ffmpeg && ./configure --arch=armel --target-os=linux --enable-gpl --enable-libx264 --enable-nonfree && make -j4 && make install
+RUN cd /usr/src &&  git clone https://git.ffmpeg.org/ffmpeg.git ffmpeg && cd ffmpeg && ./configure --arch=armel --target-os=linux --enable-gpl --enable-libx264 --enable-nonfree && make install
 
 #
 # POCKET SPHINX
