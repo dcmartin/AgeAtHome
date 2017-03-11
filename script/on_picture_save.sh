@@ -166,10 +166,15 @@ elif [ -s "${ALCHEMY_OUTPUT}" ]; then
     echo '"visual":{"image":"'${IMAGE_ID}.jpg'","scores":[{"classifier_id":"NA","name":"NA","score":0}]' >> "${OUTPUT}.$$"
 elif [ -s "${VR_OUTPUT}" ]; then
     echo "+++ $0 VR ONLY"
-    echo '{ "alchemy":{"text":"NO_TAGS","score":0},' > "${OUTPUT}.$$"
+    # EXAMPLE {"custom_classes":0,"images":[{"classifiers":[{"classes":[{"class":"parlor","score":0.593,"type_hierarchy":"/room/parlor"},{"class":"room","score":0.804},{"class":"beauty salon","score":0.586,"type_hierarchy":"/shop/beauty salon"},{"class":"shop","score":0.587},{"class":"stateroom","score":0.562,"type_hierarchy":"/compartment/stateroom"},{"class":"compartment","score":0.563},{"class":"reception room","score":0.557},{"class":"living room","score":0.556},{"class": "kitchen","score":0.554,"type_hierarchy":"/room/kitchen"},{"class":"blue color","score":0.719},{"class":"ultramarine color","score":0.57}],"classifier_id":"default","name":"default"}],"image":"20170311091908-1907-00.jpg"}],"images_processed":1} 
+    # encode top1 as alchemy
+    jq '.images[]|{"alchemy":[.classifiers[].classes[]]|sort_by(.score)[-1]|{"text":.class,"score":.score}}' "${VR_OUTPUT}" > "${OUTPUT}.alchemy.$$"
     # make it look like VI-type output
-    jq -c '.images[0]|{image:.image,scores:[.classifiers[].classes[]|{classifier_id:.class,name:.type_hierarchy,score:.score}]}' "${VR_OUTPUT}" \
-	| sed 's/^{\(.*\)/"visual":{ \1 \}/' >> "${OUTPUT}.$$"
+    jq -c '.images[0]|{image:.image,scores:[.classifiers[].classes[]|{classifier_id:.class,name:.type_hierarchy,score:.score}]}' "${VR_OUTPUT}" > "${OUTPUT}.visual.$$"
+    # concatenate
+    cat "${OUTPUT}.alchemy.$$" | sed 's/\(.*\)}/\1,"visual":/' | paste - "${OUTPUT}.visual.$$" | sed 's/\(.*\)/\1}/' | jq -c >! "${OUTPUT}.$$"
+    # cleanup
+    rm -f "${OUTPUT}.alchemy.$$" "${OUTPUT}.visual.$$"
 elif [ -s "${VI_OUTPUT}" ]; then
     echo "+++ $0 VI_INSIGHTS ONLY"
     echo '{ "alchemy":{"text":"NO_TAGS","score":0},' > "${OUTPUT}.$$"
