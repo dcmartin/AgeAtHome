@@ -172,7 +172,8 @@ elif [ -s "${VR_OUTPUT}" ]; then
     # make it look like VI-type output
     jq -c '.images[0]|{image:.image,scores:[.classifiers[].classes[]|{classifier_id:.class,name:.type_hierarchy,score:.score}]}' "${VR_OUTPUT}" > "${OUTPUT}.visual.$$"
     # concatenate
-    cat "${OUTPUT}.alchemy.$$" | sed 's/\(.*\)}/\1,"visual":/' | paste - "${OUTPUT}.visual.$$" | sed 's/\(.*\)/\1}/' | jq -c >! "${OUTPUT}.$$"
+    cat "${OUTPUT}.alchemy.$$" | sed 's/\(.*\)}/\1,"visual":/' | paste - "${OUTPUT}.visual.$$" | sed 's/\(.*\)/\1}/' >! "${OUTPUT}.$$"
+    jq -c "${OUTPUT}"
     # cleanup
     rm -f "${OUTPUT}.alchemy.$$" "${OUTPUT}.visual.$$"
 elif [ -s "${VI_OUTPUT}" ]; then
