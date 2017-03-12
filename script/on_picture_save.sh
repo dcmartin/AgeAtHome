@@ -168,15 +168,14 @@ elif [ -s "${ALCHEMY_OUTPUT}" ]; then
 elif [ -s "${VR_OUTPUT}" ]; then
     echo "+++ $0 VR ONLY"
     # EXAMPLE {"custom_classes":0,"images":[{"classifiers":[{"classes":[{"class":"parlor","score":0.593,"type_hierarchy":"/room/parlor"},{"class":"room","score":0.804},{"class":"beauty salon","score":0.586,"type_hierarchy":"/shop/beauty salon"},{"class":"shop","score":0.587},{"class":"stateroom","score":0.562,"type_hierarchy":"/compartment/stateroom"},{"class":"compartment","score":0.563},{"class":"reception room","score":0.557},{"class":"living room","score":0.556},{"class": "kitchen","score":0.554,"type_hierarchy":"/room/kitchen"},{"class":"blue color","score":0.719},{"class":"ultramarine color","score":0.57}],"classifier_id":"default","name":"default"}],"image":"20170311091908-1907-00.jpg"}],"images_processed":1} 
-    jq -c '.' "${VR_OUTPUT}"
-    jq -c '.images[0]|{alchemy:[.classifiers[].classes[]]|sort_by(.score)[-1]}' "${VR_OUTPUT}"
+    jq -c '.images[0]' "${VR_OUTPUT}"
+    jq -c '.images[0]|.classifiers[].classes|sort_by(.score)[-1]|{text:.class,score:.score}' "${VR_OUTPUT}"
     # encode top1 as alchemy
-    jq -c '.images[0]|{alchemy:[.classifiers[].classes[]]|sort_by(.score)[-1]|{text:.class,score:.score}}' "${VR_OUTPUT}" > "${OUTPUT}.alchemy.$$"
-    # make it look like VI-type output
+    jq -c '.images[0]|.classifiers[].classes|sort_by(.score)[-1]|{text:.class,score:.score}' "${VR_OUTPUT}" > "${OUTPUT}.alchemy.$$"
+    # make VR look like VI-type output
     jq -c '.images[0]|{image:.image,scores:[.classifiers[].classes[]|{classifier_id:.class,name:.type_hierarchy,score:.score}]}' "${VR_OUTPUT}" > "${OUTPUT}.visual.$$"
-    jq -c '.' "${OUTPUT}.visual.$$"
     # concatenate
-    cat "${OUTPUT}.alchemy.$$" | sed 's/\(.*\)}/\1,"visual":/' | paste - "${OUTPUT}.visual.$$" | sed 's/\(.*\)/\1}/' > "${OUTPUT}.$$"
+    cat "${OUTPUT}.alchemy.$$" | sed 's/\(.*\)/{"alchemy":\1,"visual":/' | paste - "${OUTPUT}.visual.$$" | sed 's/\(.*\)/\1}/' > "${OUTPUT}.$$"
     # cleanup
     rm -f "${OUTPUT}.alchemy.$$" "${OUTPUT}.visual.$$"
 elif [ -s "${VI_OUTPUT}" ]; then
@@ -191,7 +190,7 @@ else
 fi
 
 
-echo -n "+++ OUTPUT " `jq -c '.' "${OUTPUT}.$$"`
+echo -n "+++ OUTPUT " `cat "${OUTPUT}.$$"`
 
 # create (and validate) output
 jq -c '.' "${OUTPUT}.$$" > "${OUTPUT}"
