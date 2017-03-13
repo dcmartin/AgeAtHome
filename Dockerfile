@@ -45,7 +45,6 @@ RUN cd /usr/src \
 	&& autoreconf -i \
 	&& ./configure \
 	&& make \
-	&& make check \
 	&& make install \
 	&& make distclean
 
