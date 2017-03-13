@@ -11,7 +11,6 @@ RUN apt-get install -q -y --no-install-recommends \
     csh \
     git \
     make \
-    jq \
     tcsh \
     bc \
     gawk \
@@ -35,6 +34,20 @@ RUN apt-get install -q -y --no-install-recommends \
     sox \
     autoconf \
     automake
+
+#
+# JQ v 1.5
+#
+RUN cd /usr/src \
+	&& curl -L "https://github.com/stedolan/jq/releases/download/jq-1.5/jq-1.5.tar.gz" > jq.gz \
+	&& tar xzvf jq.gz \
+	&& cd jq-1.5 \ 
+	&& autoreconf -i \
+	&& ./configure \
+	&& make \
+	&& make check \
+	&& make install \
+	&& make distclean
 
 #
 # VSFTPD
