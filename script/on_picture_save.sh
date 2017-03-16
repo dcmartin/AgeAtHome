@@ -61,7 +61,6 @@ if [ -z "${VR_OFF}" ] && [ -n "${VR_APIKEY}" ] && [ -n "${VR_VERSION}" ] && [ -n
 	"$VR_URL/$VR_VERSION/classify?api_key=$VR_APIKEY&classifier_ids=$VR_CLASSIFIER&threshold=0.0&version=$VR_DATE"
     if [ -s "${VR_OUTPUT}" ]; then
 	echo  "+++ $0 SUCCESS visual-recognition ${IMAGE_FILE}"
-	jq -c '.' "${VR_OUTPUT}"
     else
 	echo "+++ $0 FAILURE visual-recognition ${IMAGE_FILE}"
     fi
@@ -89,7 +88,7 @@ if [ -s "${VR_OUTPUT}" ]; then
       '.images[0]|{image:.image,scores:[.classifiers[]|.classifier_id as $cid|.classes[]|{classifier_id:.class,name:(if .type_hierarchy == null then $cid else .type_hierarchy end),score:.score}]}' \
       "${VR_OUTPUT}" > "${OUTPUT}.visual.$$"
     # concatenate
-    cat "${OUTPUT}.alchemy.$$" | sed 's/\(.*\)/{"alchemy":\1,"visual":/' | paste - "${OUTPUT}.visual.$$" | sed 's/\(.*\)/\1}/' > "${OUTPUT}.$$"
+    sed 's/\(.*\)/{"alchemy":\1,"visual":/' "${OUTPUT}.alchemy.$$" | paste - "${OUTPUT}.visual.$$" | sed 's/\(.*\)/\1}/' > "${OUTPUT}.$$"
     # cleanup
     rm -f "${OUTPUT}.alchemy.$$" "${OUTPUT}.visual.$$"
 else
@@ -99,8 +98,8 @@ else
     echo "}}" >> "${OUTPUT}.$$"
 fi
 
-echo "+++ OUTPUT " `cat "${OUTPUT}.$$"`
-
+# debug
+cat "${OUTPUT}"
 # create (and validate) output
 jq -c '.' "${OUTPUT}.$$" > "${OUTPUT}"
 
