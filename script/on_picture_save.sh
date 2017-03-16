@@ -80,8 +80,10 @@ IMAGE_ID=`echo "${IMAGE_ID%.*}"`
 
 if [ -s "${VR_OUTPUT}" ]; then
     echo "+++ $0 VR ONLY"
-    # encode top1 as alchemy (only first classifier; should be custom, not default)
-    jq -c '.images[0]|.classifiers[0].classes|sort_by(.score)[-1]|{text:.class,score:.score}' "${VR_OUTPUT}" > "${OUTPUT}.alchemy.$$"
+    # encode top1 across custom (iff specified above) and default classifiers; decorate with source: default, <hierarchy:default>, custom classifier_id
+    jq -c \
+      '.images[0]|.classifiers[]|.classifier_id as $cid|.classes|sort_by(.score)[-1]|{text:.class,name:(if .type_hierarchy == null then $cid else .type_hierarchy end),score:.score}' \
+      "${VR_OUTPUT}" > "${OUTPUT}.alchemy.$$"
     # make VR look like VI-type output
     jq -c \
       '.images[0]|{image:.image,scores:[.classifiers[]|.classifier_id as $cid|.classes[]|{classifier_id:.class,name:(if .type_hierarchy == null then $cid else .type_hierarchy end),score:.score}]}' \
