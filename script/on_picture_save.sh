@@ -39,48 +39,26 @@ fi
 #
 # CLASSIFICATION
 #
-# {
-#   "custom_classes": 0,
-#   "images": [
-#     {
-#       "classifiers": [
-#         {
-#           "classes": [
-#             {
-#               "class": "people",
-#               "score": 0.310026,
-#               "type_hierarchy": "/people"
-#             },
-#             {
-#               "class": "street",
-#               "score": 0.28905,
-#               "type_hierarchy": "/places/street"
-#             }
-#           ],
-#           "classifier_id": "default",
-#           "name": "default"
-#         }
-#       ],
-#       "image": "20160821203750-3027-00.jpg"
-#     }
-#   ],
-#   "images_processed": 1
-# }
-# 
+# EXAMPLE
+# {"custom_classes":8,"images":[{"classifiers":[{"classes":[{"class":"cat","score":0.0440043},{"class":"david","score":0.682563},{"class":"dog","score":0.0426537},{"class":"ellen","score":0.0450058},{"class":"hali","score":0.0435302},{"class":"ian","score":0.936221},{"class":"keli","score":0.0293902},{"class":"riley","score":0.539559}],"classifier_id":"roughfog_879989469","name":"roughfog_879989469"},{"classes":[{"class":"kitchen","score":0.63,"type_hierarchy":"/room/kitchen"},{"class":"room","score":0.68},{"class":"people","score":0.573,"type_hierarchy":"/person/people"},{"class":"person","score":0.628},{"class":"cafe","score":0.557,"type_hierarchy":"/building/restaurant/cafe"},{"class":"restaurant","score":0.56},{"class":"building","score":0.56},{"class":"computer user","score":0.556,"type_hierarchy":"/person/computer user"},{"class":"wheelhouse","score":0.554,"type_hierarchy":"/room/compartment/wheelhouse"},{"class":"compartment","score":0.554},{"class":"reddish brown color","score":0.64},{"class":"chestnut color","score":0.623}],"classifier_id":"default","name":"default"}],"image":"input.jpg"}],"images_processed":1}
+#
 
 # create VR_OUTPUT JSON filename
 VR_OUTPUT="${IMAGE_FILE%.*}-vr.json"
-# proceed if VR_OFF is zero length or undefined
+# proceed iff all
 if [ -z "${VR_OFF}" ] && [ -n "${VR_APIKEY}" ] && [ -n "${VR_VERSION}" ] && [ -n "${VR_DATE}" ] && [ -n "${VR_URL}" ]; then
-    echo "+++ $0 PROCESSING visual-recognition ${VR_VERSION} ${VR_DATE} ${VR_URL} ${IMAGE_FILE}"
     if [ -z "${VR_CLASSIFIER}" ]; then
 	VR_CLASSIFIER="default"
+    else
+	# custom classifier goes first; top1 from first classifier is encoded as alchemy
+        VR_CLASSIFIER="${VR_CLASSIFIER},default"
     fi
-    curl -L \
+    echo "+++ $0 PROCESSING visual-recognition ${VR_CLASSIFIER} ${VR_VERSION} ${VR_DATE} ${VR_URL} ${IMAGE_FILE}"
+    # make the call
+    curl -s -q -L \
         -F "images_file=@$IMAGE_FILE" \
 	-o "${VR_OUTPUT}" \
-	"$VR_URL/$VR_VERSION/classify?api_key=$VR_APIKEY&classifier_ids=$VR_CLASSIFIER&threshold=0.000001&version=$VR_DATE"
-       # -f -s -q \
+	"$VR_URL/$VR_VERSION/classify?api_key=$VR_APIKEY&classifier_ids=$VR_CLASSIFIER&threshold=0.0&version=$VR_DATE"
     if [ -s "${VR_OUTPUT}" ]; then
 	echo  "+++ $0 SUCCESS visual-recognition ${IMAGE_FILE}"
 	jq -c '.' "${VR_OUTPUT}"
@@ -92,54 +70,6 @@ else
 fi
 
 #
-# VISUAL INSIGHTS
-#
-
-# set VI_OUTPUT
-VI_OUTPUT="${IMAGE_FILE%.*}-visual.json"
-# proceed if VI_OFF is zero length or undefined
-if [ -z "${VI_OFF}" ] && [ -n "${VI_USERNAME}" ] && [ -n "${VI_PASSWORD}" ] && [ -n "${VI_URL}" ]; then
-    echo "+++ $0 PROCESSING visual-insights ${IMAGE_FILE}"
-    # VisualInsights
-    curl -q -s -L -u "${VI_USERNAME}":"${VI_PASSWORD}" -X POST -F "images_file=@${IMAGE_FILE}" "${VI_URL}" > "${VI_OUTPUT}"
-    if [ -s "${VI_OUTPUT}" ]; then
-	echo "+++ $0 SUCCESS visual-insights ${IMAGE_FILE}"
-    else
-	echo "+++ $0 FAILURE visual-insights ${IMAGE_FILE}"
-    fi
-else
-    echo "+++ $0 VISUAL-INSIGHTS - OFF"
-fi
-
-#
-# ALCHEMY
-#
-# FACES
-# curl -q -s -L -X POST --data-binary "@${IMAGE_FILE}" "${ALCHEMY_API_URL}/image/ImageGetRankedImageFaceTags?apikey=${ALCHEMY_API_KEY}&imagePostMode=raw&outputMode=json"
-#
-
-# set ALCHEMY_OUTPUT
-ALCHEMY_OUTPUT="${IMAGE_FILE%.*}-alchemy.json"
-# test if not OFF or not configured
-if [ -z "${ALCHEMY_OFF}" ] && [ -n "${ALCHEMY_API_KEY}" ] && [ -n "${ALCHEMY_API_URL}" ]; then
-    API_KEY="${ALCHEMY_API_KEY}"
-    if [ $(date +%p) == "PM" ] && [ -n "${ALCHEMY_API_KEY_PM}" ]; then
-	API_KEY="${ALCHEMY_API_KEY_PM}"
-    fi
-    echo "+++ $0 PROCESSING ALCHEMY ${IMAGE_FILE} with ${API_KEY}"
-    # ALCHEMY CLASSIFY
-    curl -q -s -L -X POST --data-binary "@${IMAGE_FILE}" "${ALCHEMY_API_URL}/image/ImageGetRankedImageKeywords?apikey=${API_KEY}&imagePostMode=raw&outputMode=json" > "${ALCHEMY_OUTPUT}"
-    if [ -s "${ALCHEMY_OUTPUT}" ]; then
-	echo "+++ SUCCESS alchemy ${IMAGE_FILE}"
-    else
-	echo "+++ $0 FAILURE ALCHEMY ${IMAGE_FILE}"
-    fi
-else
-    echo "+++ $0 ALCHEMY OFF"
-    rm -f "${ALCHEMY_OUTPUT}"
-fi
-
-#
 # Prepare output
 #
 OUTPUT="${IMAGE_FILE%.*}.json"
@@ -148,50 +78,24 @@ IMAGE_ID=`echo "${OUTPUT##*/}"`
 # drop extension
 IMAGE_ID=`echo "${IMAGE_ID%.*}"`
 
-if [ -s "${VI_OUTPUT}" ] && [ -s "${ALCHEMY_OUTPUT}" ]; then
-    echo "+++ $0 VI and ALCHEMY"
-    # order matters
-    jq -c '.imageKeywords[0]' "${ALCHEMY_OUTPUT}" | sed 's/\(.*\)\}/\{ "alchemy": \1 \},/' > "${OUTPUT}.$$"
-    jq -c '.images[0]' "${VI_OUTPUT}" | sed 's/^{\(.*\)/"visual":{ \1 \}/' >> "${OUTPUT}.$$"
-elif [ -s "${VR_OUTPUT}" ] && [ -s "${ALCHEMY_OUTPUT}" ]; then
-    echo "+++ $0 VR and ALCHEMY"
-    # order matters
-    jq -c '.imageKeywords[0]' "${ALCHEMY_OUTPUT}" | sed 's/\(.*\)\}/\{ "alchemy": \1 \},/' > "${OUTPUT}.$$"
-    # make it look like VI-type output
-    jq -c '.images[0]|{image:.image,scores:[.classifiers[].classes[]|{classifier_id:.class,name:.type_hierarchy,score:.score}]}' "${VR_OUTPUT}" \
-	| sed 's/^{\(.*\)/"visual":{ \1 \}/' >> "${OUTPUT}.$$"
-elif [ -s "${ALCHEMY_OUTPUT}" ]; then
-    echo "+++ $0 ALCHEMY ONLY"
-    echo `date` "$0 $$ -- " `jq -c . "${ALCHEMY_OUTPUT}"`
-    jq -c '.imageKeywords[0]' "${ALCHEMY_OUTPUT}" | sed 's/\(.*\)\}/\{ "alchemy": \1 \},/' > "${OUTPUT}.$$"
-    echo '"visual":{"image":"'${IMAGE_ID}.jpg'","scores":[{"classifier_id":"NA","name":"NA","score":0}]' >> "${OUTPUT}.$$"
-elif [ -s "${VR_OUTPUT}" ]; then
+if [ -s "${VR_OUTPUT}" ]; then
     echo "+++ $0 VR ONLY"
-    # EXAMPLE {"custom_classes":0,"images":[{"classifiers":[{"classes":[{"class":"parlor","score":0.593,"type_hierarchy":"/room/parlor"},{"class":"room","score":0.804},{"class":"beauty salon","score":0.586,"type_hierarchy":"/shop/beauty salon"},{"class":"shop","score":0.587},{"class":"stateroom","score":0.562,"type_hierarchy":"/compartment/stateroom"},{"class":"compartment","score":0.563},{"class":"reception room","score":0.557},{"class":"living room","score":0.556},{"class": "kitchen","score":0.554,"type_hierarchy":"/room/kitchen"},{"class":"blue color","score":0.719},{"class":"ultramarine color","score":0.57}],"classifier_id":"default","name":"default"}],"image":"20170311091908-1907-00.jpg"}],"images_processed":1} 
-    echo "??? DEBUG ???"
-    jq -c '.images[0]|.classifiers[].classes|sort_by(.score)[-1]' "${VR_OUTPUT}"
-    jq -c '.images[0]|.classifiers[].classes|sort_by(.score)[-1]|.class' "${VR_OUTPUT}"
-    jq -c '.images[0]|.classifiers[].classes|sort_by(.score)[-1]|.score' "${VR_OUTPUT}"
-    jq -c '.images[0]|.classifiers[].classes|sort_by(.score)[-1]|{text:.class,score:.score}' "${VR_OUTPUT}"
-    # encode top1 as alchemy
-    jq -c '.images[0]|.classifiers[].classes|sort_by(.score)[-1]|{text:.class,score:.score}' "${VR_OUTPUT}" > "${OUTPUT}.alchemy.$$"
+    # encode top1 as alchemy (only first classifier; should be custom, not default)
+    jq -c '.images[0]|.classifiers[0].classes|sort_by(.score)[-1]|{text:.class,score:.score}' "${VR_OUTPUT}" > "${OUTPUT}.alchemy.$$"
     # make VR look like VI-type output
-    jq -c '.images[0]|{image:.image,scores:[.classifiers[].classes[]|{classifier_id:.class,name:.type_hierarchy,score:.score}]}' "${VR_OUTPUT}" > "${OUTPUT}.visual.$$"
+    jq -c \
+      '.images[0]|{image:.image,scores:[.classifiers[]|.classifier_id as $cid|.classes[]|{classifier_id:.class,name:(if .type_hierarchy == null then $cid else .type_hierarchy end),score:.score}]}' \
+      "${VR_OUTPUT}" > "${OUTPUT}.visual.$$"
     # concatenate
     cat "${OUTPUT}.alchemy.$$" | sed 's/\(.*\)/{"alchemy":\1,"visual":/' | paste - "${OUTPUT}.visual.$$" | sed 's/\(.*\)/\1}/' > "${OUTPUT}.$$"
     # cleanup
     rm -f "${OUTPUT}.alchemy.$$" "${OUTPUT}.visual.$$"
-elif [ -s "${VI_OUTPUT}" ]; then
-    echo "+++ $0 VI_INSIGHTS ONLY"
-    echo '{ "alchemy":{"text":"NO_TAGS","score":0},' > "${OUTPUT}.$$"
-    jq -c '.images[0]' "${VI_OUTPUT}" | sed 's/^{\(.*\)/"visual":{ \1 \}/' >> "${OUTPUT}.$$"
 else
-    echo "+++ $0 NEITHER"
+    echo "+++ $0 NO OUTPUT"
     echo '{ "alchemy":{"text":"NO_TAGS","score":0},' > "${OUTPUT}.$$"
     echo '"visual":{"image":"'${IMAGE_ID}.jpg'","scores":[{"classifier_id":"NA","name":"NA","score":0}]' >> "${OUTPUT}.$$"
     echo "}}" >> "${OUTPUT}.$$"
 fi
-
 
 echo "+++ OUTPUT " `cat "${OUTPUT}.$$"`
 
@@ -199,7 +103,7 @@ echo "+++ OUTPUT " `cat "${OUTPUT}.$$"`
 jq -c '.' "${OUTPUT}.$$" > "${OUTPUT}"
 
 # remove tmp & originals
-rm -f "${OUTPUT}.$$" "${VI_OUTPUT}" "${ALCHEMY_OUTPUT}" "${VR_OUTPUT}"
+rm -f "${OUTPUT}.$$" "${VR_OUTPUT}"
 
 #
 # add date and time
