@@ -90,9 +90,9 @@ cat "${OUTPUT}.alchemy.$$"
       "${VR_OUTPUT}" > "${OUTPUT}.visual.$$"
 cat "${OUTPUT}.visual.$$"
     # concatenate
-    sed 's/\(.*\)/{"alchemy":\1,"visual":/' < "${OUTPUT}.alchemy.$$" | paste - "${OUTPUT}.visual.$$" > "${OUTPUT}.joint.$$
+    sed 's/\(.*\)/{"alchemy":\1,"visual":/' < "${OUTPUT}.alchemy.$$" | paste - "${OUTPUT}.visual.$$" > "${OUTPUT}.joint.$$"
 cat "${OUTPUT}.joint.$$"
-    sed 's/\(.*\)/\1}/' < "${OUTPUT}.joint.$$ > "${OUTPUT}.$$"
+    sed 's/\(.*\)/\1}/' < "${OUTPUT}.joint.$$" > "${OUTPUT}.$$"
 cat "${OUTPUT}.$$"
     # cleanup
     rm -f "${OUTPUT}.alchemy.$$" "${OUTPUT}.visual.$$" "${OUTPUT}.joint.$$"
