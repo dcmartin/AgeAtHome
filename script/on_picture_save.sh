@@ -78,22 +78,19 @@ IMAGE_ID=`echo "${OUTPUT##*/}"`
 IMAGE_ID=`echo "${IMAGE_ID%.*}"`
 
 if [ -s "${VR_OUTPUT}" ]; then
-    echo "+++ $0 VR ONLY"
+    echo "+++ $0 PROCESSING VISUAL_RECOGNITION ${VR_OUTPUT}"
     # encode top1 across custom (iff specified above) and default classifiers; decorate with source: default, <hierarchy:default>, custom classifier_id
     jq -c \
-      '.images[0]|.classifiers[]|.classifier_id as $cid|.classes|sort_by(.score)[-1]|{text:.class,name:(if .type_hierarchy == null then $cid else .type_hierarchy end),score:.score}' \
+      '[.images[0]|.classifiers[]|.classifier_id as $cid|.classes|sort_by(.score)[-1]|{text:.class,name:(if .type_hierarchy == null then $cid else .type_hierarchy end),score:.score}][0]' \
       "${VR_OUTPUT}" > "${OUTPUT}.alchemy.$$"
 echo -n "alchemy:" ; cat "${OUTPUT}.alchemy.$$"
     # make VR look like VI-type output
     jq -c \
       '.images[0]|{image:.image,scores:[.classifiers[]|.classifier_id as $cid|.classes[]|{classifier_id:.class,name:(if .type_hierarchy == null then $cid else .type_hierarchy end),score:.score}]}' \
       "${VR_OUTPUT}" > "${OUTPUT}.visual.$$"
-echo -n "visual:" ; cat "${OUTPUT}.visual.$$"
     # concatenate
-    sed 's/\(.*\)/{"alchemy":\1,"visual":/' < "${OUTPUT}.alchemy.$$" | paste - "${OUTPUT}.visual.$$" > "${OUTPUT}.joint.$$"
-echo -n "joint:" ; cat "${OUTPUT}.joint.$$"
-    sed 's/\(.*\)/\1}/' < "${OUTPUT}.joint.$$" > "${OUTPUT}.$$"
-echo -n "final:" ; cat "${OUTPUT}.$$"
+    sed 's/\(.*\)/{"alchemy":\1,"visual":/' "${OUTPUT}.alchemy.$$" | paste - "${OUTPUT}.visual.$$" > "${OUTPUT}.joint.$$"
+    sed 's/\(.*\)/\1}/' "${OUTPUT}.joint.$$" > "${OUTPUT}.$$"
     # cleanup
     rm -f "${OUTPUT}.alchemy.$$" "${OUTPUT}.visual.$$" "${OUTPUT}.joint.$$"
 else
