@@ -83,17 +83,17 @@ if [ -s "${VR_OUTPUT}" ]; then
     jq -c \
       '.images[0]|.classifiers[]|.classifier_id as $cid|.classes|sort_by(.score)[-1]|{text:.class,name:(if .type_hierarchy == null then $cid else .type_hierarchy end),score:.score}' \
       "${VR_OUTPUT}" > "${OUTPUT}.alchemy.$$"
-cat "${OUTPUT}.alchemy.$$"
+echo -n "alchemy:" ; cat "${OUTPUT}.alchemy.$$"
     # make VR look like VI-type output
     jq -c \
       '.images[0]|{image:.image,scores:[.classifiers[]|.classifier_id as $cid|.classes[]|{classifier_id:.class,name:(if .type_hierarchy == null then $cid else .type_hierarchy end),score:.score}]}' \
       "${VR_OUTPUT}" > "${OUTPUT}.visual.$$"
-cat "${OUTPUT}.visual.$$"
+echo -n "visual:" ; cat "${OUTPUT}.visual.$$"
     # concatenate
     sed 's/\(.*\)/{"alchemy":\1,"visual":/' < "${OUTPUT}.alchemy.$$" | paste - "${OUTPUT}.visual.$$" > "${OUTPUT}.joint.$$"
-cat "${OUTPUT}.joint.$$"
+echo -n "joint:" ; cat "${OUTPUT}.joint.$$"
     sed 's/\(.*\)/\1}/' < "${OUTPUT}.joint.$$" > "${OUTPUT}.$$"
-cat "${OUTPUT}.$$"
+echo -n "final:" ; cat "${OUTPUT}.$$"
     # cleanup
     rm -f "${OUTPUT}.alchemy.$$" "${OUTPUT}.visual.$$" "${OUTPUT}.joint.$$"
 else
