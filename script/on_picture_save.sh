@@ -81,7 +81,7 @@ if [ -s "${VR_OUTPUT}" ]; then
     echo "+++ $0 PROCESSING VISUAL_RECOGNITION ${VR_OUTPUT}"
     # encode top1 across custom (iff specified above) and default classifiers; decorate with source: default, <hierarchy:default>, custom classifier_id
     jq -c \
-      '[.images[0]|.classifiers[]|.classifier_id as $cid|.classes|sort_by(.score)[-1]|{text:.class,name:(if .type_hierarchy == null then $cid else .type_hierarchy end),score:.score}][0]' \
+      '[.images[0]|.classifiers[]|.classifier_id as $cid|.classes|sort_by(.score)[-1]|{text:.class,name:(if .type_hierarchy == null then $cid else .type_hierarchy end),score:.score}]|sort_by(.score)[-1]' \
       "${VR_OUTPUT}" > "${OUTPUT}.alchemy.$$"
 echo -n "alchemy:" ; cat "${OUTPUT}.alchemy.$$"
     # make VR look like VI-type output
