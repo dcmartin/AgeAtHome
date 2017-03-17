@@ -33,7 +33,7 @@ fi
 # Override MOTION_THRESHOLD (pixels changed) default 1500
 [ -n "${MOTION_THRESHOLD}" ] && \
     sed -i "s/^threshold\s[0-9]\+/threshold ${MOTION_THRESHOLD}/g" /etc/motion/motion.conf
-# Override MOTION_EVENT_GAP (seconds) default 15 (formerly 60)
+# Override MOTION_EVENT_GAP (seconds) default 60
 [ -n "${MOTION_EVENT_GAP}" ] && \
     sed -i "s/^event_gap\s[0-9]\+/event_gap ${MOTION_EVENT_GAP}/g" /etc/motion/motion.conf
 
