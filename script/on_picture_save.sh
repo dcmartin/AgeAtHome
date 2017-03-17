@@ -83,8 +83,7 @@ if [ -s "${VR_OUTPUT}" ]; then
     jq -c \
       '[.images[0]|.classifiers[]|.classifier_id as $cid|.classes|sort_by(.score)[-1]|{text:.class,name:(if .type_hierarchy == null then $cid else .type_hierarchy end),score:.score}]|sort_by(.score)[-1]' \
       "${VR_OUTPUT}" > "${OUTPUT}.alchemy.$$"
-echo -n "alchemy:" ; cat "${OUTPUT}.alchemy.$$"
-    # make VR look like VI-type output
+    # process top1 from custom (iff exists) and default
     jq -c \
       '.images[0]|{image:.image,scores:[.classifiers[]|.classifier_id as $cid|.classes[]|{classifier_id:.class,name:(if .type_hierarchy == null then $cid else .type_hierarchy end),score:.score}]}' \
       "${VR_OUTPUT}" > "${OUTPUT}.visual.$$"
