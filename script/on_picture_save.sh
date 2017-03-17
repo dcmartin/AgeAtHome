@@ -102,6 +102,9 @@ fi
 # create (and validate) output
 jq -c '.' "${OUTPUT}.$$" > "${OUTPUT}"
 
+# debug
+jq -c '.' "${OUTPUT}"
+
 # remove tmp & originals
 rm -f "${OUTPUT}.$$" "${VR_OUTPUT}"
 
