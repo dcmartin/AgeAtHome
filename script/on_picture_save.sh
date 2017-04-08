@@ -83,11 +83,11 @@ if [ -s "${VR_OUTPUT}" ]; then
     jq -c \
       '[.images[0]|.classifiers[]|.classifier_id as $cid|.classes|sort_by(.score)[-1]|{text:.class,name:(if .type_hierarchy == null then $cid else .type_hierarchy end),score:.score}]|sort_by(.score)[-1]' \
       "${VR_OUTPUT}" > "${OUTPUT}.alchemy.$$"
-    # process top1 from custom (iff exists) and default
+    # process WVR into "market basket" with "name" used to indicate source (default, <custom-id> or hierarchy (from default)
     jq -c \
       '.images[0]|{image:.image,scores:[.classifiers[]|.classifier_id as $cid|.classes[]|{classifier_id:.class,name:(if .type_hierarchy == null then $cid else .type_hierarchy end),score:.score}]}' \
       "${VR_OUTPUT}" > "${OUTPUT}.visual.$$"
-    # concatenate
+    # concatenate -- "alchemy" is _really_ "top1" and "visual" is _really_ the entire "set" of classifiers
     sed 's/\(.*\)/{"alchemy":\1,"visual":/' "${OUTPUT}.alchemy.$$" | paste - "${OUTPUT}.visual.$$" > "${OUTPUT}.joint.$$"
     sed 's/\(.*\)/\1}/' "${OUTPUT}.joint.$$" > "${OUTPUT}.$$"
     # cleanup
@@ -136,7 +136,7 @@ if [ -s "${OUTPUT}" ]; then
     fi
 else
     echo "*** ERROR: $0 - NO OUTPUT"
-    exit
+    goto done
 fi
 
 #
@@ -158,5 +158,20 @@ if [ -z "${CLOUDANT_OFF}" ] && [ -s "${OUTPUT}" ] && [ -n "${CLOUDANT_URL}" ] &&
 	curl -q -s -H "Content-type: application/json" -X PUT "$CLOUDANT_URL/${DEVICE_NAME}/${IMAGE_ID}" -d "@${OUTPUT}"
     fi
 fi
+
+# make a noise
+if [ -z "${TALKTOME_OFF}" ] && [ -s "${OUTPUT}" ] && [ -n "${WATSON_TTS_URL}" ] && [ -n "${WATSON_TTS_CREDS}" ]; then
+    set what = `jq -j '.alchemy.text' "$OUTPUT"` 
+    set say = "I just saw $what"
+    curl -s -q -L -X POST \
+	--header "Content-Type: application/json" \
+	--header "Accept: audio/wav" \
+	--data '{"text":"'"$say"'"}' \
+	"https://${WATSON_TTS_CREDS}@${WATSON_TTS_URL}?voice=en-US_MichaelVoice" --output output.wav
+    play output.wav
+    rm output.wav
+fi
+
+done:
 
 echo "+++ END: $0: $*" $(date) >&2
