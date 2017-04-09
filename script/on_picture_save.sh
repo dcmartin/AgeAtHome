@@ -136,7 +136,7 @@ if [ -s "${OUTPUT}" ]; then
     fi
 else
     echo "*** ERROR: $0 - NO OUTPUT"
-    goto done
+    exit
 fi
 
 #
@@ -161,21 +161,19 @@ fi
 
 # make a noise
 if [ -z "${TALKTOME_OFF}" ] && [ -s "${OUTPUT}" ] && [ -n "${WATSON_TTS_URL}" ] && [ -n "${WATSON_TTS_CREDS}" ]; then
-    what=`jq -j '.alchemy.text' "${OUTPUT}"`
+    WHAT=`jq -j '.alchemy.text' "${OUTPUT}"`
     if [ -z "${WHAT_TO_SAY}" ]; then
-	speak="I just saw ${what}"
+	SPEAK="I just saw ${WHAT}"
     else
-	speak="${WHAT_TO_SAY} ${what}"
+	SPEAK="${WHAT_TO_SAY} ${WHAT}"
     fi
     curl -s -q -L -X POST \
 	--header "Content-Type: application/json" \
 	--header "Accept: audio/wav" \
-	--data '{"text":"'"${speak}"'"}' \
+	--data '{"text":"'"${SPEAK}"'"}' \
 	"https://${WATSON_TTS_CREDS}@${WATSON_TTS_URL}?voice=en-US_MichaelVoice" --output output.wav
     play output.wav
-    rm output.wav
+    rm -f output.wav
 fi
-
-done:
 
 echo "+++ END: $0: $*" $(date) >&2
