@@ -161,12 +161,16 @@ fi
 
 # make a noise
 if [ -z "${TALKTOME_OFF}" ] && [ -s "${OUTPUT}" ] && [ -n "${WATSON_TTS_URL}" ] && [ -n "${WATSON_TTS_CREDS}" ]; then
-    set what = `jq -j '.alchemy.text' "$OUTPUT"` 
-    set say = "I just saw $what"
+    what=`jq -j '.alchemy.text' "${OUTPUT}"`
+    if [ -z "${WHAT_TO_SAY}" ]; then
+	speak="I just saw ${what}"
+    else
+	speak="${WHAT_TO_SAY} ${what}"
+    fi
     curl -s -q -L -X POST \
 	--header "Content-Type: application/json" \
 	--header "Accept: audio/wav" \
-	--data '{"text":"'"$say"'"}' \
+	--data '{"text":"'"${speak}"'"}' \
 	"https://${WATSON_TTS_CREDS}@${WATSON_TTS_URL}?voice=en-US_MichaelVoice" --output output.wav
     play output.wav
     rm output.wav
