@@ -177,4 +177,12 @@ if [ -z "${TALKTOME_OFF}" ] && [ -s "${OUTPUT}" ] && [ -n "${WATSON_TTS_URL}" ] 
     play "${WHAT}.wav"
 fi
 
+# send an email
+if [ -n "${EMAILME_ON}" ] && [ -s "${OUTPUT}" ] && [ -n "${GMAIL_ACCOUNT}" ] && [ -n "${GMAIL_CREDS}" ] && [ -n "${EMAIL_ADDRESS}" ]; then
+    if [ ! -f "${WHAT}.txt" ]; then
+        echo "From: ${AAH_LOCATION}\nSubject: ${WHAT}" > "${WHAT}.txt"
+    fi
+    curl -v --url 'smtps://smtp.gmail.com:465' --ssl-reqd --mail-from "${GMAIL_ACCOUNT}" --mail-rcpt "${EMAIL_ADDRESS}" --upload-file "${WHAT}.txt" --user "${GMAIL_CREDS}" --insecure
+fi
+
 echo "+++ END: $0: $*" $(date) >&2
