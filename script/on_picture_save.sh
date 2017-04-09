@@ -167,13 +167,14 @@ if [ -z "${TALKTOME_OFF}" ] && [ -s "${OUTPUT}" ] && [ -n "${WATSON_TTS_URL}" ] 
     else
 	SPEAK="${WHAT_TO_SAY} ${WHAT}"
     fi
-    curl -s -q -L -X POST \
-	--header "Content-Type: application/json" \
-	--header "Accept: audio/wav" \
-	--data '{"text":"'"${SPEAK}"'"}' \
-	"https://${WATSON_TTS_CREDS}@${WATSON_TTS_URL}?voice=en-US_MichaelVoice" --output output.wav
-    play output.wav
-    rm -f output.wav
+    if [ -z "${WHAT}" ]; then
+	curl -s -q -L -X POST \
+	  --header "Content-Type: application/json" \
+	  --header "Accept: audio/wav" \
+	  --data '{"text":"'"${SPEAK}"'"}' \
+	  "https://${WATSON_TTS_CREDS}@${WATSON_TTS_URL}?voice=en-US_MichaelVoice" --output "${WHAT}"
+    fi
+    play "${WHAT}"
 fi
 
 echo "+++ END: $0: $*" $(date) >&2
