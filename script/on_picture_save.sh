@@ -70,6 +70,35 @@ else
 fi
 
 #
+# DIGITS
+#
+
+# create DG_OUTPUT JSON filename
+DG_OUTPUT="${IMAGE_FILE%.*}-dg.json"
+if [ -n "${DIGITS_SERVER_URL}" ]; then
+    if [ -n "${DIGITS_JOB_ID}" ]; then
+	CMD="models/images/classification/classify_one.json"
+	# get inference
+	curl -s -q -L \ 
+	    -X POST \
+	    -F "image_file=@$IMAGE_FILE" \
+	    -F "job_id=${DIGITS_JOB_ID}" \
+	    -o "${DG_OUTPUT}" \
+	    "${DIGITS_SERVER_URL}/${CMD}"
+	# debug
+	jq -c '.' "${DG_OUTPUT}"
+	# get top1 class
+	TOP1_CLASS=$( jq -r '.predictions[0][0]' ${DG_OUTPUT} | sed "s/.*class=\(.*\)/\1/" )
+	TOP1_SCORE=$( jq -r '.predictions[0][1]' ${DG_OUTPUT} )
+	echo '{"text":"'"${TOP1_CLASS}"'","class":"'"${DIGITS_JOB_ID}"'","score":'${TOP1_SCORE}'}'
+    else
+	echo "+++ $0 NO DIGITS_JOB_ID specified for server ${DIGITS_SERVER_URL}"
+    fi
+else
+    echo "+++ $0 NO DIGITS_SERVER_URL specified"
+fi
+
+#
 # Prepare output
 #
 OUTPUT="${IMAGE_FILE%.*}.json"
@@ -162,7 +191,9 @@ fi
 
 # make a noise
 if [ -z "${TALKTOME_OFF}" ] && [ -s "${OUTPUT}" ] && [ -n "${WATSON_TTS_URL}" ] && [ -n "${WATSON_TTS_CREDS}" ]; then
+    # what entity to discuss/say
     WHAT=`jq -j '.alchemy.text' "${OUTPUT}"`
+    # should be a lookup aah_whatToSay(<where>,<when>,[<entity>],<whom>?)
     if [ -z "${WHAT_TO_SAY}" ]; then
 	SPEAK="I just saw ${WHAT}"
     else
@@ -181,9 +212,11 @@ fi
 # send an email
 if [ -n "${EMAILME_ON}" ] && [ -s "${OUTPUT}" ] && [ -n "${GMAIL_ACCOUNT}" ] && [ -n "${GMAIL_CREDS}" ] && [ -n "${EMAIL_ADDRESS}" ]; then
     if [ ! -f "${WHAT}.txt" ]; then
-        echo "From: ${AAH_LOCATION}\nSubject: ${WHAT}" > "${WHAT}.txt"
+        echo "From: ${AAH_LOCATION}" > "${WHAT}.txt"
+        echo "Subject: ${WHAT}" >> "${WHAT}.txt"
     fi
     curl -v --url 'smtps://smtp.gmail.com:465' --ssl-reqd --mail-from "${GMAIL_ACCOUNT}" --mail-rcpt "${EMAIL_ADDRESS}" --upload-file "${WHAT}.txt" --user "${GMAIL_CREDS}" --insecure
+    rm -f "${WHAT}.txt"
 fi
 
 echo "+++ END: $0: $*" $(date) >&2
