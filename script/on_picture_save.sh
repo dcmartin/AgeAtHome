@@ -79,8 +79,7 @@ if [ -n "${DIGITS_SERVER_URL}" ]; then
     if [ -n "${DIGITS_JOB_ID}" ]; then
 	CMD="models/images/classification/classify_one.json"
 	# get inference
-	curl -s -q -L \ 
-	    -X POST \
+	curl -s -q -L -X POST \
 	    -F "image_file=@$IMAGE_FILE" \
 	    -F "job_id=${DIGITS_JOB_ID}" \
 	    -o "${DG_OUTPUT}" \
