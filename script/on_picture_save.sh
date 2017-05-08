@@ -72,6 +72,8 @@ fi
 #
 # DIGITS
 #
+# EXAMPLE
+# {"predictions":[["http://www.dcmartin.com/CGI/aah-index.cgi?db=quiet-water&ext=sample&class=road",90.09],["http://www.dcmartin.com/CGI/aah-index.cgi?db=quiet-water&ext=sample&class=motorcycle",9.76],["http://www.dcmartin.com/CGI/aah-index.cgi?db=quiet-water&ext=sample&class=car",0.06],["http://www.dcmartin.com/CGI/aah-index.cgi?db=quiet-water&ext=sample&class=builder",0.03],["http://www.dcmartin.com/CGI/aah-index.cgi?db=quiet-water&ext=sample&class=martin c70",0.02]]}
 
 # create DG_OUTPUT JSON filename
 DG_OUTPUT="${IMAGE_FILE%.*}-dg.json"
@@ -85,11 +87,13 @@ if [ -n "${DIGITS_SERVER_URL}" ]; then
 	    -o "${DG_OUTPUT}" \
 	    "${DIGITS_SERVER_URL}/${CMD}"
 	# debug
-	jq -c '.' "${DG_OUTPUT}"
-	# get top1 class
-	TOP1_CLASS=$( jq -r '.predictions[0][0]' ${DG_OUTPUT} | sed "s/.*class=\(.*\)/\1/" )
-	TOP1_SCORE=$( jq -r '.predictions[0][1]' ${DG_OUTPUT} )
-	echo '{"text":"'"${TOP1_CLASS}"'","class":"'"${DIGITS_JOB_ID}"'","score":'${TOP1_SCORE}'}'
+	if [-s "${DG_OUTPUT}"]; then
+	    jq -c '.predictions[]' "${DG_OUTPUT}" \
+	    	| sed 's/.*http.*class=\([^"]*\)",\(.*\)\]/\1,'"$DIGITS_JOB_ID"',\2/' \
+		| sed 's/ /_/g' \
+		| awk -F, 'BEGIN { n=0 } { if (n>0) printf(","); n++; printf("{\"classifier_id\":\"%s\",\"name\":\"%s\",\"score\":%1.4f}", $1, $2, $3/100)}' > "${DG_OUTPUT}.$$"
+	    mv "${DG_OUTPUT}.$$" "${DG_OUTPUT}"
+	fi
     else
 	echo "+++ $0 NO DIGITS_JOB_ID specified for server ${DIGITS_SERVER_URL}"
     fi
@@ -117,19 +121,23 @@ if [ -s "${VR_OUTPUT}" ]; then
       '.images[0]|{image:.image,scores:[.classifiers[]|.classifier_id as $cid|.classes[]|{classifier_id:.class,name:(if .type_hierarchy == null then $cid else .type_hierarchy end),score:.score}]}' \
       "${VR_OUTPUT}" > "${OUTPUT}.visual.$$"
     # concatenate -- "alchemy" is _really_ "top1" and "visual" is _really_ the entire "set" of classifiers
-    sed 's/\(.*\)/{"alchemy":\1,"visual":/' "${OUTPUT}.alchemy.$$" | paste - "${OUTPUT}.visual.$$" > "${OUTPUT}.joint.$$"
-    sed 's/\(.*\)/\1}/' "${OUTPUT}.joint.$$" > "${OUTPUT}.$$"
+    # test if DIGITS
+    if [ -s "${DG_OUTPUT}" ]; then
+	echo "+++ $0 ADDING ${DG_OUTPUT}"
+	sed 's/\(.*\)/{"alchemy":\1,"visual":/' input.json.alchemy.1558 | paste - input.json.visual.1558 | sed 's/]}$/,/' | paste - "${DG_OUTPUT}" | sed 's/$/]}}/' > "${OUTPUT}.$$"
+    else
+	sed 's/\(.*\)/{"alchemy":\1,"visual":/' "${OUTPUT}.alchemy.$$" | paste - "${OUTPUT}.visual.$$" | sed 's/]}$/]}}/' > "${OUTPUT}.$$"
+    endif
+    # create (and validate) output
+    jq -c '.' "${OUTPUT}.$$" > "${OUTPUT}"
     # cleanup
-    rm -f "${OUTPUT}.alchemy.$$" "${OUTPUT}.visual.$$" "${OUTPUT}.joint.$$"
+    rm -f "${OUTPUT}.alchemy.$$" "${OUTPUT}.visual.$$" "${DG_OUTPUT}"
 else
     echo "+++ $0 NO OUTPUT"
     echo '{ "alchemy":{"text":"NO_TAGS","score":0},' > "${OUTPUT}.$$"
     echo '"visual":{"image":"'${IMAGE_ID}.jpg'","scores":[{"classifier_id":"NA","name":"NA","score":0}]' >> "${OUTPUT}.$$"
-    echo "}}" >> "${OUTPUT}.$$"
+    echo "}}" >> "${OUTPUT}"
 fi
-
-# create (and validate) output
-jq -c '.' "${OUTPUT}.$$" > "${OUTPUT}"
 
 # debug
 jq -c '.' "${OUTPUT}"
