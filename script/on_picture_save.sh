@@ -127,7 +127,7 @@ if [ -s "${VR_OUTPUT}" ]; then
 	sed 's/\(.*\)/{"alchemy":\1,"visual":/' input.json.alchemy.1558 | paste - input.json.visual.1558 | sed 's/]}$/,/' | paste - "${DG_OUTPUT}" | sed 's/$/]}}/' > "${OUTPUT}.$$"
     else
 	sed 's/\(.*\)/{"alchemy":\1,"visual":/' "${OUTPUT}.alchemy.$$" | paste - "${OUTPUT}.visual.$$" | sed 's/]}$/]}}/' > "${OUTPUT}.$$"
-    endif
+    fi
     # create (and validate) output
     jq -c '.' "${OUTPUT}.$$" > "${OUTPUT}"
     # cleanup
