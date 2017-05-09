@@ -87,7 +87,7 @@ if [ -n "${DIGITS_SERVER_URL}" ]; then
 	    -o "${DG_OUTPUT}" \
 	    "${DIGITS_SERVER_URL}/${CMD}"
 	# debug
-	if [-s "${DG_OUTPUT}"]; then
+	if [ -s "${DG_OUTPUT}" ]; then
 	    jq -c '.predictions[]' "${DG_OUTPUT}" \
 	    	| sed 's/.*http.*class=\([^"]*\)",\(.*\)\]/\1,'"$DIGITS_JOB_ID"',\2/' \
 		| sed 's/ /_/g' \
@@ -124,14 +124,14 @@ if [ -s "${VR_OUTPUT}" ]; then
     # test if DIGITS
     if [ -s "${DG_OUTPUT}" ]; then
 	echo "+++ $0 ADDING ${DG_OUTPUT}"
-	sed 's/\(.*\)/{"alchemy":\1,"visual":/' input.json.alchemy.1558 | paste - input.json.visual.1558 | sed 's/]}$/,/' | paste - "${DG_OUTPUT}" | sed 's/$/]}}/' > "${OUTPUT}.$$"
+	sed 's/\(.*\)/{"alchemy":\1,"visual":/' "${OUTPUT}.alchemy.$$" | paste - "${OUTPUT}.visual.$$" | sed 's/]}$/,/' | paste - "${DG_OUTPUT}" | sed 's/$/]}}/' > "${OUTPUT}.$$"
     else
 	sed 's/\(.*\)/{"alchemy":\1,"visual":/' "${OUTPUT}.alchemy.$$" | paste - "${OUTPUT}.visual.$$" | sed 's/]}$/]}}/' > "${OUTPUT}.$$"
     fi
     # create (and validate) output
     jq -c '.' "${OUTPUT}.$$" > "${OUTPUT}"
     # cleanup
-    rm -f "${OUTPUT}.alchemy.$$" "${OUTPUT}.visual.$$" "${DG_OUTPUT}"
+    rm -f "${OUTPUT}.alchemy.$$" "${OUTPUT}.visual.$$"
 else
     echo "+++ $0 NO OUTPUT"
     echo '{ "alchemy":{"text":"NO_TAGS","score":0},' > "${OUTPUT}.$$"
@@ -143,7 +143,7 @@ fi
 jq -c '.' "${OUTPUT}"
 
 # remove tmp & originals
-rm -f "${OUTPUT}.$$" "${VR_OUTPUT}"
+rm -f "${OUTPUT}.$$" "${VR_OUTPUT}" "${DG_OUTPUT}"
 
 #
 # add date and time
