@@ -194,6 +194,8 @@ if [ -z "${CLOUDANT_OFF}" ] && [ -s "${OUTPUT}" ] && [ -n "${CLOUDANT_URL}" ] &&
     if [ -z "${CLOUDANT_OFF}" ]; then
 	curl -q -s -H "Content-type: application/json" -X PUT "$CLOUDANT_URL/${DEVICE_NAME}/${IMAGE_ID}" -d "@${OUTPUT}"
     fi
+else
+    echo "+++ $0 NO CLOUDANT (CHECK DEVICE_NAME)"
 fi
 
 # make a noise
