@@ -29,6 +29,15 @@ if [ -z "${IMAGE_BOX}" ]; then
 fi
 
 #
+# Prepare output
+#
+OUTPUT="${IMAGE_FILE%.*}.json"
+# drop prefix path
+IMAGE_ID=`echo "${OUTPUT##*/}"`
+# drop extension
+IMAGE_ID=`echo "${IMAGE_ID%.*}"`
+
+#
 # VISUAL RECOGNITION
 #
 # FACES
@@ -102,13 +111,8 @@ else
 fi
 
 #
-# Prepare output
+# CREATE OUTPUT FROM COMBINATIONS OF RESULTS
 #
-OUTPUT="${IMAGE_FILE%.*}.json"
-# drop prefix path
-IMAGE_ID=`echo "${OUTPUT##*/}"`
-# drop extension
-IMAGE_ID=`echo "${IMAGE_ID%.*}"`
 
 if [ -s "${VR_OUTPUT}" ]; then
     echo "+++ $0 PROCESSING VISUAL_RECOGNITION ${VR_OUTPUT}"
@@ -120,21 +124,38 @@ if [ -s "${VR_OUTPUT}" ]; then
     jq -c \
       '.images[0]|{image:.image,scores:[.classifiers[]|.classifier_id as $cid|.classes[]|{classifier_id:.class,name:(if .type_hierarchy == null then $cid else .type_hierarchy end),score:.score}]}' \
       "${VR_OUTPUT}" > "${OUTPUT}.visual.$$"
-    # concatenate -- "alchemy" is _really_ "top1" and "visual" is _really_ the entire "set" of classifiers
-    # test if DIGITS
+    # test if DIGITS too
     if [ -s "${DG_OUTPUT}" ]; then
-	echo "+++ $0 ADDING ${DG_OUTPUT}"
+	echo "+++ $0 ADDING WATSON & DIGITS classifiers"
 	sed 's/\(.*\)/{"alchemy":\1,"visual":/' "${OUTPUT}.alchemy.$$" | paste - "${OUTPUT}.visual.$$" | sed 's/]}$/,/' | paste - "${DG_OUTPUT}" | sed 's/$/]}}/' > "${OUTPUT}.$$"
     else
+	echo "+++ $0 ADDING WATSON WITH ALCHEMY AS TOP1 ACROSS DEFINE & ANY CUSTOM CLASSIFIER"
+        # concatenate -- "alchemy" is _really_ "top1" and "visual" is _really_ the entire "set" of classifiers
 	sed 's/\(.*\)/{"alchemy":\1,"visual":/' "${OUTPUT}.alchemy.$$" | paste - "${OUTPUT}.visual.$$" | sed 's/]}$/]}}/' > "${OUTPUT}.$$"
+    fi
+    # process consolidated scores into sorted list
+    if [ -s "${DG_OUTPUT}" ]; then
+	echo "+++ $0 REPLACING ALCHEMY WITH TOP1 ACROSS WATSON & DIGITS"
+        # pick top1 across all classification results; sorted by score
+        TOP1=$(jq -r '.visual.scores|sort_by(.score)[-1]|{"text":.classifier_id,"name":.name,"score":.score}' "${OUTPUT}.$$")
+	# change output to indicate (potentially) new top1
+	cat "${OUTPUT}.$$" | jq '.alchemy='"${TOP1}" > "$OUTPUT.$$.$$"
+	if [ -s "$OUTPUT.$$.$$" ]; then
+	  mv "${OUTPUT}.$$.$$" "${OUTPUT}.$$"
+	fi
+	rm -f "${OUTPUT}.$$.$$"
     fi
     # create (and validate) output
     jq -c '.' "${OUTPUT}.$$" > "${OUTPUT}"
     # cleanup
     rm -f "${OUTPUT}.alchemy.$$" "${OUTPUT}.visual.$$"
+else if [ -s "${DG_OUTPUT}" ]; then
+    TOP1=$(echo '[' | paste - "${DG_OUTPUT}" | sed 's/$/]/' | jq '.|sort_by(.score)[-1]|{"text":.classifier_id,"name":.name,"score":.score}')
+    CLASSIFIERS=$(echo '[' | paste - "${DG_OUTPUT}" | sed 's/$/]/'" | jq '.|sort_by(.score)')
+    echo '{"alchemy":'"${TOP1}"',"visual":{"image":"'"$IMAGE_ID"'","scores":{"classifiers":'"${CLASSIFIERS}"'}}}' >! "${OUTPUT}"
 else
     echo "+++ $0 NO OUTPUT"
-    echo '{ "alchemy":{"text":"NO_TAGS","score":0},' > "${OUTPUT}.$$"
+    echo '{ "alchemy":{"text":"NA","name":"NA","score":0},' > "${OUTPUT}.$$"
     echo '"visual":{"image":"'${IMAGE_ID}.jpg'","scores":[{"classifier_id":"NA","name":"NA","score":0}]' >> "${OUTPUT}.$$"
     echo "}}" >> "${OUTPUT}"
 fi
