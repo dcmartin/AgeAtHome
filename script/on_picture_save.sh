@@ -10,6 +10,11 @@ MOTION_MIDY=$5
 MOTION_WIDTH=$6
 MOTION_HEIGHT=$7
 
+if [ -z "${IMAGE_FILE}" ]; then
+  echo "<EVENT> <IMAGE_FILE> <IMAGE_TYPE> <MIDX> <MIDY> <WIDTH> <HEIGHT>"
+  exit
+fi
+
 # calculate imagebox
 if [ -n "${MOTION_MIDX}" ]; then
     if [ -n "${MOTION_MIDY}" ]; then
@@ -90,6 +95,7 @@ if [ -n "${DIGITS_SERVER_URL}" ]; then
     if [ -n "${DIGITS_JOB_ID}" ]; then
 	CMD="models/images/classification/classify_one.json"
 	# get inference
+        echo "+++ $0 PROCESSING DIGITS (${DIGITS_JOB_ID})"
 	curl -s -q -L -X POST \
 	    -F "image_file=@$IMAGE_FILE" \
 	    -F "job_id=${DIGITS_JOB_ID}" \
@@ -102,6 +108,9 @@ if [ -n "${DIGITS_SERVER_URL}" ]; then
 		| sed 's/ /_/g' \
 		| awk -F, 'BEGIN { n=0 } { if (n>0) printf(","); n++; printf("{\"classifier_id\":\"%s\",\"name\":\"%s\",\"score\":%1.4f}", $1, $2, $3/100)}' > "${DG_OUTPUT}.$$"
 	    mv "${DG_OUTPUT}.$$" "${DG_OUTPUT}"
+            echo "+++ $0 SUCCESS DIGITS (${DIGITS_JOB_ID})"
+        else
+            echo "+++ $0 FAILURE DIGITS (${DIGITS_JOB_ID})"
 	fi
     else
 	echo "+++ $0 NO DIGITS_JOB_ID specified for server ${DIGITS_SERVER_URL}"
@@ -109,6 +118,8 @@ if [ -n "${DIGITS_SERVER_URL}" ]; then
 else
     echo "+++ $0 NO DIGITS_SERVER_URL specified"
 fi
+
+
 
 #
 # CREATE OUTPUT FROM COMBINATIONS OF RESULTS
@@ -129,7 +140,7 @@ if [ -s "${VR_OUTPUT}" ]; then
 	echo "+++ $0 ADDING WATSON & DIGITS classifiers"
 	sed 's/\(.*\)/{"alchemy":\1,"visual":/' "${OUTPUT}.alchemy.$$" | paste - "${OUTPUT}.visual.$$" | sed 's/]}$/,/' | paste - "${DG_OUTPUT}" | sed 's/$/]}}/' > "${OUTPUT}.$$"
     else
-	echo "+++ $0 ADDING WATSON WITH ALCHEMY AS TOP1 ACROSS DEFINE & ANY CUSTOM CLASSIFIER"
+	echo "+++ $0 ADDING WATSON WITH ALCHEMY AS TOP1 ACROSS DEFAULT & ANY CUSTOM CLASSIFIER"
         # concatenate -- "alchemy" is _really_ "top1" and "visual" is _really_ the entire "set" of classifiers
 	sed 's/\(.*\)/{"alchemy":\1,"visual":/' "${OUTPUT}.alchemy.$$" | paste - "${OUTPUT}.visual.$$" | sed 's/]}$/]}}/' > "${OUTPUT}.$$"
     fi
@@ -149,15 +160,16 @@ if [ -s "${VR_OUTPUT}" ]; then
     jq -c '.' "${OUTPUT}.$$" > "${OUTPUT}"
     # cleanup
     rm -f "${OUTPUT}.alchemy.$$" "${OUTPUT}.visual.$$"
-else if [ -s "${DG_OUTPUT}" ]; then
+elif [ -s "${DG_OUTPUT}" ]; then
+    echo "+++ $0 PROCESSING ${DG_OUTPUT} ONLY"
     TOP1=$(echo '[' | paste - "${DG_OUTPUT}" | sed 's/$/]/' | jq '.|sort_by(.score)[-1]|{"text":.classifier_id,"name":.name,"score":.score}')
-    CLASSIFIERS=$(echo '[' | paste - "${DG_OUTPUT}" | sed 's/$/]/'" | jq '.|sort_by(.score)')
-    echo '{"alchemy":'"${TOP1}"',"visual":{"image":"'"$IMAGE_ID"'","scores":{"classifiers":'"${CLASSIFIERS}"'}}}' >! "${OUTPUT}"
+    CLASSIFIERS=$(echo '[' | paste - "${DG_OUTPUT}" | sed 's/$/]/' | jq '.|sort_by(.score)')
+    echo '{"alchemy":'"${TOP1}"',"visual":{"image":"'"${IMAGE_ID}.jpg"'","scores":{"classifiers":'"${CLASSIFIERS}"'}}}' >! "${OUTPUT}"
 else
     echo "+++ $0 NO OUTPUT"
     echo '{ "alchemy":{"text":"NA","name":"NA","score":0},' > "${OUTPUT}.$$"
     echo '"visual":{"image":"'${IMAGE_ID}.jpg'","scores":[{"classifier_id":"NA","name":"NA","score":0}]' >> "${OUTPUT}.$$"
-    echo "}}" >> "${OUTPUT}"
+    echo '}}' >> "${OUTPUT}"
 fi
 
 # debug
