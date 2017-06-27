@@ -261,4 +261,14 @@ if [ -n "${EMAILME_ON}" ] && [ -s "${OUTPUT}" ] && [ -n "${GMAIL_ACCOUNT}" ] && 
     rm -f "${WHAT}.txt"
 fi
 
+# check for updates
+TTL=1800
+SECONDS=$(date "+%s")
+DATE=$(/bin/echo "${SECONDS} / ${TTL} * ${TTL}" | bc)
+if [ ! -f "/tmp/updates.$DATE.json" ]; then
+  rm -f "/tmp/updates".*.json
+  curl "http://www.dcmartin.com/CGI/aah-updates.cgi?db=${DEVICE_NAME}" > "/tmp/updates.${DATE}.json"
+  jq -c '.' "/tmp/updates.${DATE}.json"
+fi
+
 echo "+++ END: $0: $*" $(date) >&2
