@@ -193,7 +193,7 @@ if [ -s "${OUTPUT}" ]; then
 	SECOND=`echo "${DATE_TIME}" | sed "s/^............\(..\).*/\1/"`
 
 	cat "${OUTPUT}" | \
-	    sed 's/^{/{"year":"YEAR","month":"MONTH","day":"DAY","hour":"HOUR","minute":"MINUTE","second":"SECOND","imagebox":"IMAGE_BOX",/' | \
+	    sed 's/^{/{"year":"YEAR","month":"MONTH","day":"DAY","hour":"HOUR","minute":"MINUTE","second":"SECOND","eventgap":"EVENTGAP","imagebox":"IMAGE_BOX",/' | \
 	    sed "s/YEAR/${YEAR}/" | \
 	    sed "s/MONTH/${MONTH}/" | \
 	    sed "s/DAY/${DAY}/" | \
@@ -201,6 +201,7 @@ if [ -s "${OUTPUT}" ]; then
 	    sed "s/MINUTE/${MINUTE}/" | \
 	    sed "s/SECOND/${SECOND}/" | \
 	    sed "s/DAY/${DAY}/" | \
+	    sed "s/EVENTGAP/${MOTION_EVENT_GAP}/" | \
 	    sed "s/IMAGE_BOX/${IMAGE_BOX}/" > /tmp/OUTPUT.$$
 	mv /tmp/OUTPUT.$$ "${OUTPUT}"
     fi
