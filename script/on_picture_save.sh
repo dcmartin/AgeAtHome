@@ -265,10 +265,10 @@ fi
 TTL=1800
 SECONDS=$(date "+%s")
 DATE=$(/bin/echo "${SECONDS} / ${TTL} * ${TTL}" | bc)
-if [ ! -f "/tmp/updates.$DATE.json" ]; then
-  rm -f "/tmp/updates".*.json
-  curl "http://www.dcmartin.com/CGI/aah-updates.cgi?db=${DEVICE_NAME}" > "/tmp/updates.${DATE}.json"
-  jq -c '.' "/tmp/updates.${DATE}.json"
+if [ ! -f "/tmp/images.$DATE.json" ]; then
+  rm -f "/tmp/images".*.json
+  curl "http://www.dcmartin.com/CGI/aah-images.cgi?db=${DEVICE_NAME}" > "/tmp/images.${DATE}.json"
+  jq -c '.' "/tmp/images.${DATE}.json"
 fi
 
 echo "+++ END: $0: $*" $(date) >&2
