@@ -272,7 +272,7 @@ if [ -n "${MQTT_ON}" ] && [ -s "${OUTPUT}" ] && [ -n "${MQTT_HOST}" ]; then
     if [ ! -z "${MQTT_JQUERY}" ]; then
         WHAT=`jq -r "${MQTT_JQUERY}" "${OUTPUT}"`
     else
-	WHAT=`jq -j '.alchemy.text' "${OUTPUT}"`
+	WHAT=`jq -r '.alchemy.text' "${OUTPUT}"`
     fi
     MSG='{"device":"'"${DEVICE_NAME}"'","location":"'"${AAH_LOCATION}"'","date":'`date +%s`',"payload":"'"${WHAT}"'"}'
     mosquitto_pub -h "${MQTT_HOST}" -t "${MQTT_TOPIC}" -m "${MSG}"
