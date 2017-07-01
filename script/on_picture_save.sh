@@ -193,9 +193,10 @@ if [ -s "${OUTPUT}" ]; then
 	SECOND=`echo "${DATE_TIME}" | sed "s/^............\(..\).*/\1/"`
 
 	# should think more about adding the event gap specification into the event record -- and maybe the date (in seconds since epoch)
-        # sed "s/EVENTGAP/${MOTION_EVENT_GAP}/" | \
+	    # sed 's/^{/{"year":"YEAR","month":"MONTH","day":"DAY","hour":"HOUR","minute":"MINUTE","second":"SECOND","eventgap":"MOTION_EVENT_GAP","imagebox":"IMAGE_BOX",/' | \
+            # sed "s/MOTION_EVENT_GAP/${MOTION_EVENT_GAP}/" | \
 	cat "${OUTPUT}" | \
-	    sed 's/^{/{"year":"YEAR","month":"MONTH","day":"DAY","hour":"HOUR","minute":"MINUTE","second":"SECOND","eventgap":"EVENTGAP","imagebox":"IMAGE_BOX",/' | \
+	    sed 's/^{/{"year":"YEAR","month":"MONTH","day":"DAY","hour":"HOUR","minute":"MINUTE","second":"SECOND","imagebox":"IMAGE_BOX",/' | \
 	    sed "s/YEAR/${YEAR}/" | \
 	    sed "s/MONTH/${MONTH}/" | \
 	    sed "s/DAY/${DAY}/" | \
