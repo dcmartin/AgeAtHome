@@ -57,10 +57,11 @@ RUN echo "anon_root=/var/lib/motion" >> /etc/vsftpd.conf \
       && sed -i -e"s/^.*anonymous_enable=.*$/anonymous_enable=YES/" /etc/vsftpd.conf
 
 #
-# MQTT
+# MQTT clients (pub/sub)
 #
 RUN apt-get install -q -y --no-install-recommends \
-    mosquitto
+    mosquitto-clients
+
 #
 # H264
 #
