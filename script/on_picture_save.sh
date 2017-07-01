@@ -192,6 +192,8 @@ if [ -s "${OUTPUT}" ]; then
 	MINUTE=`echo "${DATE_TIME}" | sed "s/^..........\(..\).*/\1/"`
 	SECOND=`echo "${DATE_TIME}" | sed "s/^............\(..\).*/\1/"`
 
+	# should think more about adding the event gap specification into the event record -- and maybe the date (in seconds since epoch)
+        # sed "s/EVENTGAP/${MOTION_EVENT_GAP}/" | \
 	cat "${OUTPUT}" | \
 	    sed 's/^{/{"year":"YEAR","month":"MONTH","day":"DAY","hour":"HOUR","minute":"MINUTE","second":"SECOND","eventgap":"EVENTGAP","imagebox":"IMAGE_BOX",/' | \
 	    sed "s/YEAR/${YEAR}/" | \
@@ -201,7 +203,6 @@ if [ -s "${OUTPUT}" ]; then
 	    sed "s/MINUTE/${MINUTE}/" | \
 	    sed "s/SECOND/${SECOND}/" | \
 	    sed "s/DAY/${DAY}/" | \
-	    sed "s/EVENTGAP/${MOTION_EVENT_GAP}/" | \
 	    sed "s/IMAGE_BOX/${IMAGE_BOX}/" > /tmp/OUTPUT.$$
 	mv /tmp/OUTPUT.$$ "${OUTPUT}"
     fi
@@ -262,7 +263,22 @@ if [ -n "${EMAILME_ON}" ] && [ -s "${OUTPUT}" ] && [ -n "${GMAIL_ACCOUNT}" ] && 
     rm -f "${WHAT}.txt"
 fi
 
-# check for updates
+# post to MQTT
+if [ -n "${MQTT_ON}" ] && [ -s "${OUTPUT}" ] && [ -n "${MQTT_HOST}" ]; then
+    if [ -z "${MQTT_TOPIC}" ]; then
+        MQTT_TOPIC='presence/'"${AAH_LOCATION}"
+    fi
+    # what entity to discuss/say
+    if [ ! -z "${MQTT_JQUERY}" ]; then
+        WHAT=`jq -r "${MQTT_JQUERY}" "${OUTPUT}"`
+    else
+	WHAT=`jq -j '.alchemy.text' "${OUTPUT}"`
+    fi
+    MSG='{"device":"'"${DEVICE_NAME}"'","location":"'"${AAH_LOCATION}"'","date":'`date +%s`',"payload":"'"${WHAT}"'"}'
+    mosquitto_pub -h "${MQTT_HOST}" -t "${MQTT_TOPIC}" -m "${MSG}"
+fi
+
+# force image updates periodically (15 minutes; 1800 seconds)
 TTL=1800
 SECONDS=$(date "+%s")
 DATE=$(/bin/echo "${SECONDS} / ${TTL} * ${TTL}" | bc)
