@@ -57,6 +57,11 @@ RUN echo "anon_root=/var/lib/motion" >> /etc/vsftpd.conf \
       && sed -i -e"s/^.*anonymous_enable=.*$/anonymous_enable=YES/" /etc/vsftpd.conf
 
 #
+# MQTT
+#
+RUN apt-get install -q -y --no-install-recommends \
+    mosquitto
+#
 # H264
 #
 # RUN cd /usr/src && git clone git://git.videolan.org/x264 && cd x264 && ./configure --host=arm-unknown-linux-gnueabi --enable-static --disable-opencl && make install
