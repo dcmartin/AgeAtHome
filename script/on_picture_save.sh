@@ -280,13 +280,13 @@ if [ -n "${MQTT_ON}" ] && [ -s "${OUTPUT}" ] && [ -n "${MQTT_HOST}" ]; then
 fi
 
 # force image updates periodically (15 minutes; 1800 seconds)
-if [ -n "${AAH_SERVER}" ]; then
+if [ -n "${AAH_LAN_SERVER}" ]; then
   TTL=1800
   SECONDS=$(date "+%s")
   DATE=$(/bin/echo "${SECONDS} / ${TTL} * ${TTL}" | bc)
   if [ ! -f "/tmp/images.$DATE.json" ]; then
     rm -f "/tmp/images".*.json
-    curl "http://${AAH_SERVER}/CGI/aah-images.cgi?db=${DEVICE_NAME}" > "/tmp/images.${DATE}.json"
+    curl "http://${AAH_LAN_SERVER}/CGI/aah-images.cgi?db=${DEVICE_NAME}" > "/tmp/images.${DATE}.json"
     jq -c '.' "/tmp/images.${DATE}.json"
   fi
 fi
