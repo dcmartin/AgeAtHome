@@ -1,6 +1,4 @@
-#!/bin/bash
-
-# Set the correct timezone
+#!/bin/bash # Set the correct timezone
 if [ -n "${TIMEZONE}" ]; then
     cp /usr/share/zoneinfo/${TIMEZONE} /etc/localtime
 fi
@@ -26,14 +24,21 @@ if [ -n "${STREAM_PORT}" ]; then
     sed -i "s/^stream_port\s[0-9]\+/stream_port ${STREAM_PORT}/g" /etc/motion/motion.conf
 fi
 if [ -n "${MOTION_IMAGE_ROTATE}" ]; then
-    echo "Set image rotation to ${MOTION_IMAGE_ROTATE} degress"
+    echo "Set image rotation to ${MOTION_IMAGE_ROTATE} degrees"
     sed -i "s/^rotate\s[0-9]\+/rotate ${MOTION_IMAGE_ROTATE}/g" /etc/motion/motion.conf
 fi
-
-# Override MOTION_THRESHOLD (pixels changed) default 1500
+# Override THRESHOLD_TUNE (which pictures selected; on, off, first, best, center); default "center"
+if [ -n "${MOTION_OUTPUT_PICTURES}" ]; then
+    echo "Set output pictures to ${MOTION_OUTPUT_PICTURES}"
+    sed -i "s/^output_pictures\s.*/output_pictures ${MOTION_OUTPUT_PICTURES}/g" /etc/motion/motion.conf
+fi
+# Override THRESHOLD_TUNE (pixels changed) default "off"
+[ -n "${MOTION_THRESHOLD_TUNE}" ] && \
+    sed -i "s/^threshold_tune\s.*/threshold_tune ${MOTION_THRESHOLD_TUNE}/g" /etc/motion/motion.conf
+# Override THRESHOLD (pixels changed) default 1500
 [ -n "${MOTION_THRESHOLD}" ] && \
     sed -i "s/^threshold\s[0-9]\+/threshold ${MOTION_THRESHOLD}/g" /etc/motion/motion.conf
-# Override MOTION_EVENT_GAP (seconds) default 60
+# Override EVENT_GAP (seconds) default 10
 [ -n "${MOTION_EVENT_GAP}" ] && \
     sed -i "s/^event_gap\s[0-9]\+/event_gap ${MOTION_EVENT_GAP}/g" /etc/motion/motion.conf
 
