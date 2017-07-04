@@ -1,4 +1,6 @@
-#!/bin/bash # Set the correct timezone
+#!/bin/bash
+
+# Set the correct timezone
 if [ -n "${TIMEZONE}" ]; then
     cp /usr/share/zoneinfo/${TIMEZONE} /etc/localtime
 fi
