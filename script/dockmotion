@@ -69,7 +69,7 @@ service iot restart
 service iot status
 service iot getdeviceid
 
-if [ -n "${RUN_ELECTRON}"]; then
+if [ -n "${RUN_ELECTRON}" ]; then
   # Run motion (as daemon)
   motion -l /dev/stderr
   # By default docker gives us 64MB of shared memory size but to display heavy pages we need more.
