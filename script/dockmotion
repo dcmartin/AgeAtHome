@@ -16,6 +16,12 @@ if [ -n "${MOTION_PIXELS}" ]; then
     sed -i "s/^height\s[0-9]\+/height ${HEIGHT}/g" /etc/motion/motion.conf
 fi
 
+# override motion daemon status
+if [ -n "${MOTION_DAEMON}" ]; then
+   echo "Set daemon to ${MOTION_DAEMON}"
+   sed -i "s/^daemon\s.*/daemon ${MOTION_DAEMON}/g" /etc/motion/motion.conf
+fi
+
 # Override control and video ports
 if [ -n "${WEBCONTROL_PORT}" ]; then
     echo "Set webcontrol_port to ${WEBCONTROL_PORT}"
@@ -76,6 +82,9 @@ service iot status
 service iot getdeviceid
 
 if [ -n "${URL_LAUNCHER_URL}" ]; then
+  # override motion daemon status for electron
+  echo 'Overriding MOTION_DAEMON to "on" for ELECTRON'
+  sed -i "s/^daemon\s.*/daemon on/g" /etc/motion/motion.conf
   # Run motion (as daemon)
   echo "START MOTION AS DAEMON"
   motion -l /dev/stderr
