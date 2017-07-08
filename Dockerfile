@@ -19,6 +19,7 @@ RUN apt-get install -q -y --no-install-recommends \
     sysstat rsync ssh \
     curl \
     python2.7-dev \
+    python3.4-dev \
     python-pip \
     x264 \
     unzip \
@@ -268,6 +269,33 @@ ENV INITSYSTEM on
 # audio drivers
 ENV AUDIODEV hw:1,0
 ENV AUDIODRIVER alsa
+
+#
+# PYTHON 3
+#
+ENV RELEASE=3.6.1
+# install dependencies
+RUN apt-get install \
+  libbz2-dev \
+  liblzma-dev \
+  libsqlite3-dev \
+  libncurses5-dev \
+  libgdbm-dev \
+  zlib1g-dev \
+  libreadline-dev \
+  libssl-dev tk-dev
+# download and build Python
+RUN mkdir ~/python3 \
+  && cd ~/python3 \
+  && wget https://www.python.org/ftp/python/$RELEASE/Python-$RELEASE.tar.xz \
+  && tar xvf Python-$RELEASE.tar.xz \
+  && cd Python-$RELEASE \
+  && ./configure \
+  && make \
+  && make install \
+  && rm -rf ~/python3/Python-$RELEASE
+# install homeassistant
+pip3 install homeassistant
 
 #
 # Copy "motion" scripts 
