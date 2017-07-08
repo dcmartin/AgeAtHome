@@ -224,6 +224,7 @@ RUN apt-get update && apt-get install -y \
   xserver-xorg-input-all \
   xserver-xorg-video-fbdev \
   xorg \
+  florence \ 
   libdbus-1-dev \
   libgtk2.0-dev \
   libnotify-dev \

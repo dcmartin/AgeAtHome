@@ -76,6 +76,7 @@ if [ -n "${RUN_ELECTRON}" ]; then
   umount /dev/shm && mount -t tmpfs shm /dev/shm
   # start X
   rm /tmp/.X0-lock &>/dev/null || true
+  echo "START ELECTRON"
   startx /usr/src/app/node_modules/electron/dist/electron /usr/src/app --enable-logging
 else
   # Run motion (not as daemon)
