@@ -1,0 +1,343 @@
+homeassistant:
+  # Name of the location where Home Assistant is running
+  name: AgeAtHome
+  # Location required to calculate the time the sun rises and sets
+  latitude: 37.174389
+  longitude: -121.816530
+  # Impacts weather/sunrise data (altitude above sea level in meters)
+  elevation: 827
+  # metric for Metric, imperial for Imperial
+  unit_system: imperial
+  # Pick yours from here: http://en.wikipedia.org/wiki/List_of_tz_database_time_zones
+  time_zone: America/Los_Angeles
+
+frontend:
+ 
+http:
+
+updater:
+  include_used_components: true
+
+# Track the sun
+sun:
+  elevation: 827
+
+# Enables support for tracking state changes over time.
+history:
+  exclude:
+    domains:
+      - pws
+      - media_player
+      - weather
+      - updater
+    entities:
+      - sensor.externalip
+      - camera.frontdoorpi
+      - camera.kitchenpi
+      - camera.bathroompi
+      - camera.roadpi
+      - sensor.datekitchen
+      - sensor.countkitchen
+      - sensor.datebathroom
+      - sensor.countbathroom
+      - sensor.datefrontdoor
+      - sensor.countfrontdoor
+      - sensor.dateroad
+      - sensor.countroad
+      - sensor.pws_feelslike_f
+      - sensor.pws_elevation
+      - sensor.pws_precip_today_in
+      - sensor.pws_relative_humidity
+      - sensor.pws_visibility_mi
+      - sensor.pws_wind_dir
+      - sensor.pws_wind_gust_mph
+      - sensor.pws_wind_mph
+      - sensor.pws_weather_1d
+      - sensor.pws_weather_1n
+      - sensor.pws_weather_2d
+      - sensor.pws_weather_2n
+      - sensor.pws_weather_3d
+      - sensor.pws_weather_3n
+      - sensor.pws_weather_4d
+      - sensor.pws_weather_4n
+      - sensor.sun
+
+# Text to speech
+tts:
+  platform: google
+
+ifttt:
+  key: dXbhgiite3T81apShQpCfW
+
+#
+# CAMERAS
+#
+
+camera weather:
+  - platform: generic
+    name: weatherforecast
+    still_image_url: 'https://www.yr.no/sted/USA/California/San_Francisco/meteogram.svg'
+    content_type: 'image/svg+xml'
+
+camera radar:
+  - platform: generic
+    still_image_url: 'https://icons.wxug.com/data/weather-maps/radar/united-states/bakersfield-california-region-current-radar-animation.gif'
+    name: wuradar
+
+# AAH cameras (still image should be last motion; mjpeg should be live)
+
+camera kitchenpi:
+  - platform: mjpeg
+    name: kitchenpi
+    still_image_url: 'http://www.dcmartin.com/CGI/aah-images.cgi?db=rough-fog&limit=1&ext=full'
+    mjpeg_url: http://192.168.1.34:8081/
+camera bathroompi:
+  - platform: mjpeg
+    name: bathroompi
+    still_image_url: 'http://www.dcmartin.com/CGI/aah-images.cgi?db=damp-cloud&limit=1&ext=full'
+    mjpeg_url: http://192.168.1.35:8081/
+camera roadpi:
+  - platform: mjpeg
+    name: roadpi
+    still_image_url: 'http://www.dcmartin.com/CGI/aah-images.cgi?db=quiet-water&limit=1&ext=full'
+    mjpeg_url: http://192.168.1.36:8081/
+camera frontdoorpi:
+  - platform: mjpeg
+    name: frontdoorpi
+    still_image_url: 'http://www.dcmartin.com/CGI/aah-images.cgi?db=rough-wind&limit=1&ext=full'
+    mjpeg_url: http://192.168.1.37:8081/
+
+#
+# WUNDERGROUND (WEATHER UNDERGROUND)
+#
+
+sensor kcasanjo411:
+  - platform: wunderground
+    api_key: 35a12c5dce931cc1
+    pws_id: KCASANJO411
+    monitored_conditions:
+      - weather
+      - feelslike_f
+      - elevation
+      - precip_today_in
+      - relative_humidity
+      - visibility_mi
+      - wind_dir
+      - wind_gust_mph
+      - wind_mph
+      - weather_1d
+      - weather_1n
+      - weather_2d
+      - weather_2n
+      - weather_3d
+      - weather_3n
+      - weather_4d
+      - weather_4n
+
+#
+# REST PLATFORM SENSORS
+#
+
+sensor external_ip:
+  - platform: rest
+    resource: http://ip.jsontest.com
+    name: externalip
+    value_template: '{{ value_json.ip }}'
+
+# DATE
+
+sensor datekitchen:
+  - platform: rest
+    icon: mdi:alarm
+    resource: 'http://192.168.1.32/CGI/aah-updates.cgi?db=rough-fog'
+    name: 'datekitchen'
+    friendly_name: 'Last time seen in kitchen'
+    value_template: '{{ value_json.date }}'
+
+sensor datebathroom:
+  - platform: rest
+    icon: mdi:alarm
+    type: time
+    resource: 'http://192.168.1.32/CGI/aah-updates.cgi?db=damp-cloud'
+    name: 'datebathroom'
+    value_template: '{{ value_json.date }}'
+
+sensor datefrontdoor:
+  - platform: rest
+    icon: mdi:alarm
+    type: time
+    resource: 'http://192.168.1.32/CGI/aah-updates.cgi?db=rough-wind'
+    name: 'datefrontdoor'
+    value_template: '{{ value_json.date }}'
+
+sensor dateroad:
+  - platform: rest
+    icon: mdi:alarm
+    type: time
+    resource: 'http://192.168.1.32/CGI/aah-updates.cgi?db=quiet-water'
+    name: 'dateroad'
+    value_template: '{{ value_json.date }}'
+
+# COUNT
+
+sensor countkitchen:
+  - platform: rest
+    icon: mdi:numeric
+    type: count
+    resource: 'http://192.168.1.32/CGI/aah-updates.cgi?db=rough-fog'
+    name: 'countkitchen'
+    value_template: '{{ value_json.count }}'
+
+sensor countbathroom:
+  - platform: rest
+    icon: mdi:numeric
+    type: count
+    resource: 'http://192.168.1.32/CGI/aah-updates.cgi?db=damp-cloud'
+    name: 'countbathroom'
+    value_template: '{{ value_json.count }}'
+
+sensor countfrontdoor:
+  - platform: rest
+    icon: mdi:numeric
+    resource: 'http://192.168.1.32/CGI/aah-updates.cgi?db=rough-wind'
+    name: 'countfrontdoor'
+    value_template: '{{ value_json.count }}'
+
+sensor countroad:
+  - platform: rest
+    icon: mdi:numeric
+    resource: 'http://192.168.1.32/CGI/aah-updates.cgi?db=quiet-water'
+    name: 'countroad'
+    value_template: '{{ value_json.count }}'
+
+#
+# MQTT PLATFORM SENSORS
+#
+
+mqtt:
+  broker: 192.168.1.28
+
+sensor whoinkitchen:
+  icon: mdi:human
+  platform: mqtt
+  state_topic: 'presence/kitchen'
+  name: whoinkitchen
+  expire_after: 60
+  value_template: '{{ value_json.class }}'
+
+sensor whoinbathroom:
+  icon: mdi:human
+  platform: mqtt
+  state_topic: 'presence/bathroom'
+  name: whoinbathroom
+  expire_after: 60
+  value_template: '{{ value_json.class }}'
+
+sensor whoinroad:
+  icon: mdi:human
+  platform: mqtt
+  state_topic: 'presence/road'
+  name: whoinroad
+  expire_after: 60
+  value_template: '{{ value_json.class }}'
+
+sensor whoinfrontdoor:
+  icon: mdi:human
+  platform: mqtt
+  state_topic: 'presence/frontdoor'
+  name: whoinfrontdoor
+  expire_after: 60
+  value_template: '{{ value_json.class }}'
+
+# LASTIN
+
+sensor lastinkitchen:
+  icon: mdi:human
+  platform: mqtt
+  state_topic: 'presence/kitchen'
+  name: lastinkitchen
+  value_template: '{{ value_json.class }}'
+
+sensor lastinbathroom:
+  icon: mdi:human
+  platform: mqtt
+  state_topic: 'presence/bathroom'
+  name: lastinbathroom
+  value_template: '{{ value_json.class }}'
+
+sensor lastinroad:
+  icon: mdi:human
+  platform: mqtt
+  state_topic: 'presence/road'
+  name: lastinroad
+  value_template: '{{ value_json.class }}'
+
+sensor lastinfrontdoor:
+  icon: mdi:human
+  platform: mqtt
+  state_topic: 'presence/frontdoor'
+  name: lastinfrontdoor
+  value_template: '{{ value_json.class }}'
+
+#
+# HISTORY_STATS
+#
+
+sensor emptykitchen:
+  - platform: history_stats
+    icon: mdi:timer
+    name: emptykitchen
+    entity_id: sensor.whoinkitchen
+    state: 'unknown'
+    type: time
+    end: '{{ now().replace(hour=0).replace(minute=0).replace(second=0) }}'
+    duration: 24:00
+
+#
+# GROUP
+#
+
+group:
+
+  daily_forecast:
+    name: Daily Forecast
+    entities:
+      - sensor.pws_weather_1d
+      - sensor.pws_weather_1n
+      - sensor.pws_weather_2d
+      - sensor.pws_weather_2n
+      - sensor.pws_weather_3d
+      - sensor.pws_weather_3n
+      - sensor.pws_weather_4d
+      - sensor.pws_weather_4n
+
+  ageathome:
+    name: 'AgeAtHome'
+    icon: mdi:home
+    entities:
+      - sensor.lastinkitchen
+      - sensor.lastinbathroom
+      - sensor.lastinroad
+      - sensor.lastinfrontdoor
+      - sensor.countkitchen
+      - sensor.countbathroom
+      - sensor.countfrontdoor
+      - sensor.countroad
+      - sensor.datekitchen
+      - sensor.datebathroom
+      - sensor.datefrontdoor
+      - sensor.dateroad
+
+  liveviews:
+    name: 'AAH Cameras'
+    view: true
+    icon: mdi:webcam
+    entities:
+      - camera.roadpi
+      - camera.frontdoorpi
+      - camera.kitchenpi
+      - camera.bathroompi
+
+# group: !include groups.yaml
+
+automation: !include automations.yaml
