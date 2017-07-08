@@ -35,14 +35,20 @@ if [ -n "${MOTION_OUTPUT_PICTURES}" ]; then
     sed -i "s/^output_pictures\s.*/output_pictures ${MOTION_OUTPUT_PICTURES}/g" /etc/motion/motion.conf
 fi
 # Override THRESHOLD_TUNE (pixels changed) default "off"
-[ -n "${MOTION_THRESHOLD_TUNE}" ] && \
-    sed -i "s/^threshold_tune\s.*/threshold_tune ${MOTION_THRESHOLD_TUNE}/g" /etc/motion/motion.conf
+if [ -n "${MOTION_THRESHOLD_TUNE}" ]; then
+   echo "Set threshold_tune to ${MOTION_THRESHOLD_TUNE}"
+   sed -i "s/^threshold_tune\s.*/threshold_tune ${MOTION_THRESHOLD_TUNE}/g" /etc/motion/motion.conf
+fi
 # Override THRESHOLD (pixels changed) default 1500
-[ -n "${MOTION_THRESHOLD}" ] && \
+if [ -n "${MOTION_THRESHOLD}" ]; then
+   echo "Set threshold to ${MOTION_THRESHOLD}"
     sed -i "s/^threshold\s[0-9]\+/threshold ${MOTION_THRESHOLD}/g" /etc/motion/motion.conf
+fi
 # Override EVENT_GAP (seconds) default 10
-[ -n "${MOTION_EVENT_GAP}" ] && \
+if [ -n "${MOTION_EVENT_GAP}" ]; then
+   echo "Set event_gap to ${MOTION_EVENT_GAP}"
     sed -i "s/^event_gap\s[0-9]\+/event_gap ${MOTION_EVENT_GAP}/g" /etc/motion/motion.conf
+fi
 
 # setup IBM IOTF
 if [ -n "${IOTF_ORG_ID}" ]; then
@@ -69,8 +75,9 @@ service iot restart
 service iot status
 service iot getdeviceid
 
-if [ -n "${RUN_ELECTRON}" ]; then
+if [ -n "${URL_LAUNCHER_URL}" ]; then
   # Run motion (as daemon)
+  echo "START MOTION AS DAEMON"
   motion -l /dev/stderr
   # By default docker gives us 64MB of shared memory size but to display heavy pages we need more.
   umount /dev/shm && mount -t tmpfs shm /dev/shm
@@ -80,5 +87,6 @@ if [ -n "${RUN_ELECTRON}" ]; then
   startx /usr/src/app/node_modules/electron/dist/electron /usr/src/app --enable-logging
 else
   # Run motion (not as daemon)
+  echo "START MOTION WITHOUT ELECTRON"
   motion -n -l /dev/stderr
 fi
