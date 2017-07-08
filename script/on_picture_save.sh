@@ -276,7 +276,7 @@ if [ -n "${MQTT_ON}" ] && [ -s "${OUTPUT}" ] && [ -n "${MQTT_HOST}" ]; then
         CLASS=`jq -r '.alchemy.text' "${OUTPUT}" | sed 's/ /_/g'`
         MODEL=`jq -r '.alchemy.name' "${OUTPUT}" | sed 's/ /_/g'`
         SCORE=`jq -r '.alchemy.score' "${OUTPUT}"`
-	WHAT='"class":"'"${CLASS}"'","model":"'"${MODEL}"'","score":'"${SCORE}"
+	WHAT='"class":"'"${CLASS}"'","model":"'"${MODEL}"'","score":'"${SCORE}"',"id":"'"${IMAGE_ID}"'"'
     fi
     MSG='{"device":"'"${DEVICE_NAME}"'","location":"'"${AAH_LOCATION}"'","date":'`date +%s`','"${WHAT}"'}'
     mosquitto_pub -h "${MQTT_HOST}" -t "${MQTT_TOPIC}" -m "${MSG}"
