@@ -21,6 +21,7 @@ RUN apt-get install -q -y --no-install-recommends \
     python2.7-dev \
     python3.4-dev \
     python-pip \
+    python3-pip \
     x264 \
     unzip \
     vsftpd \
@@ -270,32 +271,10 @@ ENV INITSYSTEM on
 ENV AUDIODEV hw:1,0
 ENV AUDIODRIVER alsa
 
-#
-# PYTHON 3
-#
-# ENV RELEASE=3.6.1
-# install dependencies
-# RUN apt-get install \
-#  libbz2-dev \
-#  liblzma-dev \
-#  libsqlite3-dev \
-#  libncurses5-dev \
-#  libgdbm-dev \
-#  zlib1g-dev \
-#  libreadline-dev \
-#  libssl-dev tk-dev
-# download and build Python
-# RUN mkdir ~/python3 \
-#  && cd ~/python3 \
-#  && wget https://www.python.org/ftp/python/$RELEASE/Python-$RELEASE.tar.xz \
-#  && tar xvf Python-$RELEASE.tar.xz \
-#  && cd Python-$RELEASE \
-#  && ./configure \
-#  && make \
-#  && make install \
-#  && rm -rf ~/python3/Python-$RELEASE
 # install homeassistant
 RUN pip3 install homeassistant
+# copy config
+COPY hass/* ~/.homeassistant/
 
 #
 # Copy "motion" scripts 
@@ -305,7 +284,7 @@ COPY config/motion.conf /etc/motion/motion.conf
 #
 # Ports for motion (control and stream)
 #
-EXPOSE 8080 8081
+EXPOSE 8080 8081 8123
 #
 # Create volume to store images & videos
 #
