@@ -92,22 +92,6 @@ RUN echo 'pcm.cap { type plug slave { pcm "array_gain" channels 4 } route_policy
 RUN echo "#! /bin/sh\nexit 0" > /usr/sbin/policy-rc.d
 RUN curl -LO https://github.com/ibm-messaging/iot-raspberrypi/releases/download/1.0.2.1/iot_1.0-2_armhf.deb
 RUN dpkg -i iot_1.0-2_armhf.deb
-
-#
-# Copy "motion" scripts 
-#
-COPY script/* /usr/local/bin/ 
-COPY config/motion.conf /etc/motion/motion.conf
-#
-# Ports for motion (control and stream)
-#
-EXPOSE 8080 8081
-#
-# Create volume to store images & videos
-#
-VOLUME ["/var/lib/motion"]
-
-
 #
 # install packages for Pulse Audio
 #
@@ -280,8 +264,23 @@ COPY ./app ./
 ## uncomment if you want systemd
 ENV INITSYSTEM on
 
+# audio drivers
 ENV AUDIODEV hw:1,0
 ENV AUDIODRIVER alsa
+
+#
+# Copy "motion" scripts 
+#
+COPY script/* /usr/local/bin/ 
+COPY config/motion.conf /etc/motion/motion.conf
+#
+# Ports for motion (control and stream)
+#
+EXPOSE 8080 8081
+#
+# Create volume to store images & videos
+#
+VOLUME ["/var/lib/motion"]
 #
 # set working directory
 #
