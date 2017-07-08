@@ -81,6 +81,9 @@ service iot restart
 service iot status
 service iot getdeviceid
 
+# HOME ASSISTANT
+pip3 install homeassistant
+
 if [ -n "${URL_LAUNCHER_URL}" ]; then
   # override motion daemon status for electron
   echo 'Overriding MOTION_DAEMON to "on" for ELECTRON'
