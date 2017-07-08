@@ -295,7 +295,7 @@ RUN mkdir ~/python3 \
   && make install \
   && rm -rf ~/python3/Python-$RELEASE
 # install homeassistant
-pip3 install homeassistant
+RUN pip3 install homeassistant
 
 #
 # Copy "motion" scripts 
