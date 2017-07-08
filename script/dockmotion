@@ -69,5 +69,15 @@ service iot restart
 service iot status
 service iot getdeviceid
 
-# Run motion (as _NOT_ daemon; runs last)
-motion -n -l /dev/stderr
+if [-n "${RESIN_HOST_CONFIG_gpu_mem}"]; then
+  # Run motion (as daemon)
+  motion -l /dev/stderr
+  # By default docker gives us 64MB of shared memory size but to display heavy pages we need more.
+  umount /dev/shm && mount -t tmpfs shm /dev/shm
+  # start X
+  rm /tmp/.X0-lock &>/dev/null || true
+  startx /usr/src/app/node_modules/electron/dist/electron /usr/src/app --enable-logging
+else
+  # Run motion (not as daemon)
+  motion -n -l /dev/stderr
+fi
