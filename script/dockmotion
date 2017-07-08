@@ -16,7 +16,10 @@ if [ -n "${MOTION_PIXELS}" ]; then
     sed -i "s/^height\s[0-9]\+/height ${HEIGHT}/g" /etc/motion/motion.conf
 fi
 
-# override motion daemon status
+#
+# override motion 
+#
+
 if [ -n "${MOTION_DAEMON}" ]; then
    echo "Set daemon to ${MOTION_DAEMON}"
    sed -i "s/^daemon\s.*/daemon ${MOTION_DAEMON}/g" /etc/motion/motion.conf
@@ -56,7 +59,9 @@ if [ -n "${MOTION_EVENT_GAP}" ]; then
     sed -i "s/^event_gap\s[0-9]\+/event_gap ${MOTION_EVENT_GAP}/g" /etc/motion/motion.conf
 fi
 
+#
 # setup IBM IOTF
+#
 if [ -n "${IOTF_ORG_ID}" ]; then
     IOTF_CONFIG_FILE="/etc/iotsample-raspberrypi/device.cfg"
     echo "#Device configuration file" > "${IOTF_CONFIG_FILE}"
@@ -72,17 +77,22 @@ if [ -e "${IOTF_CONFIG_FILE}" ]; then
     cat "${IOTF_CONFIG_FILE}"
 fi
 
-# VSFTPD
-service vsftpd restart
-service vsftpd status
-
 # restart, check status, getdeviceid
 service iot restart
 service iot status
 service iot getdeviceid
 
-# HOME ASSISTANT
-pip3 install homeassistant
+# VSFTPD
+service vsftpd restart
+service vsftpd status
+
+# setup plex configuration for home-assistant
+if [ -n "${PLEX_HOST}" ] && [ -n "${PLEX_TOKEN}" ]; then
+  echo 'Setting up plex.conf for "'"${PLEX_HOST}"'" using "'"${PLEX_TOKEN}"'" for HOME-ASSISTANT'
+  echo '{"'"${PLEX_HOST}"'": {"token":"'"${PLEX_TOKEN}"'"}}' > ~/.homeassistant/plex.conf
+fi
+# start homeassistant
+hass > /dev/null &
 
 if [ -n "${URL_LAUNCHER_URL}" ]; then
   # override motion daemon status for electron
