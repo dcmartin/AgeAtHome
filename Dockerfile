@@ -126,10 +126,11 @@ RUN apt-get update && apt-get install -y \
 
 # Set Xorg and FLUXBOX preferences
 RUN mkdir ~/.fluxbox
-RUN echo "xset s off" > ~/.fluxbox/startup && echo "xserver-command=X -s 0 dpms" >> ~/.fluxbox/startup
-RUN echo "#!/bin/bash" > /etc/X11/xinit/xserverrc \
+RUN echo "xset s on" > ~/.fluxbox/startup \
+  && echo "xserver-command=X -s 30 +dpms" >> ~/.fluxbox/startup \
+  && echo "#!/bin/bash" > /etc/X11/xinit/xserverrc \
   && echo "" >> /etc/X11/xinit/xserverrc \
-  && echo 'exec /usr/bin/X -s 0 dpms -nocursor -nolisten tcp "$@"' >> /etc/X11/xinit/xserverrc
+  && echo 'exec /usr/bin/X -s 30 +dpms -nocursor -nolisten tcp "$@"' >> /etc/X11/xinit/xserverrc
 
 # Move to app dir
 WORKDIR /usr/src/app
