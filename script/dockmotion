@@ -86,14 +86,6 @@ service iot getdeviceid
 service vsftpd restart
 service vsftpd status
 
-# setup plex configuration for home-assistant
-if [ -n "${PLEX_HOST}" ] && [ -n "${PLEX_TOKEN}" ]; then
-  echo 'Setting up plex.conf for "'"${PLEX_HOST}"'" using "'"${PLEX_TOKEN}"'" for HOME-ASSISTANT'
-  echo '{"'"${PLEX_HOST}"'": {"token":"'"${PLEX_TOKEN}"'"}}' > ~/.homeassistant/plex.conf
-fi
-# start homeassistant
-hass > /dev/null &
-
 if [ -n "${URL_LAUNCHER_URL}" ]; then
   # override motion daemon status for electron
   echo 'Overriding MOTION_DAEMON to "on" for ELECTRON'
