@@ -264,7 +264,7 @@ if [ -n "${EMAILME_ON}" ] && [ -s "${OUTPUT}" ] && [ -n "${GMAIL_ACCOUNT}" ] && 
     rm -f "${WHAT}.txt"
 fi
 
-# post to MQTT
+# post json to MQTT
 if [ -n "${MQTT_ON}" ] && [ -s "${OUTPUT}" ] && [ -n "${MQTT_HOST}" ]; then
     if [ -z "${MQTT_TOPIC}" ]; then
         MQTT_TOPIC='presence/'"${AAH_LOCATION}"
@@ -280,6 +280,12 @@ if [ -n "${MQTT_ON}" ] && [ -s "${OUTPUT}" ] && [ -n "${MQTT_HOST}" ]; then
     fi
     MSG='{"device":"'"${DEVICE_NAME}"'","location":"'"${AAH_LOCATION}"'","date":'`date +%s`','"${WHAT}"'}'
     mosquitto_pub -h "${MQTT_HOST}" -t "${MQTT_TOPIC}" -m "${MSG}"
+fi
+
+# post image to MQTT
+if [ -n "${MQTT_ON}" ] && [ -s "${IMAGE_FILE}" ] && [ -n "${MQTT_HOST}" ]; then
+    MQTT_TOPIC='image/'"${AAH_LOCATION}"
+    mosquitto_pub -h "${MQTT_HOST}" -t "${MQTT_TOPIC}" -f "${IMAGE_FILE}"
 fi
 
 # force image updates periodically (15 minutes; 1800 seconds)
