@@ -1,8 +1,9 @@
 #!/bin/bash
 
 # INITIATE DEVICE
-IPADDR=$(ip addr | egrep inet | egrep global | egrep brd | awk '{ print $2 }' | sed 's@/.*@@')
-JSON='{"name":"'"${DEVICE_NAME}"'","date":'$(date +%s)',"hostname":"'$(hostname)'","location":"'"${AAH_LOCATION}"'","ip_addr":"'"${IPADDR}"'"'
+IPADDR=$(hostname -I | awk '{ print $1 }')
+
+JSON='{"name":"'"${DEVICE_NAME}"'","date":'$(date +%s)',"location":"'"${AAH_LOCATION}"'","ip_addr":"'"${IPADDR}"'"'
 
 if [ -n "${DIGITS_JOB_ID}" ]; then
   echo "Using DIGITS ${DIGITS_JOB_ID}"
@@ -124,7 +125,7 @@ JSON="${JSON}"'}'
 
 /bin/echo "${JSON}" | jq '.'
 
-if [ -z "${CLOUDANT_OFF}" ] && [ -n "${CLOUDANT_URL}" ] && [ -n "${DEVICE_NAME}" ]; then
+if [ -n "${CLOUDANT_URL}" ] && [ -n "${DEVICE_NAME}" ]; then
   echo "Using CLOUDANT as ${CLOUDANT_USERNAME}"
   URL="${CLOUDANT_URL}/devices"
   DB=$(curl -q -s -X GET "${URL}" | jq '.db_name')
@@ -144,7 +145,7 @@ if [ -z "${CLOUDANT_OFF}" ] && [ -n "${CLOUDANT_URL}" ] && [ -n "${DEVICE_NAME}"
         curl -q -s -H "Content-type: application/json" -X PUT "${URL}" -d "${JSON}"
     fi
 else
-    echo "+++ $0 NO CLOUDANT (CHECK DEVICE_NAME)"
+    echo "+++ $0 NO CLOUDANT ${JSON}"
 fi
 
 # restart, check status, getdeviceid
