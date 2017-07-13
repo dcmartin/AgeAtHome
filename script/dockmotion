@@ -11,9 +11,10 @@ if [ -n "${DIGITS_JOB_ID}" ]; then
 fi
 
 if [ -n "${VR_URL}" ] && [ -n "${VR_API_KEY}" ]; then
-  echo "Using WATSON ${VR_CLASSIFIER}"
+  echo "Using Watson Visual Recognition at ${VR_URL} with ${VR_DATE} and {$VR_VERSION}"
   JSON="${JSON}"',"watson":{"release":"'"${VR_DATE}"'","version":"'"${VR_VERSION}"'","classifiers":["default"'
   if [ -n "{$VR_CLASSIFIER}" ]; then
+    echo "Using ${VR_CLASSIFIER}"
     JSON="${JSON}"',"'"${VR_CLASSIFIER}"'"'
   fi
   JSON="${JSON}"']}'
@@ -49,8 +50,11 @@ if [ -n "${MOTION_PIXELS}" ]; then
     HEIGHT=${wxh[1]}
     sed -i "s/^width\s[0-9]\+/width ${WIDTH}/g" /etc/motion/motion.conf
     sed -i "s/^height\s[0-9]\+/height ${HEIGHT}/g" /etc/motion/motion.conf
-    JSON="${JSON}"',"image":{"width":'"${WIDTH}"',"height":'"${HEIGHT}"'}'
+else
+    WIDTH=640
+    HEIGHT=480
 fi
+JSON="${JSON}"',"image":{"width":'"${WIDTH}"',"height":'"${HEIGHT}"'}'
 
 #
 # override motion 

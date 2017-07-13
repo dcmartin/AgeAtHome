@@ -285,15 +285,17 @@ if [ -n "${MQTT_ON}" ] && [ -s "${IMAGE_FILE}" ] && [ -n "${MQTT_HOST}" ]; then
     "$class" \
     -background none -shadow "100x3+0+0" +repage -stroke none -fill white -annotate 0 \
     "$class" \
-    "$path" \
+    "${IMAGE_FILE}"
     +swap -gravity south -geometry +0-3 -composite \
     -fill none \
     -stroke white \
     -strokewidth 3 \
     -draw "rectangle ${MOTION_X},${MOTION_Y} ${MOTION_WIDTH},${MOTION_HEIGHT}" "${IMAGE_FILE}.$$"
 
-    mosquitto_pub -h "${MQTT_HOST}" -t "${MQTT_TOPIC}" -f "${IMAGE_FILE}.$$"
-    /bin/rm -f "${IMAGE_FILE}.$$"
+    if [ -s "${IMAGE_FILE}.$$" ]; then
+      mosquitto_pub -h "${MQTT_HOST}" -t "${MQTT_TOPIC}" -f "${IMAGE_FILE}.$$"
+      /bin/rm -f "${IMAGE_FILE}.$$"
+    fi
 fi
 
 # force image updates periodically (15 minutes; 1800 seconds)
