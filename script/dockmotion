@@ -115,7 +115,7 @@ if [ -n "${IOTF_ORG_ID}" ]; then
     echo "auth-method = ${IOTF_AUTH_METHOD}" >> "${IOTF_CONFIG_FILE}"
     echo "auth-token = ${IOTF_AUTH_TOKEN}" >> "${IOTF_CONFIG_FILE}"
     echo "#End of Configuration file" >> "${IOTF_CONFIG_FILE}"
-    JSON="${JSON}"',"iotf":{"org":"'"${IOTF_ORG_ID}"'", "type":"'"${IOTF_DEVICE_TYPE}",","id":";"${IOTF_DEVICE_ID}"'"}'
+    JSON="${JSON}"',"iotf":{"org":"'"${IOTF_ORG_ID}"'","type":"'"${IOTF_DEVICE_TYPE}",","id":"'"${IOTF_DEVICE_ID}"'"}'
 fi
 
 JSON="${JSON}"'}'
