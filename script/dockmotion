@@ -1,7 +1,8 @@
 #!/bin/bash
 
 # INITIATE DEVICE
-JSON='{"name":"'"${DEVICE_NAME}"'","date":'$(date +%s)',"hostname":"'$(hostname)'","location":"'"${AAH_LOCATION}"'"'
+IPADDR=$(ip addr | egrep inet | egrep global | egrep brd | awk '{ print $2 }' | sed 's@/.*@@')
+JSON='{"name":"'"${DEVICE_NAME}"'","date":'$(date +%s)',"hostname":"'$(hostname)'","location":"'"${AAH_LOCATION}"'","ip_addr":"'"${IPADDR}"'"'
 
 if [ -n "${DIGITS_JOB_ID}" ]; then
   echo "Using DIGITS ${DIGITS_JOB_ID}"
