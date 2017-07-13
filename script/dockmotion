@@ -99,6 +99,7 @@ if [ -n "${MOTION_THRESHOLD}" ]; then
     sed -i "s/^threshold\s[0-9]\+/threshold ${MOTION_THRESHOLD}/g" /etc/motion/motion.conf
     JSON="${JSON}"',"threshold":'"${MOTION_THRESHOLD}"
 fi
+
 # Override EVENT_GAP (seconds) default 10
 if [ -n "${MOTION_EVENT_GAP}" ]; then
    echo "Set event_gap to ${MOTION_EVENT_GAP}"
@@ -118,8 +119,9 @@ if [ -n "${IOTF_ORG_ID}" ]; then
     echo "auth-method = ${IOTF_AUTH_METHOD}" >> "${IOTF_CONFIG_FILE}"
     echo "auth-token = ${IOTF_AUTH_TOKEN}" >> "${IOTF_CONFIG_FILE}"
     echo "#End of Configuration file" >> "${IOTF_CONFIG_FILE}"
-    JSON="${JSON}"',"iotf":{"org":"'"${IOTF_ORG_ID}"'","type":"'"${IOTF_DEVICE_TYPE}",","id":"'"${IOTF_DEVICE_ID}"'"}'
+    JSON="${JSON}"',"iotf":{"org":"'"${IOTF_ORG_ID}"'","type":"'"${IOTF_DEVICE_TYPE}"'","id":"'"${IOTF_DEVICE_ID}"'"}'
 fi
+
 
 JSON="${JSON}"'}'
 
