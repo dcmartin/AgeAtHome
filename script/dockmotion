@@ -123,18 +123,22 @@ JSON="${JSON}"'}'
 
 if [ -z "${CLOUDANT_OFF}" ] && [ -n "${CLOUDANT_URL}" ] && [ -n "${DEVICE_NAME}" ]; then
   echo "Using CLOUDANT as ${CLOUDANT_USERNAME}"
-  DB=`curl -q -s -X GET "${CLOUDANT_URL}/aah-devices" | jq '.db_name'`
+  URL="${CLOUDANT_URL}/devices"
+  DB=$(curl -q -s -X GET "${URL}" | jq '.db_name')
     if [ "${DB}" == "null" ]; then
         # create DB
-        DB=`curl -q -s -X PUT "${CLOUDANT_URL}/aah-devices" | jq '.ok'`
-        # test for success
+        DB=$(curl -q -s -X PUT "${CLOUDANT_URL}/devices" | jq '.ok')
         if [ "${DB}" != "true" ]; then
-            # failure
             CLOUDANT_OFF=TRUE
         fi
     fi
     if [ -z "${CLOUDANT_OFF}" ]; then
-        curl -q -s -H "Content-type: application/json" -X PUT "$CLOUDANT_URL/aah-devices/${DEVICE_NAME}" -d "${JSON}"
+        URL="${URL}/${DEVICE_NAME}"
+        REV=$(curl -s -q -f "${URL}" | jq '._rev')
+        if [ -n "${REV}" ]; then
+          URL="${URL}/rev=${REV}"
+        fi
+        curl -q -s -H "Content-type: application/json" -X PUT "${URL}" -d "${JSON}"
     fi
 else
     echo "+++ $0 NO CLOUDANT (CHECK DEVICE_NAME)"
