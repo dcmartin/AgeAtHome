@@ -144,7 +144,7 @@ if [ -n "${CLOUDANT_URL}" ] && [ -n "${DEVICE_NAME}" ]; then
     fi
     if [ -z "${CLOUDANT_OFF}" ]; then
         URL="${URL}/${DEVICE_NAME}"
-        REV=$(curl -s -q -f "${URL}" | jq '._rev')
+        REV=$(curl -s -q "${URL}" | jq -r '._rev')
         if [ -n "${REV}" ]; then
           URL="${URL}/rev=${REV}"
         fi
