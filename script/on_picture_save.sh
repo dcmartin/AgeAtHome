@@ -278,32 +278,9 @@ fi
 
 # post image to MQTT
 if [ -n "${MQTT_ON}" ] && [ -s "${IMAGE_FILE}" ] && [ -n "${MQTT_HOST}" ]; then
-  CLASS=`jq -r '.alchemy.text' "${OUTPUT}" | sed 's/ /_/g'`
-  MODEL=`jq -r '.alchemy.name' "${OUTPUT}" | sed 's/ /_/g'`
-  SCORE=`jq -r '.alchemy.score' "${OUTPUT}"`
-  CSIZE="600x40"
-  PSIZE="48"
   MQTT_TOPIC='image/'"${AAH_LOCATION}"
 
-  /usr/local/bin/convert \
-    -pointsize "${PSIZE}" -size "${CSIZE}" \
-    xc:none -gravity center -stroke black -strokewidth 2 -annotate 0 \
-    "${CLASS}" \
-    -background none -shadow "100x3+0+0" +repage -stroke none -fill white -annotate 0 \
-    "${CLASS}" \
-    "${IMAGE_FILE}"
-    +swap -gravity south -geometry +0-3 -composite \
-    -fill none \
-    -stroke white \
-    -strokewidth 3 \
-    -draw "rectangle ${MOTION_X},${MOTION_Y} ${MOTION_WIDTH},${MOTION_HEIGHT}" "${IMAGE_FILE}.$$"
-
-  if [ -s "${IMAGE_FILE}.$$" ]; then
-    mosquitto_pub -h "${MQTT_HOST}" -t "${MQTT_TOPIC}" -f "${IMAGE_FILE}.$$"
-    /bin/rm -f "${IMAGE_FILE}.$$"
-  else
-    mosquitto_pub -h "${MQTT_HOST}" -t "${MQTT_TOPIC}" -f "${IMAGE_FILE}"
-  fi
+  mosquitto_pub -h "${MQTT_HOST}" -t "${MQTT_TOPIC}" -f "${IMAGE_FILE}"
 fi
 
 # force image updates periodically (15 minutes; 1800 seconds)
