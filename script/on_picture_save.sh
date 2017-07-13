@@ -15,23 +15,16 @@ if [ -z "${IMAGE_FILE}" ]; then
   exit
 fi
 
-# calculate imagebox
-if [ -n "${MOTION_MIDX}" ]; then
-    if [ -n "${MOTION_MIDY}" ]; then
-	if [ -n "${MOTION_WIDTH}" ]; then
-	    if [ -n "${MOTION_HEIGHT}" ]; then
-		# calculate X,Y start from mid-point and extant
-		(( MOTION_X = ${MOTION_MIDX} - ${MOTION_WIDTH} / 2 ))
-		(( MOTION_Y = ${MOTION_MIDY} - ${MOTION_HEIGHT} / 2 ))
-		IMAGE_BOX="${MOTION_WIDTH}x${MOTION_HEIGHT}+${MOTION_X}+${MOTION_Y}"
-	    fi
-	fi
-    fi
-fi
+# X coordinate in pixels of the center point of motion. Origin is upper left corner.
+# Y coordinate in pixels of the center point of motion. Origin is upper left corner and number is positive moving downwards 
 
-if [ -z "${IMAGE_BOX}" ]; then
-    IMAGE_BOX="640x480+0+0"
-fi
+# calculate imagebox
+MOTION_X=$(/bin/echo "${MOTION_MIDX} - ( ${MOTION_WIDTH} / 2 )" | /usr/bin/bc)
+MOTION_Y=$(/bin/echo "${MOTION_MIDY} - ( ${MOTION_HEIGHT} / 2 )" | /usr/bin/bc)
+
+IMAGE_BOX="${MOTION_WIDTH}x${MOTION_HEIGHT}+${MOTION_X}+${MOTION_Y}"
+
+/bin/echo "+++ $0 PROCESSING ${EVENT} ${IMAGE_ID} ${MOTION_MIDX} ${MOTION_MIDY} ${MOTION_WIDTH} ${MOTION_HEIGHT} == ${IMAGE_BOX}"
 
 #
 # Prepare output
@@ -284,8 +277,23 @@ fi
 
 # post image to MQTT
 if [ -n "${MQTT_ON}" ] && [ -s "${IMAGE_FILE}" ] && [ -n "${MQTT_HOST}" ]; then
-    MQTT_TOPIC='image/'"${AAH_LOCATION}"
-    mosquitto_pub -h "${MQTT_HOST}" -t "${MQTT_TOPIC}" -f "${IMAGE_FILE}"
+  MQTT_TOPIC='image/'"${AAH_LOCATION}"
+
+  /usr/local/bin/convert \
+    -pointsize "$psize" -size "$csize" \
+    xc:none -gravity center -stroke black -strokewidth 2 -annotate 0 \
+    "$class" \
+    -background none -shadow "100x3+0+0" +repage -stroke none -fill white -annotate 0 \
+    "$class" \
+    "$path" \
+    +swap -gravity south -geometry +0-3 -composite \
+    -fill none \
+    -stroke white \
+    -strokewidth 3 \
+    -draw "rectangle ${MOTION_X},${MOTION_Y} ${MOTION_WIDTH},${MOTION_HEIGHT}" "${IMAGE_FILE}.$$"
+
+    mosquitto_pub -h "${MQTT_HOST}" -t "${MQTT_TOPIC}" -f "${IMAGE_FILE}.$$"
+    /bin/rm -f "${IMAGE_FILE}.$$"
 fi
 
 # force image updates periodically (15 minutes; 1800 seconds)
