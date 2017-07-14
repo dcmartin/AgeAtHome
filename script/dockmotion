@@ -148,7 +148,7 @@ if [ -n "${CLOUDANT_URL}" ] && [ -n "${DEVICE_NAME}" ]; then
         if [ -n "${REV}" ]; then
           URL="${URL}/rev=${REV}"
         fi
-        echo "Updating ${DEVICE_NAME}"
+        echo "Updating ${DEVICE_NAME} with ${URL}"
         curl -q -s -H "Content-type: application/json" -X PUT "${URL}" -d "${JSON}"
     fi
 else
