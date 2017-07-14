@@ -3,7 +3,7 @@
 # INITIATE DEVICE
 IPADDR=$(/bin/hostname -I | /usr/bin/awk '{ print $1 }')
 
-JSON='{"name":"'"${DEVICE_NAME}"'","date":'$(/bin/date +%s)',"location":"'"${AAH_LOCATION}"'","ip_addr":"'"${IPADDR}"'"'
+JSON='{"name":"'"${DEVICE_NAME}"'","date":'$(/bin/date +%s)',"location":"'"${AAH_LOCATION}"'","ip_address":"'"${IPADDR}"'"'
 
 if [ -n "${DIGITS_JOB_ID}" ]; then
   echo "Using DIGITS ${DIGITS_JOB_ID}"
