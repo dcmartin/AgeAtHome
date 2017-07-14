@@ -10,7 +10,7 @@ if [ -n "${DIGITS_JOB_ID}" ]; then
   JSON="${JSON}"',"digits":"'"${DIGITS_JOB_ID}"'"'
 fi
 
-if [ -n "${VR_URL}" ] && [ -n "${VR_API_KEY}" ]; then
+if [ -n "${VR_URL}" ] && [ -n "${VR_APIKEY}" ]; then
   echo "Using Watson Visual Recognition at ${VR_URL} with ${VR_DATE} and {$VR_VERSION}"
   JSON="${JSON}"',"watson":{"release":"'"${VR_DATE}"'","version":"'"${VR_VERSION}"'","classifiers":["default"'
   if [ -n "{$VR_CLASSIFIER}" ]; then
@@ -148,6 +148,7 @@ if [ -n "${CLOUDANT_URL}" ] && [ -n "${DEVICE_NAME}" ]; then
         if [ -n "${REV}" ]; then
           URL="${URL}/rev=${REV}"
         fi
+        echo "Updating ${DEVICE_NAME}"
         curl -q -s -H "Content-type: application/json" -X PUT "${URL}" -d "${JSON}"
     fi
 else
