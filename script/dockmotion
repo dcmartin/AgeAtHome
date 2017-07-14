@@ -5,17 +5,20 @@ IPADDR=$(/bin/hostname -I | /usr/bin/awk '{ print $1 }')
 
 JSON='{"name":"'"${DEVICE_NAME}"'","date":'$(/bin/date +%s)',"location":"'"${AAH_LOCATION}"'","ip_address":"'"${IPADDR}"'"'
 
-if [ -n "${DIGITS_JOB_ID}" ]; then
-  echo "Using DIGITS ${DIGITS_JOB_ID}"
-  JSON="${JSON}"',"digits":"'"${DIGITS_JOB_ID}"'"'
+if [ -n "${DIGITS_JOB_ID}" ] && [ -n "${DIGITS_HOST}" ]; then
+  JOBIDS=$(echo "${DIGITS_JOB_ID}" | sed 's/\([^,]*\)\([,]*\)/"\1"\2/g')
+  echo "Using DIGITS ${JOBIDS}"
+  JSON="${JSON}"',"digits":{"host":"'"${DIGITS_HOST}"'",""models:['"${JOBIDS}"']}'
 fi
 
 if [ -n "${VR_URL}" ] && [ -n "${VR_APIKEY}" ]; then
   echo "Using Watson Visual Recognition at ${VR_URL} with ${VR_DATE} and {$VR_VERSION}"
-  JSON="${JSON}"',"watson":{"release":"'"${VR_DATE}"'","version":"'"${VR_VERSION}"'","classifiers":["default"'
-  if [ -n "{$VR_CLASSIFIER}" ]; then
-    echo "Using ${VR_CLASSIFIER}"
-    JSON="${JSON}"',"'"${VR_CLASSIFIER}"'"'
+  JSON="${JSON}"',"watson":{"release":"'"${VR_DATE}"'","version":"'"${VR_VERSION}"'","models":["default"'
+  if [ -n "${VR_CLASSIFIER}" ]; then
+    # quote the model names
+    CLASSIFIERS=$(echo "${VR_CLASSIFIER}" | sed 's/\([^,]*\)\([,]*\)/"\1"\2/g')
+    echo 'Using custom classifiers(s):'"${CLASSIFIERS}"
+    JSON="${JSON}"','"${CLASSIFIERS}"
   fi
   JSON="${JSON}"']}'
 fi
