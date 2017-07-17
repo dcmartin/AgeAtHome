@@ -167,6 +167,11 @@ service iot getdeviceid
 service vsftpd restart
 service vsftpd status
 
+# FONTS
+mkdir -p ~/.magick
+convert -list font \
+  | awk -F': ' 'BEGIN { printf("<?xml version=\"1.0\"?>\n<typemap>\n"); } /Font: / { font=$2; getline; family=$2; getline; style=$2; getline; stretch=$2; getline; weight=$2; getline; glyphs=$2; printf("<type format=\"ttf\" name=\"%s\" glyphs=\"%s\"\n", font, glyphs); } END { printf("</typemap>\n"); }' > ~/.magick/type.xml
+
 if [ -n "${MOTION_DAEMON}" ]; then
    echo "Set daemon to ${MOTION_DAEMON}"
    sed -i "s/^daemon\s.*/daemon ${MOTION_DAEMON}/g" /etc/motion/motion.conf
