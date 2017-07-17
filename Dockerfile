@@ -152,6 +152,17 @@ ENV INITSYSTEM on
 ENV AUDIODEV hw:1,0
 ENV AUDIODRIVER alsa
 
+# get fonts
+RUN cd /tmp \
+  && curl http://sourceforge.net/projects/freetype/files/freetype2/2.4.4/freetype-2.4.4.tar.bz2 \
+  && bunzip2 freetype-2.4.4.tar.bz2 \
+  && tar xvf freetype-2.4.4.tar \
+  && cd freetype-2.4.4 \
+  && ./configure \
+  && make \
+  && sudo make install \
+  && make clean
+
 #
 # Copy "motion" scripts 
 #
