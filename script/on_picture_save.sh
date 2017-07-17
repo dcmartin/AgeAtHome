@@ -300,7 +300,7 @@ if [ -n "${MQTT_ON}" ] && [ -s "${IMAGE_FILE}" ] && [ -s "${OUTPUT}" ] && [ -n "
   # END 
   #
   if [ -s "${IMAGE_FILE}.$$" ]; then
-    mosquitto_pub -r -h "${MQTT_HOST}" -t "${MQTT_TOPIC}" -f "${IMAGE_FILE}" > "${IMAGE_FILE}.$$"
+    mosquitto_pub -r -h "${MQTT_HOST}" -t "${MQTT_TOPIC}" -f "${IMAGE_FILE}.$$"
     rm -f "${IMAGE_FILE}.$$"
   fi
 fi
