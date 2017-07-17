@@ -170,6 +170,7 @@ service vsftpd status
 # FONTS
 curl -L0 "http://www.imagemagick.org/Usage/scripts/imagick_type_gen" -o "itg.pl"
 chmod 755 itg.pl
+mkdir -p ~/.magick
 ./itg.pl > ~/.magick/type.xml
 
 if [ -n "${MOTION_DAEMON}" ]; then
