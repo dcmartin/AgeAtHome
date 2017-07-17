@@ -16,7 +16,7 @@ switch ($path:e)
 endsw
 
 set out = "$path:r.$$.$path:e"
-set xywh = ( `/bin/echo "$crop" | sed "s/\(.*\)x\(.*\)\([+-]\)\(.*\)\([+-]\)\(.*\)/\3\4 \5\6 \1 \2/"` )
+set xywh = ( `/bin/echo "$crop" | /bin/sed "s/\(.*\)x\(.*\)\([+-]\)\(.*\)\([+-]\)\(.*\)/\3\4 \5\6 \1 \2/"` )
 
 if ($path:e == "jpg") then
   @ w = $xywh[3] / 2
