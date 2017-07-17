@@ -42,7 +42,9 @@ else
 endif
 
 /usr/bin/convert \
-    -pointsize "$psize" -size "$csize" \
+    -family "Courier 10 Pitch" \
+    -pointsize "$psize" \
+    -size "$csize" \
     xc:none -gravity center -stroke black -strokewidth 2 -annotate 0 \
     "$class" \
     -background none -shadow "100x3+0+0" +repage -stroke none -fill white -annotate 0 \
