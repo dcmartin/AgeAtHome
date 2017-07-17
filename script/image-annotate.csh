@@ -41,8 +41,8 @@ else
   set rect = ( 0 0 224 224 )
 endif
 
+    # -family "Courier 10 Pitch" \
 /usr/bin/convert \
-    -family "Courier 10 Pitch" \
     -pointsize "$psize" \
     -size "$csize" \
     xc:none -gravity center -stroke black -strokewidth 2 -annotate 0 \
