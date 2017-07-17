@@ -152,24 +152,18 @@ ENV INITSYSTEM on
 ENV AUDIODEV hw:1,0
 ENV AUDIODRIVER alsa
 
-#
 # Copy "motion" scripts 
-#
 COPY script/* /usr/local/bin/ 
 COPY config/motion.conf /etc/motion/motion.conf
-#
+
 # Ports for motion (control and stream)
-#
 EXPOSE 8080 8081
-#
+
 # Create volume to store images & videos
-#
 VOLUME ["/var/lib/motion"]
-#
+
 # set working directory
-#
 WORKDIR /var/lib/motion
-#
+
 # invoke motion detection script (NOT as daemon; re-direct logging to STDERR)
-#
 CMD [ "/usr/local/bin/dockmotion" ]
