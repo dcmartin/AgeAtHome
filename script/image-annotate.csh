@@ -42,7 +42,7 @@ else
 endif
 
 /usr/bin/convert \
-    -font "Courier 10 Pitch" \
+    -font "Courier-10-Pitch" \
     -pointsize "$psize" \
     -size "$csize" \
     xc:none -gravity center -stroke black -strokewidth 2 -annotate 0 \
