@@ -160,17 +160,8 @@ RUN mkdir -p /tmp/freetype-2.4.4 \
      | tar xf - \
   && cd freetype-2.4.4 \
   && ./configure \
-  && make \
-  && make install \
-  && curl -L0 "http://www.imagemagick.org/Usage/scripts/imagick_type_gen" -o "itg.pl" \
-  && chmod 755 itg.pl \
-  && ./itg.pl > ~/.magick/type.xml \
-  && cd /tmp \
-  && rm -fr /tmp/freetype-2.4.4
+  && make
 
-# setup library
-RUN cd /tmp \
-  && curl "" \
 #
 # Copy "motion" scripts 
 #
