@@ -283,6 +283,29 @@ if [ -n "${MQTT_ON}" ] && [ -s "${IMAGE_FILE}" ] && [ -n "${MQTT_HOST}" ]; then
   mosquitto_pub -h "${MQTT_HOST}" -t "${MQTT_TOPIC}" -f "${IMAGE_FILE}"
 fi
 
+# post annotated image to MQTT
+if [ -n "${MQTT_ON}" ] && [ -s "${IMAGE_FILE}" ] && [ -s "${OUTPUT}" ] && [ -n "${MQTT_HOST}" ]; then
+  CLASS=`jq -r '.alchemy.text' "${OUTPUT}" | sed 's/ /_/g'`
+  MODEL=`jq -r '.alchemy.name' "${OUTPUT}" | sed 's/ /_/g'`
+  SCORE=`jq -r '.alchemy.score' "${OUTPUT}"`
+  CROP=`jq -r '.imagebox' "${OUTPUT}"`
+
+  MQTT_TOPIC='image-annotated/'"${AAH_LOCATION}"
+
+  #
+  # CODE FROM aah-images-label.csh
+  #
+  image-annotate.csh "${IMAGE_FILE}" "${MODEL}/${CLASS}/${SCORE}" "${CROP}" > "${IMAGE_FILE}.$$"
+  #
+  # END 
+  #
+  if [ -s "${IMAGE_FILE}.$$" ];
+    mosquitto_pub -h "${MQTT_HOST}" -t "${MQTT_TOPIC}" -f "${IMAGE_FILE}" > "${IMAGE_FILE}.$$"
+    rm -f "${IMAGE_FILE}.$$"
+  endif
+fi
+
+
 # force image updates periodically (15 minutes; 1800 seconds)
 if [ -n "${AAH_LAN_SERVER}" ]; then
   TTL=1800
