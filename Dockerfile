@@ -153,12 +153,11 @@ ENV AUDIODEV hw:1,0
 ENV AUDIODRIVER alsa
 
 # get fonts
-RUN mkdir -p /tmp/freetype-2.4.4 \
-  && cd /tmp/freetype-2.4.4 \
-  && curl -L0 "http://sourceforge.net/projects/freetype/files/freetype2/2.4.4/freetype-2.4.4.tar.bz2" \
-     | bunzip2 \
-     | tar xf - \
-  && cd freetype-2.4.4 \
+RUN mkdir -p /tmp/freetype \
+  && cd /tmp/freetype \
+  && curl -L0 "https://sourceforge.net/projects/freetype/files/latest/download?source=files" -o latest.zip \
+  && unzip latest.zip
+  && cd freetype-*
   && ./configure \
   && make
 
