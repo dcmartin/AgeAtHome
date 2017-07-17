@@ -41,7 +41,7 @@ else
   set rect = ( 0 0 224 224 )
 endif
 
-/usr/local/bin/convert \
+/usr/bin/convert \
     -pointsize "$psize" -size "$csize" \
     xc:none -gravity center -stroke black -strokewidth 2 -annotate 0 \
     "$class" \
