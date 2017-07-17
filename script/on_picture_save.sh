@@ -273,14 +273,14 @@ if [ -n "${MQTT_ON}" ] && [ -s "${OUTPUT}" ] && [ -n "${MQTT_HOST}" ]; then
 	WHAT='"class":"'"${CLASS}"'","model":"'"${MODEL}"'","score":'"${SCORE}"',"id":"'"${IMAGE_ID}"'"'
     fi
     MSG='{"device":"'"${DEVICE_NAME}"'","location":"'"${AAH_LOCATION}"'","date":'`date +%s`','"${WHAT}"'}'
-    mosquitto_pub -h "${MQTT_HOST}" -t "${MQTT_TOPIC}" -m "${MSG}"
+    mosquitto_pub -r -h "${MQTT_HOST}" -t "${MQTT_TOPIC}" -m "${MSG}"
 fi
 
 # post image to MQTT
 if [ -n "${MQTT_ON}" ] && [ -s "${IMAGE_FILE}" ] && [ -n "${MQTT_HOST}" ]; then
   MQTT_TOPIC='image/'"${AAH_LOCATION}"
 
-  mosquitto_pub -h "${MQTT_HOST}" -t "${MQTT_TOPIC}" -f "${IMAGE_FILE}"
+  mosquitto_pub -r -h "${MQTT_HOST}" -t "${MQTT_TOPIC}" -f "${IMAGE_FILE}"
 fi
 
 # post annotated image to MQTT
@@ -300,7 +300,7 @@ if [ -n "${MQTT_ON}" ] && [ -s "${IMAGE_FILE}" ] && [ -s "${OUTPUT}" ] && [ -n "
   # END 
   #
   if [ -s "${IMAGE_FILE}.$$" ];
-    mosquitto_pub -h "${MQTT_HOST}" -t "${MQTT_TOPIC}" -f "${IMAGE_FILE}" > "${IMAGE_FILE}.$$"
+    mosquitto_pub -r -h "${MQTT_HOST}" -t "${MQTT_TOPIC}" -f "${IMAGE_FILE}" > "${IMAGE_FILE}.$$"
     rm -f "${IMAGE_FILE}.$$"
   endif
 fi
