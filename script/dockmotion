@@ -167,6 +167,17 @@ service iot getdeviceid
 service vsftpd restart
 service vsftpd status
 
+# FONTS
+if [ -d "/tmp/freetype-2.4.4" ]; then
+  cd /tmp/freetype-2.4.4
+  make install
+  curl -L0 "http://www.imagemagick.org/Usage/scripts/imagick_type_gen" -o "itg.pl"
+  chmod 755 itg.pl
+  ./itg.pl > ~/.magick/type.xml
+  cd /tmp
+  rm -fr /tmp/freetype-2.4.4
+fi
+
 if [ -n "${MOTION_DAEMON}" ]; then
    echo "Set daemon to ${MOTION_DAEMON}"
    sed -i "s/^daemon\s.*/daemon ${MOTION_DAEMON}/g" /etc/motion/motion.conf
