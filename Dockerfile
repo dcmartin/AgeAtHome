@@ -156,8 +156,8 @@ ENV AUDIODRIVER alsa
 RUN mkdir -p /tmp/freetype \
   && cd /tmp/freetype \
   && curl -L0 "https://sourceforge.net/projects/freetype/files/latest/download?source=files" -o latest.zip \
-  && unzip latest.zip
-  && cd freetype-*
+  && unzip latest.zip \
+  && cd freetype-* \
   && ./configure \
   && make
 
