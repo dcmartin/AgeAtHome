@@ -41,18 +41,25 @@ else
   set rect = ( 0 0 224 224 )
 endif
 
+set fonts = ( `fc-list | awk -F: '{ print $1 }'` )
 
-/usr/bin/convert \
-    -font "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf" \
+foreach font ( $fonts )
+
+  /usr/bin/convert \
+    -font "$font" \
     -pointsize "$psize" -size "$csize" xc:none -gravity center -stroke black -strokewidth 2 -annotate 0 "$class" \
     -background none -shadow "100x3+0+0" +repage -stroke none -fill white -annotate 0 "$class" \
     "$file" \
     +swap -gravity south -geometry +0-3 -composite -fill none -stroke white -strokewidth 3 -draw "rectangle $rect" \
-    "$out" >&! /dev/stderr
+    "$out"
 
-if (-s "$out") then
-  /bin/dd if="$out"
-  /bin/rm -f "$out"
-else
-  /bin/dd if="$file"
-endif
+  if (-s "$out") then
+    echo "$0 ($$) -- OUTPUT SUCCESSFUL $font ($out)" >&! /dev/console
+    /bin/dd if="$out"
+    /bin/rm -f "$out"
+    exit 0
+  endif
+end
+
+/bin/dd if="$file"
+exit 1
