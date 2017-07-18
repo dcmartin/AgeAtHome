@@ -1,9 +1,9 @@
 #!/bin/csh -fb
-set path = $1
+set file = $1
 set class = $2
 set crop = $3
 
-switch ($path:e)
+switch ($file:e)
     case "jpeg": # 224x224 image
 	set csize = "200x20"
 	set psize = "18"
@@ -15,10 +15,10 @@ switch ($path:e)
       breaksw
 endsw
 
-set out = "$path:r.$$.$path:e"
+set out = "$file:r.$$.$file:e"
 set xywh = ( `/bin/echo "$crop" | /bin/sed "s/\(.*\)x\(.*\)\([+-]\)\(.*\)\([+-]\)\(.*\)/\3\4 \5\6 \1 \2/"` )
 
-if ($path:e == "jpg") then
+if ($file:e == "jpg") then
   @ w = $xywh[3] / 2
   @ h = $xywh[4] / 2
   @ x = `/bin/echo "$w $xywh[1] - 112" | /usr/bin/bc`
@@ -42,23 +42,23 @@ else
 endif
 
 /usr/bin/convert \
-    -font /usr/share/fonts/truetype/dejavu/DejaVuSans.ttf
+    -font /usr/share/fonts/truetype/dejavu/DejaVuSans.ttf \
     -pointsize "$psize" \
     -size "$csize" \
     xc:none -gravity center -stroke black -strokewidth 2 -annotate 0 \
     "$class" \
     -background none -shadow "100x3+0+0" +repage -stroke none -fill white -annotate 0 \
     "$class" \
-    "$path" \
+    "$file" \
     +swap -gravity south -geometry +0-3 -composite \
     -fill none \
     -stroke white \
     -strokewidth 3 \
-    -draw "rectangle $rect" "$out"
+    -draw "rectangle $rect" "$out" >&! /dev/stderr
 
 if (-s "$out") then
   /bin/dd if="$out"
   /bin/rm -f "$out"
 else
-  /bin/dd if="$path"
+  /bin/dd if="$file"
 endif
