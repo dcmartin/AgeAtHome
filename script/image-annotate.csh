@@ -41,20 +41,14 @@ else
   set rect = ( 0 0 224 224 )
 endif
 
+
 /usr/bin/convert \
+    -font "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf" \
+    -pointsize "$psize" -size "$csize" xc:none -gravity center -stroke black -strokewidth 2 -annotate 0 "$class" \
+    -background none -shadow "100x3+0+0" +repage -stroke none -fill white -annotate 0 "$class" \
     "$file" \
-    -pointsize "$psize" \
-    -size "$csize" \
-    xc:none -gravity center -stroke black -strokewidth 2 -annotate 0 \
-    -font /usr/share/fonts/truetype/dejavu/DejaVuSans.ttf \
-    "$class" \
-    -background none -shadow "100x3+0+0" +repage -stroke none -fill white -annotate 0 \
-    "$class" \
-    +swap -gravity south -geometry +0-3 -composite \
-    -fill none \
-    -stroke white \
-    -strokewidth 3 \
-    -draw "rectangle $rect" "$out" >&! /dev/stderr
+    +swap -gravity south -geometry +0-3 -composite -fill none -stroke white -strokewidth 3 -draw "rectangle $rect" \
+    "$out" >&! /dev/stderr
 
 if (-s "$out") then
   /bin/dd if="$out"
