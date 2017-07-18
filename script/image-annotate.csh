@@ -41,7 +41,14 @@ else
   set rect = ( 0 0 224 224 )
 endif
 
-set fonts = ( `fc-list | awk -F: '{ print $1 }'` )
+set fonts = ( `convert -list font | awk -F': ' '/glyphs/ { print $2 }' | sort | uniq` )
+if ($#fonts == 0) then
+  echo "$0 $$ -- found no fonts using convert(1) to list fonts" >&! /dev/console
+  set fonts = ( `fc-list | awk -F: '{ print $1 }' | sort | uniq` )
+  if ($#fonts == 0) then
+    echo "$0 $$ -- found no fonts using fc-list(1) to list fonts" >&! /dev/console
+  endif 
+endif
 
 foreach font ( $fonts )
 
@@ -61,5 +68,6 @@ foreach font ( $fonts )
   endif
 end
 
+echo "$0 ($$) -- OUTPUT FAILURE $fonts" >&! /dev/console
 /bin/dd if="$file"
 exit 1
