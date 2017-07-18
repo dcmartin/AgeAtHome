@@ -42,14 +42,14 @@ else
 endif
 
 /usr/bin/convert \
-    -font /usr/share/fonts/truetype/dejavu/DejaVuSans.ttf \
+    "$file" \
     -pointsize "$psize" \
     -size "$csize" \
     xc:none -gravity center -stroke black -strokewidth 2 -annotate 0 \
+    -font /usr/share/fonts/truetype/dejavu/DejaVuSans.ttf \
     "$class" \
     -background none -shadow "100x3+0+0" +repage -stroke none -fill white -annotate 0 \
     "$class" \
-    "$file" \
     +swap -gravity south -geometry +0-3 -composite \
     -fill none \
     -stroke white \
