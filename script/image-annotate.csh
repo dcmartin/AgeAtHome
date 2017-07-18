@@ -76,7 +76,7 @@ if (-s "$out") then
   /bin/rm -f "$out"
   exit 0
 else
-  echo "$0 ($$) -- OUTPUT FAILURE $fonts" >&! /dev/console
+  echo "$0 ($$) -- OUTPUT FAILURE $*" >&! /dev/console
   /bin/dd if="$file"
   exit 1
 endif
