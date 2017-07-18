@@ -64,19 +64,19 @@ if ($?IMAGE_ANNOTATE_TEXT) then
       -background none -shadow "100x3+0+0" +repage -stroke none -fill white -annotate 0 "$class" \
       "$file" \
       +swap -gravity south -geometry +0-3 -composite -fill none -stroke white -strokewidth 3 -draw "rectangle $rect" \
-      "$out"
+      "$out" >&! /dev/console
   endif
 else
-  /usr/bin/convert "$file" -fill none -stroke white -strokewidth 3 -draw "rectangle $rect" "$out"
+  /usr/bin/convert "$file" -fill none -stroke white -strokewidth 3 -draw "rectangle $rect" "$out" >&! /dev/console
 endif
 
 if (-s "$out") then
-  echo "$0 ($$) -- OUTPUT SUCCESSFUL FONT ($?font) $class" >&! /dev/console
+  echo "$0 ($$) -- OUTPUT SUCCESSFUL $out ($class $rect)" >&! /dev/console
   /bin/dd if="$out"
   /bin/rm -f "$out"
   exit 0
 else
-  echo "$0 ($$) -- OUTPUT FAILURE $*" >&! /dev/console
+  echo "$0 ($$) -- OUTPUT FAILURE $* ($file $class $rect) ($?font)" >&! /dev/console
   /bin/dd if="$file"
   exit 1
 endif
