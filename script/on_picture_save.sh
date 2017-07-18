@@ -295,7 +295,7 @@ if [ -n "${MQTT_ON}" ] && [ -s "${IMAGE_FILE}" ] && [ -s "${OUTPUT}" ] && [ -n "
   #
   # CODE FROM aah-images-label.csh
   #
-  image-annotate.csh "${IMAGE_FILE}" "${MODEL}/${CLASS}/${SCORE}" "${CROP}" > "${IMAGE_FILE}.$$"
+  image-annotate.csh "${IMAGE_FILE}" "${CLASS}" "${CROP}" > "${IMAGE_FILE}.$$"
   #
   # END 
   #
