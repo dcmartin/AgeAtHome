@@ -41,33 +41,42 @@ else
   set rect = ( 0 0 224 224 )
 endif
 
-set fonts = ( `convert -list font | awk -F': ' '/glyphs/ { print $2 }' | sort | uniq` )
-if ($#fonts == 0) then
-  echo "$0 $$ -- found no fonts using convert(1) to list fonts" >&! /dev/console
-  set fonts = ( `fc-list | awk -F: '{ print $1 }' | sort | uniq` )
-  if ($#fonts == 0) then
-    echo "$0 $$ -- found no fonts using fc-list(1) to list fonts" >&! /dev/console
-  endif 
+if ($?IMAGE_ANNOTATE_TEXT) then
+  if ($?IMAGE_ANNOTATE_FONT == 0) then
+    set fonts = ( `convert -list font | awk -F': ' '/glyphs/ { print $2 }' | sort | uniq` )
+    if ($#fonts == 0) then
+      echo "$0 $$ -- found no fonts using convert(1) to list fonts" >&! /dev/console
+      set fonts = ( `fc-list | awk -F: '{ print $1 }' | sort | uniq` )
+      if ($#fonts == 0) then
+        echo "$0 $$ -- found no fonts using fc-list(1) to list fonts" >&! /dev/console
+      endif 
+    endif
+    # use the first font
+    if ($#fonts) set font = $fonts[1]
+  else
+    set font = "$IMAGE_ANNOTATE_FONT"
+  endif
+  if ($?font) then
+    # attempt to write the "$class" annotation
+    /usr/bin/convert \
+      -font "$font" \
+      -pointsize "$psize" -size "$csize" xc:none -gravity center -stroke black -strokewidth 2 -annotate 0 "$class" \
+      -background none -shadow "100x3+0+0" +repage -stroke none -fill white -annotate 0 "$class" \
+      "$file" \
+      +swap -gravity south -geometry +0-3 -composite -fill none -stroke white -strokewidth 3 -draw "rectangle $rect" \
+      "$out"
+  endif
+else
+  /usr/bin/convert "$file" -fill none -stroke white -strokewidth 3 -draw "rectangle $rect" "$out"
 endif
 
-foreach font ( $fonts )
-
-  /usr/bin/convert \
-    -font "$font" \
-    -pointsize "$psize" -size "$csize" xc:none -gravity center -stroke black -strokewidth 2 -annotate 0 "$class" \
-    -background none -shadow "100x3+0+0" +repage -stroke none -fill white -annotate 0 "$class" \
-    "$file" \
-    +swap -gravity south -geometry +0-3 -composite -fill none -stroke white -strokewidth 3 -draw "rectangle $rect" \
-    "$out"
-
-  if (-s "$out") then
-    echo "$0 ($$) -- OUTPUT SUCCESSFUL $font ($out)" >&! /dev/console
-    /bin/dd if="$out"
-    /bin/rm -f "$out"
-    exit 0
-  endif
-end
-
-echo "$0 ($$) -- OUTPUT FAILURE $fonts" >&! /dev/console
-/bin/dd if="$file"
-exit 1
+if (-s "$out") then
+  echo "$0 ($$) -- OUTPUT SUCCESSFUL FONT ($?font) $class" >&! /dev/console
+  /bin/dd if="$out"
+  /bin/rm -f "$out"
+  exit 0
+else
+  echo "$0 ($$) -- OUTPUT FAILURE $fonts" >&! /dev/console
+  /bin/dd if="$file"
+  exit 1
+endif
