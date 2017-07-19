@@ -66,7 +66,9 @@ if ($?IMAGE_ANNOTATE_TEXT) then
       +swap -gravity south -geometry +0-3 -composite -fill none -stroke white -strokewidth 3 -draw "rectangle $rect" \
       "$out" >&! /dev/console
   endif
-else
+endif
+
+if (! -s "$out") then
   /usr/bin/convert "$file" -fill none -stroke white -strokewidth 3 -draw "rectangle $rect" "$out" >&! /dev/console
 endif
 
