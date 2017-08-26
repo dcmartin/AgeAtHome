@@ -3,7 +3,7 @@ set file = $1
 set class = $2
 set crop = $3
 
-if (! -s "$file") then
+if (! -e "$file") then
   /bin/echo "$0 $$ -- NO FILE ($file)" >&! /dev/console
   exit(1) 
 endif
@@ -73,22 +73,22 @@ if ($?IMAGE_ANNOTATE_TEXT) then
   endif
 endif
 
-if (! -s "$out") then
+if (! -e "$out") then
   /bin/echo "$0 $$ -- trying to convert $file into $out" >&! /dev/console
   /usr/bin/convert "$file" -fill none -stroke white -strokewidth 3 -draw "rectangle $rect" "$out" >&! /dev/console
 endif
 
-if (-s "$out") then
+if (-e "$out") then
   /bin/echo "$0 ($$) -- OUTPUT SUCCESSFUL $out ($class $rect)" >&! /dev/console
   /bin/dd if="$out"
   /bin/rm -f "$out"
   exit 0
-else if (-s "$file") then
+else if (-e "$file") then
   /bin/echo "$0 ($$) -- OUTPUT FAILURE $out (returning $file)" >&! /dev/console
   /bin/dd if="$file"
   /bin/rm -f "$out"
   exit 1
-else  if (! -s "$file") then
+else  if (! -e "$file") then
   /bin/echo "$0 ($$) -- NO INPUT ($file)" >&! /dev/console
   /bin/rm -f "$out"
   exit 1
