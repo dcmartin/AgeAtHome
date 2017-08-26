@@ -3,6 +3,11 @@ set file = $1
 set class = $2
 set crop = $3
 
+if (! -s "$file) then
+  /bin/echo "$0 $$ -- NO FILE ($file)" >&! /dev/console
+  exit(1) 
+endif
+
 switch ($file:e)
     case "jpeg": # 224x224 image
 	set csize = "200x20"
@@ -83,8 +88,8 @@ else if (-s "$file") then
   /bin/dd if="$file"
   /bin/rm -f "$out"
   exit 1
-else 
-  /bin/echo "$0 ($$) -- NO INPUT ($file) and NO OUTPUT ($out)" >&! /dev/console
+else  if (! -s "$file") then
+  /bin/echo "$0 ($$) -- NO INPUT ($file)" >&! /dev/console
   /bin/rm -f "$out"
   exit 1
 endif
