@@ -19,10 +19,10 @@ set out = "$file:r.$$.$file:e"
 set xywh = ( `/bin/echo "$crop" | /bin/sed "s/\(.*\)x\(.*\)\([+-]\)\(.*\)\([+-]\)\(.*\)/\3\4 \5\6 \1 \2/"` )
 
 if ($file:e == "jpg") then
-  @ w = $xywh[3] / 2
-  @ h = $xywh[4] / 2
-  @ x = `/bin/echo "$w $xywh[1] - 112" | /usr/bin/bc`
-  @ y = `/bin/echo "$h $xywh[2] - 112" | /usr/bin/bc`
+  set w = `/bin/echo "$xywh[3] / 2" | /usr/bin/bc`
+  set h = `/bin/echo "$xywh[4] / 2" | /usr/bin/bc`
+  set x = `/bin/echo "$w $xywh[1] - 112" | /usr/bin/bc`
+  set y = `/bin/echo "$h $xywh[2] - 112" | /usr/bin/bc`
 
   if ($x < 0) set x = 0
   if ($y < 0) set y = 0
@@ -45,10 +45,10 @@ if ($?IMAGE_ANNOTATE_TEXT) then
   if ($?IMAGE_ANNOTATE_FONT == 0) then
     set fonts = ( `convert -list font | awk -F': ' '/glyphs/ { print $2 }' | sort | uniq` )
     if ($#fonts == 0) then
-      echo "$0 $$ -- found no fonts using convert(1) to list fonts" >&! /dev/console
+      /bin/echo "$0 $$ -- found no fonts using convert(1) to list fonts" >&! /dev/console
       set fonts = ( `fc-list | awk -F: '{ print $1 }' | sort | uniq` )
       if ($#fonts == 0) then
-        echo "$0 $$ -- found no fonts using fc-list(1) to list fonts" >&! /dev/console
+        /bin/echo "$0 $$ -- found no fonts using fc-list(1) to list fonts" >&! /dev/console
       endif 
     endif
     # use the first font
@@ -69,22 +69,22 @@ if ($?IMAGE_ANNOTATE_TEXT) then
 endif
 
 if (! -s "$out") then
-  echo "$0 $$ -- trying to convert $file into $out" >&! /dev/console
+  /bin/echo "$0 $$ -- trying to convert $file into $out" >&! /dev/console
   /usr/bin/convert "$file" -fill none -stroke white -strokewidth 3 -draw "rectangle $rect" "$out" >&! /dev/console
 endif
 
 if (-s "$out") then
-  echo "$0 ($$) -- OUTPUT SUCCESSFUL $out ($class $rect)" >&! /dev/console
+  /bin/echo "$0 ($$) -- OUTPUT SUCCESSFUL $out ($class $rect)" >&! /dev/console
   /bin/dd if="$out"
   /bin/rm -f "$out"
   exit 0
 else if (-s "$file") then
-  echo "$0 ($$) -- OUTPUT FAILURE $out (returning $file)" >&! /dev/console
+  /bin/echo "$0 ($$) -- OUTPUT FAILURE $out (returning $file)" >&! /dev/console
   /bin/dd if="$file"
   /bin/rm -f "$out"
   exit 1
 else 
-  echo "$0 ($$) -- NO INPUT ($file) and NO OUTPUT ($out)" >&! /dev/console
+  /bin/echo "$0 ($$) -- NO INPUT ($file) and NO OUTPUT ($out)" >&! /dev/console
   /bin/rm -f "$out"
   exit 1
 endif
