@@ -3,7 +3,7 @@ set file = $1
 set class = $2
 set crop = $3
 
-if (! -s "$file) then
+if (! -s "$file") then
   /bin/echo "$0 $$ -- NO FILE ($file)" >&! /dev/console
   exit(1) 
 endif
