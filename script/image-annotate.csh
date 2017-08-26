@@ -69,6 +69,7 @@ if ($?IMAGE_ANNOTATE_TEXT) then
 endif
 
 if (! -s "$out") then
+  echo "$0 $$ -- trying to convert $file into $out" >&! /dev/console
   /usr/bin/convert "$file" -fill none -stroke white -strokewidth 3 -draw "rectangle $rect" "$out" >&! /dev/console
 endif
 
@@ -77,8 +78,13 @@ if (-s "$out") then
   /bin/dd if="$out"
   /bin/rm -f "$out"
   exit 0
-else
-  echo "$0 ($$) -- OUTPUT FAILURE $* ($file $class $rect) ($?font)" >&! /dev/console
+else if (-s "$file") then
+  echo "$0 ($$) -- OUTPUT FAILURE $out (returning $file)" >&! /dev/console
   /bin/dd if="$file"
+  /bin/rm -f "$out"
+  exit 1
+else 
+  echo "$0 ($$) -- NO INPUT ($file) and NO OUTPUT ($out)" >&! /dev/console
+  /bin/rm -f "$out"
   exit 1
 endif
