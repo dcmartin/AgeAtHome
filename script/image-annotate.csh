@@ -30,16 +30,16 @@ set xywh = ( `/bin/echo "$crop" | /bin/sed "s/\(.*\)x\(.*\)\([+-]\)\(.*\)\([+-]\
 
 if ($file:e == "jpg") then
 
-  @ x = ( `/bin/echo "$xywh[1]"` )
+  set x = ( `/bin/echo "$xywh[1]"` )
   if ($?x == 0) set x = 0
   if ($x < 0) set x = 0
-  @ y = ( `/bin/echo "$xywh[2]"` )
+  set y = ( `/bin/echo "$xywh[2]"` )
   if ($?y == 0) set y = 0
   if ($y < 0) set y = 0
-  @ w = ( `/bin/echo "$xywh[3]"` )
+  set w = ( `/bin/echo "$xywh[3]"` )
   if ($?w == 0) set w = 640
   if ($w <= 0) set w = 640
-  @ h = ( `/bin/echo "$xywh[4]"` )
+  set h = ( `/bin/echo "$xywh[4]"` )
   if ($?h == 0) set h = 480
   if ($h <= 0) set h = 480
 
