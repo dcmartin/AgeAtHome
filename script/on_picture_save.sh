@@ -290,18 +290,27 @@ if [ -n "${MQTT_ON}" ] && [ -s "${IMAGE_FILE}" ] && [ -s "${OUTPUT}" ] && [ -n "
   SCORE=`jq -r '.alchemy.score' "${OUTPUT}"`
   CROP=`jq -r '.imagebox' "${OUTPUT}"`
 
-  MQTT_TOPIC='image-annotated/'"${AAH_LOCATION}"
 
   #
   # CODE FROM aah-images-label.csh
   #
   image-annotate.csh "${IMAGE_FILE}" "${CLASS}" "${CROP}" > "${IMAGE_FILE}.$$"
-  #
-  # END 
-  #
+
   if [ -s "${IMAGE_FILE}.$$" ]; then
     mosquitto_pub -i "${DEVICE_NAME}" -r -h "${MQTT_HOST}" -t "${MQTT_TOPIC}" -f "${IMAGE_FILE}.$$"
     rm -f "${IMAGE_FILE}.$$"
+  fi
+  # END 
+  #
+  if [ -s "${IMAGE_FILE}.$$" ]; then
+    MQTT_TOPIC='image-annotated/'"${AAH_LOCATION}"
+    mosquitto_pub -i "${DEVICE_NAME}" -r -h "${MQTT_HOST}" -t "${MQTT_TOPIC}" -f "${IMAGE_FILE}.$$"
+    rm -f "${IMAGE_FILE}.$$"
+  fi
+  if [ -s "${IMAGE_FILE%.*}.jpeg" ]; then
+    MQTT_TOPIC='image-cropped/'"${AAH_LOCATION}"
+    mosquitto_pub -i "${DEVICE_NAME}" -r -h "${MQTT_HOST}" -t "${MQTT_TOPIC}" -f "${IMAGE_FILE}.$$"
+    rm -f "${IMAGE_FILE%.*}.jpeg"
   fi
 fi
 

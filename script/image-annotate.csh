@@ -3,6 +3,11 @@ set file = $1
 set class = $2
 set crop = $3
 
+if ($?CAMERA_IMAGE_WIDTH == 0) setenv CAMERA_IMAGE_WIDTH 640
+if ($?CAMERA_IMAGE_HEIGHT == 0) setenv CAMERA_IMAGE_HEIGHT 480
+if ($?MODEL_IMAGE_WIDTH == 0) setenv MODEL_IMAGE_WIDTH 224
+if ($?MODEL_IMAGE_HEIGHT == 0) setenv MODEL_IMAGE_HEIGHT 224
+
 if (! -e "$file") then
   /bin/echo "$0 $$ -- NO FILE ($file)" >&! /dev/console
   exit(1) 
@@ -24,26 +29,46 @@ set out = "$file:r.$$.$file:e"
 set xywh = ( `/bin/echo "$crop" | /bin/sed "s/\(.*\)x\(.*\)\([+-]\)\(.*\)\([+-]\)\(.*\)/\3\4 \5\6 \1 \2/"` )
 
 if ($file:e == "jpg") then
-  set w = `/bin/echo "$xywh[3] / 2" | /usr/bin/bc`
-  set h = `/bin/echo "$xywh[4] / 2" | /usr/bin/bc`
-  set x = `/bin/echo "$w $xywh[1] - 112" | /usr/bin/bc`
-  set y = `/bin/echo "$h $xywh[2] - 112" | /usr/bin/bc`
 
+  @ x = ( `/bin/echo "$xywh[1]"` )
+  if ($?x == 0) set x = 0
   if ($x < 0) set x = 0
+  @ y = ( `/bin/echo "$xywh[2]"` )
+  if ($?y == 0) set y = 0
   if ($y < 0) set y = 0
-  set w = `/bin/echo "$x + 224" | /usr/bin/bc`
-  set h = `/bin/echo "$y + 224" | /usr/bin/bc`
-  if ($w > 640) then
-    @ x -= ( $w - 640 )
-    @ w = 640
-  endif
-  if ($h > 480) then
-    @ y -= ( $h - 480 )
-    @ h = 480
-  endif
-  set rect = ( $x $y $w $h )
+  @ w = ( `/bin/echo "$xywh[3]"` )
+  if ($?w == 0) set w = 640
+  if ($w <= 0) set w = 640
+  @ h = ( `/bin/echo "$xywh[4]"` )
+  if ($?h == 0) set h = 480
+  if ($h <= 0) set h = 480
+
+  @ cx = $x + ( $w / 2 ) - ( $MODEL_IMAGE_WIDTH / 2 )
+  @ cy = $y + ( $h / 2 ) - ( $MODEL_IMAGE_HEIGHT / 2 )
+  if ($cx < 0) @ cx = 0
+  if ($cy < 0) @ cy = 0
+  if ($cx + $MODEL_IMAGE_WIDTH > $CAMERA_IMAGE_WIDTH) @ cx = $CAMERA_IMAGE_WIDTH - $MODEL_IMAGE_WIDTH
+  if ($cy + $MODEL_IMAGE_HEIGHT > $CAMERA_IMAGE_HEIGHT) @ cy = $CAMERA_IMAGE_HEIGHT - $MODEL_IMAGE_HEIGHT
+
+  set rect = ( $cx $cy $MODEL_IMAGE_WIDTH $MODEL_IMAGE_HEIGHT )
+  set xform = "$MODEL_IMAGE_WIDTH"x"$MODEL_IMAGE_HEIGHT"+"$cx"+"$cy"
 else
-  set rect = ( 0 0 224 224 )
+  set rect = ( 0 0  $MODEL_IMAGE_WIDTH $MODEL_IMAGE_HEIGHT )
+  set xform = "$MODEL_IMAGE_WIDTH"x"$MODEL_IMAGE_HEIGHT"+"0"+"0"
+endif
+
+if ($file:e == "jpg" && $?CAMERA_MODEL_TRANSFORM) then
+  switch ($CAMERA_MODEL_TRANSFORM)
+    case "RESIZE":
+       breaksw
+    case "CROP":
+      /usr/local/bin/convert \
+	 -crop "$xform" "$file" \
+	 -gravity center \
+	 -background gray \
+	 "$file:r.jpeg"
+    breaksw
+  endsw
 endif
 
 if ($?IMAGE_ANNOTATE_TEXT) then
