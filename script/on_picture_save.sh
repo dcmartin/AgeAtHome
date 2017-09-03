@@ -290,18 +290,11 @@ if [ -n "${MQTT_ON}" ] && [ -s "${IMAGE_FILE}" ] && [ -s "${OUTPUT}" ] && [ -n "
   SCORE=`jq -r '.alchemy.score' "${OUTPUT}"`
   CROP=`jq -r '.imagebox' "${OUTPUT}"`
 
-
   #
   # CODE FROM aah-images-label.csh
   #
   image-annotate.csh "${IMAGE_FILE}" "${CLASS}" "${CROP}" > "${IMAGE_FILE}.$$"
 
-  if [ -s "${IMAGE_FILE}.$$" ]; then
-    mosquitto_pub -i "${DEVICE_NAME}" -r -h "${MQTT_HOST}" -t "${MQTT_TOPIC}" -f "${IMAGE_FILE}.$$"
-    rm -f "${IMAGE_FILE}.$$"
-  fi
-  # END 
-  #
   if [ -s "${IMAGE_FILE}.$$" ]; then
     MQTT_TOPIC='image-annotated/'"${AAH_LOCATION}"
     mosquitto_pub -i "${DEVICE_NAME}" -r -h "${MQTT_HOST}" -t "${MQTT_TOPIC}" -f "${IMAGE_FILE}.$$"
@@ -313,7 +306,6 @@ if [ -n "${MQTT_ON}" ] && [ -s "${IMAGE_FILE}" ] && [ -s "${OUTPUT}" ] && [ -n "
     rm -f "${IMAGE_FILE%.*}.jpeg"
   fi
 fi
-
 
 # force image updates periodically (15 minutes; 1800 seconds)
 if [ -n "${AAH_LAN_SERVER}" ]; then
