@@ -7,11 +7,13 @@ if ($?CAMERA_IMAGE_WIDTH == 0) setenv CAMERA_IMAGE_WIDTH 640
 if ($?CAMERA_IMAGE_HEIGHT == 0) setenv CAMERA_IMAGE_HEIGHT 480
 if ($?MODEL_IMAGE_WIDTH == 0) setenv MODEL_IMAGE_WIDTH 224
 if ($?MODEL_IMAGE_HEIGHT == 0) setenv MODEL_IMAGE_HEIGHT 224
-if ($?CAMERA_MODEL_TRANSFORM== 0) setenv CAMERA_MODEL_TRANSFORM "CROP"
+if ($?CAMERA_MODEL_TRANSFORM == 0) setenv CAMERA_MODEL_TRANSFORM "CROP"
 
 if (! -e "$file") then
   /bin/echo "$0 $$ -- NO FILE ($file)" >&! /dev/console
   exit(1) 
+else
+  /bin/echo "$0 $$ -- FILE ($file)" >&! /dev/console
 endif
 
 switch ($file:e)
