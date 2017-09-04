@@ -13,7 +13,7 @@ if (! -e "$file") then
   /bin/echo "$0 $$ -- NO FILE ($file)" >&! /dev/console
   exit(1) 
 else
-  /bin/echo "$0 $$ -- FILE ($file)" >&! /dev/console
+  /bin/echo "$0 $$ -- FILE ($file) ($class) ($crop)" >&! /dev/console
 endif
 
 switch ($file:e)
@@ -29,27 +29,40 @@ switch ($file:e)
 endsw
 
 set out = "$file:r.$$.$file:e"
-set xywh = ( `/bin/echo "$crop" | /bin/sed "s/\(.*\)x\(.*\)\([+-]\)\(.*\)\([+-]\)\(.*\)/\3\4 \5\6 \1 \2/"` )
+
+set xywh = ( `/bin/echo "$crop" | sed "s/\(.*\)x\(.*\)\([+-]\)\(.*\)\([+-]\)\(.*\)/\3\4 \5\6 \1 \2/"` )
+if ($?xywh == 0) then
+  /bin/echo "$0 $$ -- NO CROP" >&! /dev/console
+  exit(1)
+else if ($#xywh != 4) then
+  /bin/echo "$0 $$ -- BAD CROP ($xywh)" >&! /dev/console
+  exit(1)
+endif
+
 
 if ($file:e == "jpg") then
 
-  set x = ( `/bin/echo "$xywh[1]"` )
-  if ($?x == 0) set x = 0
-  if ($x < 0) set x = 0
-  set y = ( `/bin/echo "$xywh[2]"` )
-  if ($?y == 0) set y = 0
-  if ($y < 0) set y = 0
+  set x = ( `/bin/echo "0 $xywh[1]" | bc` )
+  if ($?x == 0) @ x = 0
+  if ($x < 0) @ x = 0
+  set y = ( `/bin/echo "0 $xywh[2]" | bc` )
+  if ($?y == 0) @ y = 0
+  if ($y < 0) @ y = 0
   set w = ( `/bin/echo "$xywh[3]"` )
-  if ($?w == 0) set w = 640
-  if ($w <= 0) set w = 640
+  if ($?w == 0) @ w = 640
+  if ($w <= 0) @ w = 640
   set h = ( `/bin/echo "$xywh[4]"` )
-  if ($?h == 0) set h = 480
-  if ($h <= 0) set h = 480
+  if ($?h == 0) @ h = 480
+  if ($h <= 0) @ h = 480
+
+  /bin/echo "$0 $$ -- FILE ($file) ($x $y $w $h)" >&! /dev/console
 
   @ cx = $x + ( $w / 2 ) - ( $MODEL_IMAGE_WIDTH / 2 )
   @ cy = $y + ( $h / 2 ) - ( $MODEL_IMAGE_HEIGHT / 2 )
+
   if ($cx < 0) @ cx = 0
   if ($cy < 0) @ cy = 0
+
   if ($cx + $MODEL_IMAGE_WIDTH > $CAMERA_IMAGE_WIDTH) @ cx = $CAMERA_IMAGE_WIDTH - $MODEL_IMAGE_WIDTH
   if ($cy + $MODEL_IMAGE_HEIGHT > $CAMERA_IMAGE_HEIGHT) @ cy = $CAMERA_IMAGE_HEIGHT - $MODEL_IMAGE_HEIGHT
 
