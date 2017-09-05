@@ -302,7 +302,7 @@ if [ -n "${MQTT_ON}" ] && [ -s "${IMAGE_FILE}" ] && [ -s "${OUTPUT}" ] && [ -n "
   fi
   if [ -s "${IMAGE_FILE%.*}.jpeg" ]; then
     MQTT_TOPIC='image-cropped/'"${AAH_LOCATION}"
-    mosquitto_pub -i "${DEVICE_NAME}" -r -h "${MQTT_HOST}" -t "${MQTT_TOPIC}" -f "${IMAGE_FILE}.$$"
+    mosquitto_pub -i "${DEVICE_NAME}" -r -h "${MQTT_HOST}" -t "${MQTT_TOPIC}" -f "${IMAGE_FILE%.*}.jpeg"
     rm -f "${IMAGE_FILE%.*}.jpeg"
   fi
 fi
