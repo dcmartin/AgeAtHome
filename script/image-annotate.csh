@@ -55,6 +55,10 @@ if ($file:e == "jpg") then
   if ($?h == 0) @ h = $CAMERA_IMAGE_HEIGHT
   if ($h <= 0 || $h > $CAMERA_IMAGE_HEIGHT) @ h = $CAMERA_IMAGE_HEIGHT
 
+  @ ew = $x + $w
+  @ eh = $y + $h
+  set target = ( $x $y $ew $eh )
+
   /bin/echo "$0 $$ -- FILE ($file) ($x $y $w $h)" >&! /dev/stderr
 
   # calculate centroid of movement bounding box
@@ -69,17 +73,16 @@ if ($file:e == "jpg") then
   if ($sx < 0) @ sx = 0
   @ sy = $cy - ( $MODEL_IMAGE_HEIGHT / 2 )
   if ($sy < 0) @ sy = 0
-
   # adjust for scale
   @ sw = $MODEL_IMAGE_WIDTH
   @ sh = $MODEL_IMAGE_HEIGHT
-
   # adjust if past edge
   if ($sx + $sw > $CAMERA_IMAGE_WIDTH) @ sx = $CAMERA_IMAGE_WIDTH - $sw
   if ($sy + $sh > $CAMERA_IMAGE_HEIGHT) @ sy = $CAMERA_IMAGE_HEIGHT - $sh
 
   /bin/echo "$0 $$ -- Start ($sx $sy) Extant ($sw $sh)" >&! /dev/stderr
 
+  # cropped rectangle of MODEL_IMAGE_WIDTH x MODEL_IMAGE_HEIGHT
   @ rw = $sx + $sw
   @ rh = $sy + $sh
   set rect = ( $sx $sy $rw $rh )
@@ -87,27 +90,38 @@ if ($file:e == "jpg") then
   set xform = "$sw"x"$sh"+"$sx"+"$sy"
 
   /bin/echo "$0 $$ -- Rect ($rect) Xform ($xform)" >&! /dev/stderr
-else
-  @ x = ($CAMERA_IMAGE_WIDTH / 2) - ($MODEL_IMAGE_WIDTH / 2)
-  @ y = ($CAMERA_IMAGE_HEIGHT / 2) - ($MODEL_IMAGE_HEIGHT / 2)
-  set xform = "$MODEL_IMAGE_WIDTH"x"$MODEL_IMAGE_HEIGHT"+"$x"+"$y"
-  @ w = $x + $MODEL_IMAGE_WIDTH
-  @ h = $y + $MODEL_IMAGE_HEIGHT
-  set rect = ( $x $y $w $h )
-endif
-
-if ($file:e == "jpg" && $?CAMERA_MODEL_TRANSFORM) then
-  switch ($CAMERA_MODEL_TRANSFORM)
-    case "RESIZE":
-       breaksw
-    case "CROP":
-      convert \
-	 -crop "$xform" "$file" \
-	 -gravity center \
-	 -background gray \
-	 "$file:r.jpeg"
-    breaksw
+  if ($?CAMERA_MODEL_TRANSFORM) then
+    switch ($CAMERA_MODEL_TRANSFORM)
+      case "RESIZE":
+        breaksw
+      case "CROP":
+        set cropped = "$file:r.$$.jpeg"
+        convert \
+ 	  -crop "$xform" "$file" \
+	  -gravity center \
+	  -background gray \
+          "$cropped"
+        if (-e "$cropped") then
+          set random = "$cropped:r.random.jpeg"
+          convert -size "$CAMERA_IMAGE_WIDTH"x"$CAMERA_IMAGE_HEIGHT" "xc:" "+noise" Random -scale "100%" "$random"
+          set composed = "$file:r.jpeg"
+          composite -compose src -geometry +"$sx"+"$sy" "$cropped" "$random" "$composed"
+          /bin/rm -f "$random" "$cropped"
+          if (-e "$composed") then
+            /bin/echo "$0 $$ -- SUCCESS composed ($composed)" >&! /dev/stderr
+          else
+            /bin/echo "$0 $$ -- FAILURE composed ($composed)" >&! /dev/stderr
+          endif
+        else
+          /bin/echo "$0 $$ -- FAILURE TO CROP ($cropped)" >&! /dev/stderr
+        endif
+        breaksw
+      default:
+        /bin/echo "$0 $$ -- invalid CAMERA_MODEL_TRANSFORM ($CAMERA_MODEL_TRANSFORM)" >&! /dev/stderr
+        breaksw
   endsw
+else
+  /bin/echo "$0 $$ -- no CAMERA_MODEL_TRANSFORM specified" >&! /dev/stderr
 endif
 
 if ($?IMAGE_ANNOTATE_TEXT) then
@@ -137,9 +151,10 @@ if ($?IMAGE_ANNOTATE_TEXT) then
   endif
 endif
 
-if (! -e "$out") then
+if (-e "$out") then
   /bin/echo "$0 $$ -- trying to convert $file into $out" >&! /dev/stderr
-  convert "$file" -fill none -stroke white -strokewidth 3 -draw "rectangle $rect" "$out" >&! /dev/stderr
+  convert "$out" -fill none -stroke red -strokewidth 3 -draw "rectangle $target" "$out.$$" >&! /dev/stderr
+  mv "$out.$$" "$out"
 endif
 
 if (-e "$out") then
