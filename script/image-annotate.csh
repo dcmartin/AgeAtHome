@@ -109,10 +109,10 @@ if ($file:e == "jpg") then
             composite -compose src -geometry +"$sx"+"$sy" "$cropped" "$random" "$composed"
             /bin/rm -f "$random" "$cropped"
           endif
-          if (-e "$composed") then
+          if ($?composed) then
             /bin/echo "$0 $$ -- SUCCESS composed ($composed)" >&! /dev/stderr
           else
-            /bin/echo "$0 $$ -- FAILURE composed ($composed)" >&! /dev/stderr
+            /bin/echo "$0 $$ -- FAILURE composing" >&! /dev/stderr
           endif
         else
           /bin/echo "$0 $$ -- FAILURE TO CROP ($cropped)" >&! /dev/stderr
