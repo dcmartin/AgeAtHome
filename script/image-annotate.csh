@@ -103,10 +103,12 @@ if ($file:e == "jpg") then
           "$cropped"
         if (-e "$cropped") then
           set random = "$cropped:r.random.jpeg"
-          convert -size "$CAMERA_IMAGE_WIDTH"x"$CAMERA_IMAGE_HEIGHT" "xc:" "+noise" Random -scale "100%" "$random"
-          set composed = "$file:r.jpeg"
-          composite -compose src -geometry +"$sx"+"$sy" "$cropped" "$random" "$composed"
-          /bin/rm -f "$random" "$cropped"
+          convert -size "$CAMERA_IMAGE_WIDTH"'x'"$CAMERA_IMAGE_HEIGHT" 'xc:' '+noise' Random "$random"
+          if (-e "$random") then
+            set composed = "$file:r.jpeg"
+            composite -compose src -geometry +"$sx"+"$sy" "$cropped" "$random" "$composed"
+            /bin/rm -f "$random" "$cropped"
+          endif
           if (-e "$composed") then
             /bin/echo "$0 $$ -- SUCCESS composed ($composed)" >&! /dev/stderr
           else
