@@ -74,12 +74,13 @@ fi
 if [ -n "${MOTION_USERNAME}" ]; then
   if [ -n "${MOTION_PASSWORD}" ]; then
     echo "Set stream_authentication to Basic"
-    sed -i "s/^stream_auth_method\s[0-9]\+/stream_auth_method 1/g" /etc/motion/motion.conf
-    sed -i "s/.*stream_authentication.*\+/stream_authentication ${MOTION_USERNAME}:${MOTION_PASSWORD}/g" /etc/motion/motion.conf
+    sed -i "s/^stream_auth_method.*/stream_auth_method 1/g" /etc/motion/motion.conf
+    sed -i "s/.*stream_authentication.*/stream_authentication ${MOTION_USERNAME}:${MOTION_PASSWORD}/g" /etc/motion/motion.conf
     JSON="${JSON}"',"stream_auth_method":"Basic"'
-    JSON="${JSON}"',"stream_authentication":'"${MOTION_USERNAME}:${MOTION_PASSWORD}"
+    JSON="${JSON}"',"stream_authentication":'"${MOTION_USERNAME}"':'"${MOTION_PASSWORD}"
   fi
 fi
+
 if [ -n "${STREAM_PORT}" ]; then
     echo "Set stream_port to ${STREAM_PORT}"
     sed -i "s/^stream_port\s[0-9]\+/stream_port ${STREAM_PORT}/g" /etc/motion/motion.conf
@@ -90,9 +91,6 @@ if [ -n "${MOTION_IMAGE_ROTATE}" ]; then
     sed -i "s/^rotate\s[0-9]\+/rotate ${MOTION_IMAGE_ROTATE}/g" /etc/motion/motion.conf
     JSON="${JSON}"',"image_rotate":'"${MOTION_IMAGE_ROTATE}"
 fi
-
-# Override THRESHOLD_TUNE (which pictures selected; on, off, first, best, center); default "center"
-if [ -n "${MOTION_OUTPUT_PICTURES}" ]; then
 
 # Override control and video ports
 if [ -n "${WEBCONTROL_PORT}" ]; then
