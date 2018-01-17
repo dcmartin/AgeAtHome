@@ -89,9 +89,6 @@ if [ -n "${MOTION_IMAGE_ROTATE}" ]; then
     JSON="${JSON}"',"image_rotate":'"${MOTION_IMAGE_ROTATE}"
 fi
 
-# Override THRESHOLD_TUNE (which pictures selected; on, off, first, best, center); default "center"
-if [ -n "${MOTION_OUTPUT_PICTURES}" ]; then
-
 # Override control and video ports
 if [ -n "${WEBCONTROL_PORT}" ]; then
     echo "Set webcontrol_port to ${WEBCONTROL_PORT}"
