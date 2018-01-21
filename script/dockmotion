@@ -77,7 +77,6 @@ if [ -n "${MOTION_USERNAME}" ]; then
     sed -i "s/^stream_auth_method.*/stream_auth_method 1/g" /etc/motion/motion.conf
     sed -i "s/.*stream_authentication.*/stream_authentication ${MOTION_USERNAME}:${MOTION_PASSWORD}/g" /etc/motion/motion.conf
     JSON="${JSON}"',"stream_auth_method":"Basic"'
-    JSON="${JSON}"',"stream_authentication":"'"${MOTION_USERNAME}"':'"${MOTION_PASSWORD}"'"'
   fi
 fi
 
