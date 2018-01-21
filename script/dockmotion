@@ -59,6 +59,8 @@ else
 fi
 JSON="${JSON}"',"image":{"width":'"${WIDTH}"',"height":'"${HEIGHT}"'}'
 
+echo "TEST 1: ${JSON}"
+
 #
 # override motion 
 #
@@ -136,10 +138,12 @@ if [ -n "${MOTION_EVENT_GAP}" ]; then
    JSON="${JSON}"',"event_gap":'"${MOTION_EVENT_GAP}"
 fi
 
+echo "TEST 2: ${JSON}"
+
 #
 # setup IBM IOTF
 #
-if [ -n "${IOTF_ORG_ID}" ]; then
+if [ -n "${IOTF_DEVICE_ID}" ]; then
     IOTF_CONFIG_FILE="/etc/iotsample-raspberrypi/device.cfg"
     echo "#Device configuration file" > "${IOTF_CONFIG_FILE}"
     echo "org = ${IOTF_ORG_ID}" >> "${IOTF_CONFIG_FILE}"
@@ -153,6 +157,8 @@ fi
 
 
 JSON="${JSON}"'}'
+
+echo "TEST 3: ${JSON}"
 
 /bin/echo "${JSON}" | jq '.'
 
