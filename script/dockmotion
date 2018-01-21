@@ -80,17 +80,11 @@ if [ -n "${MOTION_USERNAME}" ]; then
   fi
 fi
 
-if [ -n "${STREAM_PORT}" ]; then
-    echo "Set stream_port to ${STREAM_PORT}"
-    sed -i "s/^stream_port\s[0-9]\+/stream_port ${STREAM_PORT}/g" /etc/motion/motion.conf
-    JSON="${JSON}"',"stream_port":'"${STREAM_PORT}"
-fi
 if [ -n "${MOTION_IMAGE_ROTATE}" ]; then
     echo "Set image rotation to ${MOTION_IMAGE_ROTATE} degrees"
     sed -i "s/^rotate\s[0-9]\+/rotate ${MOTION_IMAGE_ROTATE}/g" /etc/motion/motion.conf
     JSON="${JSON}"',"image_rotate":'"${MOTION_IMAGE_ROTATE}"
 fi
-
 # Override control and video ports
 if [ -n "${WEBCONTROL_PORT}" ]; then
     echo "Set webcontrol_port to ${WEBCONTROL_PORT}"
@@ -101,11 +95,6 @@ if [ -n "${STREAM_PORT}" ]; then
     echo "Set stream_port to ${STREAM_PORT}"
     sed -i "s/^stream_port\s[0-9]\+/stream_port ${STREAM_PORT}/g" /etc/motion/motion.conf
     JSON="${JSON}"',"stream_port":'"${STREAM_PORT}"
-fi
-if [ -n "${MOTION_IMAGE_ROTATE}" ]; then
-    echo "Set image rotation to ${MOTION_IMAGE_ROTATE} degrees"
-    sed -i "s/^rotate\s[0-9]\+/rotate ${MOTION_IMAGE_ROTATE}/g" /etc/motion/motion.conf
-    JSON="${JSON}"',"image_rotate":'"${MOTION_IMAGE_ROTATE}"
 fi
 
 # Override THRESHOLD_TUNE (which pictures selected; on, off, first, best, center); default "center"
