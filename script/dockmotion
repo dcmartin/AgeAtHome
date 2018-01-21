@@ -59,8 +59,6 @@ else
 fi
 JSON="${JSON}"',"image":{"width":'"${WIDTH}"',"height":'"${HEIGHT}"'}'
 
-echo "TEST 1: ${JSON}"
-
 #
 # override motion 
 #
@@ -79,7 +77,7 @@ if [ -n "${MOTION_USERNAME}" ]; then
     sed -i "s/^stream_auth_method.*/stream_auth_method 1/g" /etc/motion/motion.conf
     sed -i "s/.*stream_authentication.*/stream_authentication ${MOTION_USERNAME}:${MOTION_PASSWORD}/g" /etc/motion/motion.conf
     JSON="${JSON}"',"stream_auth_method":"Basic"'
-    JSON="${JSON}"',"stream_authentication":'"${MOTION_USERNAME}"':'"${MOTION_PASSWORD}"
+    JSON="${JSON}"',"stream_authentication":"'"${MOTION_USERNAME}"':'"${MOTION_PASSWORD}"'"'
   fi
 fi
 
@@ -138,8 +136,6 @@ if [ -n "${MOTION_EVENT_GAP}" ]; then
    JSON="${JSON}"',"event_gap":'"${MOTION_EVENT_GAP}"
 fi
 
-echo "TEST 2: ${JSON}"
-
 #
 # setup IBM IOTF
 #
@@ -155,10 +151,7 @@ if [ -n "${IOTF_DEVICE_ID}" ]; then
     JSON="${JSON}"',"iotf":{"org":"'"${IOTF_ORG_ID}"'","type":"'"${IOTF_DEVICE_TYPE}"'","id":"'"${IOTF_DEVICE_ID}"'"}'
 fi
 
-
 JSON="${JSON}"'}'
-
-echo "TEST 3: ${JSON}"
 
 /bin/echo "${JSON}" | jq '.'
 
