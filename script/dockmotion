@@ -110,7 +110,7 @@ fi
 if [ -n "${MOTION_OUTPUT_DEBUG_PICTURES}" ]; then
     echo "Set output debug pictures to ${MOTION_OUTPUT_DEBUG_PICTURES}"
     sed -i "s/^output_debug_pictures\s.*/output_debug_pictures ${MOTION_OUTPUT_DEBUG_PICTURES}/g" /etc/motion/motion.conf
-    JSON="${JSON}"',"output_debug_pictures":"'"${MOTION_OUTPUT_DEBUG_PICTURES}"'"'
+    JSON="${JSON}"',"debug_pictures":"'"${MOTION_OUTPUT_DEBUG_PICTURES}"'"'
 fi
 
 ##
@@ -122,20 +122,20 @@ if [ -n "${MOTION_OUTPUT_MOVIES}" ]; then
   sed -i "s/^ffmpeg_output_movies\s.*/ffmpeg_output_movies ${MOTION_OUTPUT_MOVIES}/g" /etc/motion/motion.conf
   JSON="${JSON}"',"output_movies":"'"${MOTION_OUTPUT_MOVIES}"'"'
 fi
-if [ -n "${MOTION_OUTPUT_MOVIE_TIME}" ]; then
-  echo "Set output movie time to ${MOTION_OUTPUT_MOVIE_TIME} seconds"
-  sed -i "s/^ffmpeg_max_movie_time\s.*/ffmpeg_max_movie_time ${MOTION_OUTPUT_MOVIE_TIME}/g" /etc/motion/motion.conf
-  JSON="${JSON}"',"output_movie_time":"'"${MOTION_OUTPUT_MOVIE_TIME}"'"'
+if [ -n "${MOTION_MOVIE_TIME}" ]; then
+  echo "Set output movie time to ${MOTION_MOVIE_TIME} seconds"
+  sed -i "s/^max_movie_time\s.*/max_movie_time ${MOTION_MOVIE_TIME}/g" /etc/motion/motion.conf
+  JSON="${JSON}"',"movie_time":"'"${MOTION_MOVIE_TIME}"'"'
 fi
-if [ -n "${MOTION_OUTPUT_VIDEO_CODEC}" ]; then
-  echo "Set output movies to ${MOTION_OUTPUT_VIDEO_CODEC}"
-  sed -i "s/^ffmpeg_output_video_codec\s.*/ffmpeg_output_video_codec ${MOTION_OUTPUT_VIDEO_CODEC}/g" /etc/motion/motion.conf
-  JSON="${JSON}"',"output_video_codec":"'"${MOTION_OUTPUT_VIDEO_CODEC}"'"'
+if [ -n "${MOTION_VIDEO_CODEC}" ]; then
+  echo "Set video codec to ${MOTION_VIDEO_CODEC}"
+  sed -i "s/^ffmpeg_video_codec\s.*/ffmpeg_video_codec ${MOTION_VIDEO_CODEC}/g" /etc/motion/motion.conf
+  JSON="${JSON}"',"video_codec":"'"${MOTION_VIDEO_CODEC}"'"'
 fi
-if [ -n "${MOTION_OUTPUT_DEBUG_MOVIES}" ]; then
-  echo "Set output movies to ${MOTION_OUTPUT_DEBUG_MOVIES}"
-  sed -i "s/^ffmpeg_output_debug_movies\s.*/ffmpeg_output_debug_movies ${MOTION_OUTPUT_DEBUG_MOVIES}/g" /etc/motion/motion.conf
-  JSON="${JSON}"',"output_debug_movies":"'"${MOTION_OUTPUT_DEBUG_MOVIES}"'"'
+if [ -n "${MOTION_DEBUG_MOVIES}" ]; then
+  echo "Set debug movies to ${MOTION_DEBUG_MOVIES}"
+  sed -i "s/^ffmpeg_debug_movies\s.*/ffmpeg_debug_movies ${MOTION_DEBUG_MOVIES}/g" /etc/motion/motion.conf
+  JSON="${JSON}"',"debug_movies":"'"${MOTION_DEBUG_MOVIES}"'"'
 fi
 
 ##
@@ -190,7 +190,7 @@ if [ -n "${CLOUDANT_URL}" ] && [ -n "${DEVICE_NAME}" ]; then
         if [[ -n "${REV}" && "${REV}" != "null" ]]; then
           URL="${URL}?rev=${REV}"
         fi
-        echo "Updating ${DEVICE_NAME} at ${URL} with " $(/usr/local/bin/jq -c '.' "${JSON}")
+        echo "Updating ${DEVICE_NAME} at ${URL} with " $(echo "${JSON}" | /usr/local/bin/jq -c '.')
         # curl -s -q -H "Content-type: application/json" -X PUT "${URL}" -d "${JSON}"
         curl -H "Content-type: application/json" -X PUT "${URL}" -d "${JSON}"
     fi
