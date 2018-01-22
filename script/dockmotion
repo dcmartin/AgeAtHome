@@ -173,8 +173,6 @@ fi
 
 JSON="${JSON}"'}'
 
-/bin/echo "${JSON}" | jq '.'
-
 if [ -n "${CLOUDANT_URL}" ] && [ -n "${DEVICE_NAME}" ]; then
   echo "Using CLOUDANT as ${CLOUDANT_USERNAME}"
   URL="${CLOUDANT_URL}/devices"
@@ -189,11 +187,12 @@ if [ -n "${CLOUDANT_URL}" ] && [ -n "${DEVICE_NAME}" ]; then
     if [ -z "${CLOUDANT_OFF}" ]; then
         URL="${URL}/${DEVICE_NAME}"
         REV=$(curl -s -q "${URL}" | jq -r '._rev')
-        if [[ -n "${REV}" && "${REV}" != "" ]]; then
+        if [[ -n "${REV}" && "${REV}" != "null" ]]; then
           URL="${URL}?rev=${REV}"
         fi
-        echo "Updating ${DEVICE_NAME} with ${URL}"
-        curl -q -s -H "Content-type: application/json" -X PUT "${URL}" -d "${JSON}"
+        echo "Updating ${DEVICE_NAME} at ${URL} with " $(/usr/local/bin/jq -c '.' "${JSON}")
+        # curl -s -q -H "Content-type: application/json" -X PUT "${URL}" -d "${JSON}"
+        curl -H "Content-type: application/json" -X PUT "${URL}" -d "${JSON}"
     fi
 else
     echo "+++ $0 NO CLOUDANT ${JSON}"
