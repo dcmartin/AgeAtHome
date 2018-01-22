@@ -59,16 +59,9 @@ else
 fi
 JSON="${JSON}"',"image":{"width":'"${WIDTH}"',"height":'"${HEIGHT}"'}'
 
-#
-# override motion 
-#
-
-# Override locate_motion_mode
-if [ -n "${MOTION_LOCATE_MODE}" ]; then
-    echo "Set locate_motion_mode (on/off/preview) to ${MOTION_LOCATE_MODE}"
-    sed -i "s/^locate_motion_mode\s.*/locate_motion_mode ${MOTION_LOCATE_MODE}/g" /etc/motion/motion.conf
-    JSON="${JSON}"',"locate_mode":"'"${MOTION_LOCATE_MODE}"'"'
-fi
+##
+## BASIC MOTION OPTIONS
+##
 
 # set username and password
 if [ -n "${MOTION_USERNAME}" ]; then
@@ -79,7 +72,6 @@ if [ -n "${MOTION_USERNAME}" ]; then
     JSON="${JSON}"',"stream_auth_method":"Basic"'
   fi
 fi
-
 if [ -n "${MOTION_IMAGE_ROTATE}" ]; then
     echo "Set image rotation to ${MOTION_IMAGE_ROTATE} degrees"
     sed -i "s/^rotate\s[0-9]\+/rotate ${MOTION_IMAGE_ROTATE}/g" /etc/motion/motion.conf
@@ -96,13 +88,59 @@ if [ -n "${STREAM_PORT}" ]; then
     sed -i "s/^stream_port\s[0-9]\+/stream_port ${STREAM_PORT}/g" /etc/motion/motion.conf
     JSON="${JSON}"',"stream_port":'"${STREAM_PORT}"
 fi
-
-# Override THRESHOLD_TUNE (which pictures selected; on, off, first, best, center); default "center"
+# Override EVENT_GAP (seconds) default 10
+if [ -n "${MOTION_EVENT_GAP}" ]; then
+   echo "Set event_gap to ${MOTION_EVENT_GAP}"
+   sed -i "s/^event_gap\s[0-9]\+/event_gap ${MOTION_EVENT_GAP}/g" /etc/motion/motion.conf
+   JSON="${JSON}"',"event_gap":'"${MOTION_EVENT_GAP}"
+fi
+# Override locate_motion_mode
+if [ -n "${MOTION_LOCATE_MODE}" ]; then
+    echo "Set locate_motion_mode (on/off/preview) to ${MOTION_LOCATE_MODE}"
+    sed -i "s/^locate_motion_mode\s.*/locate_motion_mode ${MOTION_LOCATE_MODE}/g" /etc/motion/motion.conf
+    JSON="${JSON}"',"locate_mode":"'"${MOTION_LOCATE_MODE}"'"'
+fi
+# Override MOTION_OUTPUT type
 if [ -n "${MOTION_OUTPUT_PICTURES}" ]; then
     echo "Set output pictures to ${MOTION_OUTPUT_PICTURES}"
     sed -i "s/^output_pictures\s.*/output_pictures ${MOTION_OUTPUT_PICTURES}/g" /etc/motion/motion.conf
     JSON="${JSON}"',"output_pictures":"'"${MOTION_OUTPUT_PICTURES}"'"'
 fi
+# output DEBUG pictues (on/off)
+if [ -n "${MOTION_OUTPUT_DEBUG_PICTURES}" ]; then
+    echo "Set output debug pictures to ${MOTION_OUTPUT_DEBUG_PICTURES}"
+    sed -i "s/^output_debug_pictures\s.*/output_debug_pictures ${MOTION_OUTPUT_DEBUG_PICTURES}/g" /etc/motion/motion.conf
+    JSON="${JSON}"',"output_debug_pictures":"'"${MOTION_OUTPUT_DEBUG_PICTURES}"'"'
+fi
+
+##
+## MOVIES
+##
+
+if [ -n "${MOTION_OUTPUT_MOVIES}" ]; then
+  echo "Set output movies to ${MOTION_OUTPUT_MOVIES}"
+  sed -i "s/^ffmpeg_output_movies\s.*/ffmpeg_output_movies ${MOTION_OUTPUT_MOVIES}/g" /etc/motion/motion.conf
+  JSON="${JSON}"',"output_movies":"'"${MOTION_OUTPUT_MOVIES}"'"'
+fi
+if [ -n "${MOTION_OUTPUT_MOVIE_TIME}" ]; then
+  echo "Set output movie time to ${MOTION_OUTPUT_MOVIE_TIME} seconds"
+  sed -i "s/^ffmpeg_max_movie_time\s.*/ffmpeg_max_movie_time ${MOTION_OUTPUT_MOVIE_TIME}/g" /etc/motion/motion.conf
+  JSON="${JSON}"',"output_movie_time":"'"${MOTION_OUTPUT_MOVIE_TIME}"'"'
+fi
+if [ -n "${MOTION_OUTPUT_VIDEO_CODEC}" ]; then
+  echo "Set output movies to ${MOTION_OUTPUT_VIDEO_CODEC}"
+  sed -i "s/^ffmpeg_output_video_codec\s.*/ffmpeg_output_video_codec ${MOTION_OUTPUT_VIDEO_CODEC}/g" /etc/motion/motion.conf
+  JSON="${JSON}"',"output_video_codec":"'"${MOTION_OUTPUT_VIDEO_CODEC}"'"'
+fi
+if [ -n "${MOTION_OUTPUT_DEBUG_MOVIES}" ]; then
+  echo "Set output movies to ${MOTION_OUTPUT_DEBUG_MOVIES}"
+  sed -i "s/^ffmpeg_output_debug_movies\s.*/ffmpeg_output_debug_movies ${MOTION_OUTPUT_DEBUG_MOVIES}/g" /etc/motion/motion.conf
+  JSON="${JSON}"',"output_debug_movies":"'"${MOTION_OUTPUT_DEBUG_MOVIES}"'"'
+fi
+
+##
+## MOVEMENT THRESHOLD
+##
 
 # Override THRESHOLD_TUNE (pixels changed) default "off"
 if [ -n "${MOTION_THRESHOLD_TUNE}" ]; then
@@ -117,12 +155,6 @@ if [ -n "${MOTION_THRESHOLD}" ]; then
     JSON="${JSON}"',"threshold":'"${MOTION_THRESHOLD}"
 fi
 
-# Override EVENT_GAP (seconds) default 10
-if [ -n "${MOTION_EVENT_GAP}" ]; then
-   echo "Set event_gap to ${MOTION_EVENT_GAP}"
-   sed -i "s/^event_gap\s[0-9]\+/event_gap ${MOTION_EVENT_GAP}/g" /etc/motion/motion.conf
-   JSON="${JSON}"',"event_gap":'"${MOTION_EVENT_GAP}"
-fi
 
 #
 # setup IBM IOTF
@@ -157,7 +189,7 @@ if [ -n "${CLOUDANT_URL}" ] && [ -n "${DEVICE_NAME}" ]; then
     if [ -z "${CLOUDANT_OFF}" ]; then
         URL="${URL}/${DEVICE_NAME}"
         REV=$(curl -s -q "${URL}" | jq -r '._rev')
-        if [ -n "${REV}" ]; then
+        if [[ -n "${REV}" && "${REV}" != "" ]]; then
           URL="${URL}?rev=${REV}"
         fi
         echo "Updating ${DEVICE_NAME} with ${URL}"
