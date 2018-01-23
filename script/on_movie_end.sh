@@ -50,6 +50,8 @@ if [ -n "${FTP_ON}" ] && [ -n "${FTP_HOST}" ] && [ -n "${FTP_USERNAME}" ]; then
   if [ -s "${VIDEO_FILE}" ]; then
     /usr/local/bin/curl -T "${VIDEO_FILE}" "ftp://${FTP_USERNAME}:${FTP_PASSWORD}@${FTP_HOST}/NEW/"
     /bin/echo "+++ DEBUG: $0 -- FTP ${VIDEO_FILE} to ${FTP_HOST}"
+  else
+    /bin/echo "+++ DEBUG: $0 -- FTP failure no video file ${VIDEO_FILE}"
   fi
 fi
 
