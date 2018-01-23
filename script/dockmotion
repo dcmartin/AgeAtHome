@@ -155,10 +155,10 @@ if [ -n "${MOTION_THRESHOLD}" ]; then
     JSON="${JSON}"',"threshold":'"${MOTION_THRESHOLD}"
 fi
 
+##
+## setup IBM IOTF
+##
 
-#
-# setup IBM IOTF
-#
 if [ -n "${IOTF_DEVICE_ID}" ]; then
     IOTF_CONFIG_FILE="/etc/iotsample-raspberrypi/device.cfg"
     echo "#Device configuration file" > "${IOTF_CONFIG_FILE}"
@@ -171,7 +171,20 @@ if [ -n "${IOTF_DEVICE_ID}" ]; then
     JSON="${JSON}"',"iotf":{"org":"'"${IOTF_ORG_ID}"'","type":"'"${IOTF_DEVICE_TYPE}"'","id":"'"${IOTF_DEVICE_ID}"'"}'
 fi
 
+##
+## setup FTP delivery
+##
+
+if [ -n "${FTP_ON}" ] && [ -n "${FTP_HOST}" ]; then
+  echo "Using FTP on ${FTP_HOST}"
+  JSON="${JSON}"',"ftp":"'"${FTP_HOST}"'"'
+fi
+
 JSON="${JSON}"'}'
+
+##
+## UPDATE DEVICE IN CLOUDANT DB
+##
 
 if [ -n "${CLOUDANT_URL}" ] && [ -n "${DEVICE_NAME}" ]; then
   echo "Using CLOUDANT as ${CLOUDANT_USERNAME}"
