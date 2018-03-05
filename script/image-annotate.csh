@@ -32,26 +32,26 @@ set out = "$file:r.$$.$file:e"
 
 set xywh = ( `/bin/echo "$crop" | sed "s/\(.*\)x\(.*\)\([+-]\)\(.*\)\([+-]\)\(.*\)/\3\4 \5\6 \1 \2/"` )
 if ($?xywh == 0) then
-  /bin/echo "$0 $$ -- NO CROP" >&! /dev/stderr
+  /bin/echo "$0 $$ -- BAD CROP ($crop)" >&! /dev/stderr
   exit(1)
 else if ($#xywh != 4) then
-  /bin/echo "$0 $$ -- BAD CROP ($xywh)" >&! /dev/stderr
+  /bin/echo "$0 $$ -- INVALID CROP ($crop) ($xywh)" >&! /dev/stderr
   exit(1)
 endif
 
 
 if ($file:e == "jpg") then
 
-  set x = ( `/bin/echo "0 $xywh[1]" | bc` )
+  set x = $xywh[1]
   if ($?x == 0) @ x = 0
   if ($x < 0 || $x > $CAMERA_IMAGE_WIDTH) @ x = 0
-  set y = ( `/bin/echo "0 $xywh[2]" | bc` )
+  set y = $xywh[2]
   if ($?y == 0) @ y = 0
   if ($y < 0 || $y > $CAMERA_IMAGE_HEIGHT) @ y = 0
-  set w = ( `/bin/echo "$xywh[3]"` )
+  set w = $xywh[3]
   if ($?w == 0) @ w = $CAMERA_IMAGE_WIDTH
   if ($w <= 0 || $w > $CAMERA_IMAGE_WIDTH) @ w = $CAMERA_IMAGE_WIDTH
-  set h = ( `/bin/echo "$xywh[4]"` )
+  set h = $xywh[4]
   if ($?h == 0) @ h = $CAMERA_IMAGE_HEIGHT
   if ($h <= 0 || $h > $CAMERA_IMAGE_HEIGHT) @ h = $CAMERA_IMAGE_HEIGHT
 
