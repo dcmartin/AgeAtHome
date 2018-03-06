@@ -44,11 +44,13 @@ endif
 
 if ($file:e == "jpg") then
 
-  set x = $xywh[1]
+  set x = `echo "0 $xywh[1]" | bc`
   if ($?x == 0) @ x = 0
+  if ($#x == 0) @ x = 0
   if ($x < 0 || $x > $CAMERA_IMAGE_WIDTH) @ x = 0
-  set y = $xywh[2]
+  set y = `echo "0 $xywh[2]" | bc`
   if ($?y == 0) @ y = 0
+  if ($#y == 0) @ y = 0
   if ($y < 0 || $y > $CAMERA_IMAGE_HEIGHT) @ y = 0
   set w = $xywh[3]
   if ($?w == 0) @ w = $CAMERA_IMAGE_WIDTH
@@ -170,7 +172,7 @@ else if (-e "$file") then
   /bin/dd if="$file"
   /bin/rm -f "$out"
   exit 1
-else  if (! -e "$file") then
+else if (! -e "$file") then
   /bin/echo "$0 ($$) -- NO INPUT ($file)" >&! /dev/stderr
   /bin/rm -f "$out"
   exit 1
