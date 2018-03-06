@@ -37,6 +37,8 @@ if ($?xywh == 0) then
 else if ($#xywh != 4) then
   /bin/echo "$0 $$ -- INVALID CROP ($crop) ($xywh)" >&! /dev/stderr
   exit(1)
+else
+  /bin/echo "$0 $$ -- GOOD CROP ($crop) ($xywh)" >&! /dev/stderr
 endif
 
 
@@ -62,7 +64,6 @@ if ($file:e == "jpg") then
   /bin/echo "$0 $$ -- FILE ($file) ($x $y $w $h)" >&! /dev/stderr
 
   # calculate centroid of movement bounding box
-  echo "$x + ( $w / 2 )" | bc >&! /dev/stderr
   @ cx = `echo "$x + ( $w / 2 )" | bc`
   @ cy = $y + ( $h / 2 )
 
