@@ -262,15 +262,16 @@ if [ -n "${MQTT_ON}" ] && [ -s "${OUTPUT}" ] && [ -n "${MQTT_HOST}" ]; then
     CLASS=`jq -r '.alchemy.text' "${OUTPUT}" | sed 's/ /_/g'`
     MODEL=`jq -r '.alchemy.name' "${OUTPUT}" | sed 's/ /_/g'`
     SCORE=`jq -r '.alchemy.score' "${OUTPUT}"`
+    SCORES=`jq -c '.visual.scores' "${OUTPUT}"`
 
     if [ -z "${MQTT_TOPIC}" ]; then
-        MQTT_TOPIC='presence/'"${AAH_LOCATION}"
+        MQTT_TOPIC='presence/'"${AAH_LOCATION}"'/'"${CLASS}"
     fi
     # what entity to discuss/say
     if [ ! -z "${MQTT_JQUERY}" ]; then
         WHAT=`jq -r "${MQTT_JQUERY}" "${OUTPUT}"`
     else
-	WHAT='"class":"'"${CLASS}"'","model":"'"${MODEL}"'","score":'"${SCORE}"',"id":"'"${IMAGE_ID}"'"'
+	WHAT='"class":"'"${CLASS}"'","model":"'"${MODEL}"'","score":'"${SCORE}"',"id":"'"${IMAGE_ID}"'","scores":'"${SCORES}"
     fi
     MSG='{"device":"'"${DEVICE_NAME}"'","location":"'"${AAH_LOCATION}"'","date":'`date +%s`','"${WHAT}"'}'
     mosquitto_pub -i "${DEVICE_NAME}" -r -h "${MQTT_HOST}" -t "${MQTT_TOPIC}" -m "${MSG}"
@@ -278,7 +279,7 @@ fi
 
 # post image to MQTT
 if [ -n "${MQTT_ON}" ] && [ -s "${IMAGE_FILE}" ] && [ -n "${MQTT_HOST}" ]; then
-  MQTT_TOPIC='image/'"${AAH_LOCATION}"
+  MQTT_TOPIC='image/'"${AAH_LOCATION}"'/'"${CLASS}"
 
   mosquitto_pub -i "${DEVICE_NAME}" -r -h "${MQTT_HOST}" -t "${MQTT_TOPIC}" -f "${IMAGE_FILE}"
 fi
