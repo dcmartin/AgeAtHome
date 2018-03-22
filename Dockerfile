@@ -9,7 +9,6 @@ RUN apt-get update
 RUN apt-get install -q -y --no-install-recommends \
     apt-utils \
     csh \
-    dateutils \
     git \
     make \
     tcsh \
@@ -45,6 +44,18 @@ RUN cd /usr/src \
 	&& curl -L "https://github.com/stedolan/jq/releases/download/jq-1.5/jq-1.5.tar.gz" > jq.gz \
 	&& tar xzvf jq.gz \
 	&& cd jq-1.5 \ 
+	&& autoreconf -i \
+	&& ./configure \
+	&& make \
+	&& make install \
+	&& make distclean
+
+#
+# DATEUTILS
+#
+RUN cd /usr/src \
+	&& git clone "https://github.com/hroptatyr/dateutils.git" \
+	&& cd dateutils \
 	&& autoreconf -i \
 	&& ./configure \
 	&& make \
