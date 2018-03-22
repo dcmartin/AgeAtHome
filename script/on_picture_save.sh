@@ -15,6 +15,25 @@ if [ -z "${IMAGE_FILE}" ]; then
   exit
 fi
 
+##
+## PROCESS MOTION_INTERVAL
+##
+
+if [ -n "${MOTION_INTERVAL}" ]; then
+  DIR=$(echo "${IMAGE_FILE%/*}")
+  FILES=($(echo "${DIR}"/*.json))
+  LAST="${FILES[-1]##*/}"
+  NOW=$(date +%s)
+  DATE=$(echo "${LAST%.*}")
+  DATE=$(echo $DATE| sed 's/\(.*\)-.*-.*/\1/')
+  THEN=$(dateutils.dconv -i '%Y%m%d%H%M%S' $DATE -f "%s")
+  INTERVAL=$(echo "$NOW - $THEN" | bc)
+  if [ $INTERVAL -le $MOTION_INTERVAL ]; then
+    /bin/echo "+++ $0 -- SKIPPING ${IMAGE_FILE} -- INTERVAL (${INTERVAL}) <= ${MOTION_INTERVAL}"
+    exit
+  fi
+fi
+
 # X coordinate in pixels of the center point of motion. Origin is upper left corner.
 # Y coordinate in pixels of the center point of motion. Origin is upper left corner and number is positive moving downwards 
 
