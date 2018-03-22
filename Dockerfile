@@ -9,6 +9,7 @@ RUN apt-get update
 RUN apt-get install -q -y --no-install-recommends \
     apt-utils \
     csh \
+    dateutils \
     git \
     make \
     tcsh \
