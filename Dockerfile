@@ -57,7 +57,6 @@ RUN cd /usr/src \
 	&& curl -L "https://github.com/westes/flex/releases/download/v2.6.4/flex-2.6.4.tar.gz" > flex.gz \
 	&& tar xzvf flex.gz \
 	&& cd flex-2.6.4 \ 
-	&& autoreconf -i \
 	&& ./configure \
 	&& make \
 	&& make install \
