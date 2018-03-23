@@ -86,7 +86,7 @@ RUN cd /usr/src \
 	&& cd src \
 	&& make \
 	&& mv src/lex.yy.c src/dexpr-scanner.c \
-        && make 
+        && make \
 	&& make install
 
 #
