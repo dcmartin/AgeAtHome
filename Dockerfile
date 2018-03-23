@@ -51,6 +51,32 @@ RUN cd /usr/src \
 	&& make distclean
 
 #
+# FLEX
+#
+RUN cd /usr/src \
+	&& curl -L "https://github.com/westes/flex/releases/download/v2.6.4/flex-2.6.4.tar.gz" > flex.gz \
+	&& tar xzvf flex.gz \
+	&& cd flex-2.6.4 \ 
+	&& autoreconf -i \
+	&& ./configure \
+	&& make \
+	&& make install \
+	&& make distclean
+
+#
+# GPERF
+#
+RUN cd /usr/src \
+	&& curl -L "http://ftp.gnu.org/pub/gnu/gperf/gperf-3.1.tar.gz" > gperf.gz \
+	&& tar xzvf gperf.gz \
+	&& cd gperf-3.1 \ 
+	&& autoreconf -i \
+	&& ./configure \
+	&& make \
+	&& mv src/gperf /usr/local/bin \
+	&& make distclean
+
+#
 # DATEUTILS
 #
 RUN cd /usr/src \
@@ -58,6 +84,8 @@ RUN cd /usr/src \
 	&& cd dateutils \
 	&& autoreconf -i \
 	&& ./configure \
+	&& make \
+	&& mv src/lex.yy.c src/dexpr-scanner.c \
 	&& make \
 	&& make install \
 	&& make distclean
