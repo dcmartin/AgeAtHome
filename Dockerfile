@@ -83,11 +83,11 @@ RUN cd /usr/src \
 	&& cd dateutils \
 	&& autoreconf -i \
 	&& ./configure \
+	&& cd src \
 	&& make \
 	&& mv src/lex.yy.c src/dexpr-scanner.c \
-	&& make \
-	&& make install \
-	&& make distclean
+        && make 
+	&& make install
 
 #
 # VSFTPD
