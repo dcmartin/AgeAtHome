@@ -26,7 +26,7 @@ if [ -n "${MOTION_INTERVAL}" ]; then
   NOW=$(date +%s)
   DATE=$(echo "${LAST%.*}")
   DATE=$(echo $DATE| sed 's/\(.*\)-.*-.*/\1/')
-  THEN=$(/usr/local/bin/dateconv -i '%Y%m%d%H%M%S' $DATE -f "%s")
+  THEN=$(/usr/bin/dateutils.dconv -i '%Y%m%d%H%M%S' $DATE -f "%s")
   INTERVAL=$(echo "$NOW - $THEN" | bc)
   if [ $INTERVAL -le $MOTION_INTERVAL ]; then
     /bin/echo "+++ $0 -- SKIPPING ${IMAGE_FILE} -- INTERVAL (${INTERVAL}) <= ${MOTION_INTERVAL}"
