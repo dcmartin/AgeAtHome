@@ -11,7 +11,7 @@ MOTION_WIDTH=$6
 MOTION_HEIGHT=$7
 
 if [ -z "${IMAGE_FILE}" ]; then
-  echo "<EVENT> <IMAGE_FILE> <IMAGE_TYPE> <MIDX> <MIDY> <WIDTH> <HEIGHT>"
+  /bin/echo "<EVENT> <IMAGE_FILE> <IMAGE_TYPE> <MIDX> <MIDY> <WIDTH> <HEIGHT>" >&2
   exit
 fi
 
@@ -22,35 +22,46 @@ fi
 if [ -n "${MOTION_INTERVAL}" ]; then
   DIR=$(echo "${IMAGE_FILE%/*}")
   FILES=($(echo "${DIR}"/*.json))
-  LAST="${FILES[-1]##*/}"
+  if [[ ${#FILES[@]} -le 0 ]]; then
+    /bin/echo "+++ $0 FILES = ${FILES}" >&2
+    exit
+  fi
+  LAST=$(echo "${#FILES[@]} -1 " | bc)
+  LAST="${FILES[${LAST}]##*/}"
   if [ -n "${LAST}" ]; then
     WHEN=$(echo "${LAST%.*}")
     WHEN=$(echo $WHEN| sed 's/\(.*\)-.*-.*/\1/')
-    if [ -n "${WHEN} ]; then
-      THEN=$(/usr/bin/dateutils.dconv -i '%Y%m%d%H%M%S' $WHEN -f "%s")
-      if [ -n "${THEN} ]; then
+    if [ -n "${WHEN}" ]; then
+      if [ -e /usr/bin/dateutils.dconv ]; then
+        THEN=$(/usr/bin/dateutils.dconv -i '%Y%m%d%H%M%S' $WHEN -f "%s")
+      elif [ -e /usr/local/bin/dateconv ]; then
+        THEN=$(/usr/local/bin/dateconv -i '%Y%m%d%H%M%S' $WHEN -f "%s")
+      fi
+      if [ -n "${THEN}" ]; then
         NOW=$(date +%s)
 	INTERVAL=$(echo "$NOW - $THEN" | bc)
-	if [ -n "${INTERVAL} ]; then
-	  /bin/echo "+++ $0 -- WHEN ${WHEN} -- NOW (${NOW}) THEN ${THEN}"
-	  if [[ $INTERVAL -le $MOTION_INTERVAL ]]; then
-	    /bin/echo "+++ $0 -- SKIPPING ${IMAGE_FILE} -- INTERVAL (${INTERVAL}) <= ${MOTION_INTERVAL}"
+	if [ -n "${INTERVAL}" ]; then
+	  # /bin/echo "+++ $0 -- WHEN ${WHEN} -- NOW ${NOW} THEN ${THEN}" >&2
+	  if [ $INTERVAL -le $MOTION_INTERVAL ]; then
+	    /bin/echo "+++ $0 -- SKIPPING ${IMAGE_FILE} -- INTERVAL ${INTERVAL} <= ${MOTION_INTERVAL}" >&2
 	    exit
+          else
+	    /bin/echo "+++ $0 -- PROCESSING ${IMAGE_FILE} -- INTERVAL ${INTERVAL} > ${MOTION_INTERVAL}" >&2
 	  fi
         else
-	  /bin/echo "+++ $0 -- INTERVAL not defined"
+	  /bin/echo "+++ $0 -- INTERVAL not defined" >&2
 	fi
       else
-	/bin/echo "+++ $0 -- THEN not defined"
+	/bin/echo "+++ $0 -- THEN not defined" >&2
       fi
     else
-      /bin/echo "+++ $0 -- WHEN not defined"
+      /bin/echo "+++ $0 -- WHEN not defined" >&2
     fi
   else
-    /bin/echo "+++ $0 -- LAST not defined"
+    /bin/echo "+++ $0 -- LAST not defined" >&2
   fi
 else
-  /bin/echo "+++ $0 -- MOTION_INTERVAL not defined"
+  /bin/echo "+++ $0 -- MOTION_INTERVAL not defined" >&2
 fi
 
 # X coordinate in pixels of the center point of motion. Origin is upper left corner.
@@ -126,7 +137,7 @@ if [ -n "${DIGITS_SERVER_URL}" ]; then
     if [ -n "${DIGITS_JOB_ID}" ]; then
 	CMD="models/images/classification/classify_one.json"
 	# get inference
-        echo "+++ $0 PROCESSING DIGITS (${DIGITS_JOB_ID})"
+        echo "+++ $0 PROCESSING DIGITS ${DIGITS_JOB_ID}"
 	curl -s -q -L -X POST \
 	    -F "image_file=@$IMAGE_FILE" \
 	    -F "job_id=${DIGITS_JOB_ID}" \
@@ -139,9 +150,9 @@ if [ -n "${DIGITS_SERVER_URL}" ]; then
 		| sed 's/ /_/g' \
 		| awk -F, 'BEGIN { n=0 } { if (n>0) printf(","); n++; printf("{\"classifier_id\":\"%s\",\"name\":\"%s\",\"score\":%1.4f}", $1, $2, $3/100)}' > "${DG_OUTPUT}.$$"
 	    mv "${DG_OUTPUT}.$$" "${DG_OUTPUT}"
-            echo "+++ $0 SUCCESS DIGITS (${DIGITS_JOB_ID})"
+            echo "+++ $0 SUCCESS DIGITS ${DIGITS_JOB_ID}"
         else
-            echo "+++ $0 FAILURE DIGITS (${DIGITS_JOB_ID})"
+            echo "+++ $0 FAILURE DIGITS ${DIGITS_JOB_ID}"
 	fi
     else
 	echo "+++ $0 NO DIGITS_JOB_ID specified for server ${DIGITS_SERVER_URL}"
@@ -262,7 +273,7 @@ if [ -z "${CLOUDANT_OFF}" ] && [ -s "${OUTPUT}" ] && [ -n "${CLOUDANT_URL}" ] &&
 	curl -q -s -H "Content-type: application/json" -X PUT "$CLOUDANT_URL/${DEVICE_NAME}/${IMAGE_ID}" -d "@${OUTPUT}"
     fi
 else
-    echo "+++ $0 NO CLOUDANT (CHECK DEVICE_NAME)"
+    echo "+++ $0 NO CLOUDANT CHECK DEVICE_NAME"
 fi
 
 # make a noise
