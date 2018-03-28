@@ -23,15 +23,34 @@ if [ -n "${MOTION_INTERVAL}" ]; then
   DIR=$(echo "${IMAGE_FILE%/*}")
   FILES=($(echo "${DIR}"/*.json))
   LAST="${FILES[-1]##*/}"
-  NOW=$(date +%s)
-  DATE=$(echo "${LAST%.*}")
-  DATE=$(echo $DATE| sed 's/\(.*\)-.*-.*/\1/')
-  THEN=$(/usr/bin/dateutils.dconv -i '%Y%m%d%H%M%S' $DATE -f "%s")
-  INTERVAL=$(echo "$NOW - $THEN" | bc)
-  if [ $INTERVAL -le $MOTION_INTERVAL ]; then
-    /bin/echo "+++ $0 -- SKIPPING ${IMAGE_FILE} -- INTERVAL (${INTERVAL}) <= ${MOTION_INTERVAL}"
-    exit
+  if [ -n "${LAST}" ]; then
+    WHEN=$(echo "${LAST%.*}")
+    WHEN=$(echo $WHEN| sed 's/\(.*\)-.*-.*/\1/')
+    if [ -n "${WHEN} ]; then
+      THEN=$(/usr/bin/dateutils.dconv -i '%Y%m%d%H%M%S' $WHEN -f "%s")
+      if [ -n "${THEN} ]; then
+        NOW=$(date +%s)
+	INTERVAL=$(echo "$NOW - $THEN" | bc)
+	if [ -n "${INTERVAL} ]; then
+	  /bin/echo "+++ $0 -- WHEN ${WHEN} -- NOW (${NOW}) THEN ${THEN}"
+	  if [[ $INTERVAL -le $MOTION_INTERVAL ]]; then
+	    /bin/echo "+++ $0 -- SKIPPING ${IMAGE_FILE} -- INTERVAL (${INTERVAL}) <= ${MOTION_INTERVAL}"
+	    exit
+	  fi
+        else
+	  /bin/echo "+++ $0 -- INTERVAL not defined"
+	fi
+      else
+	/bin/echo "+++ $0 -- THEN not defined"
+      fi
+    else
+      /bin/echo "+++ $0 -- WHEN not defined"
+    fi
+  else
+    /bin/echo "+++ $0 -- LAST not defined"
   fi
+else
+  /bin/echo "+++ $0 -- MOTION_INTERVAL not defined"
 fi
 
 # X coordinate in pixels of the center point of motion. Origin is upper left corner.
