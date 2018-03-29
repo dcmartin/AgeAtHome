@@ -21,44 +21,49 @@ fi
 
 if [ -n "${MOTION_INTERVAL}" ]; then
   DIR=$(echo "${IMAGE_FILE%/*}")
-  FILES=($(echo "${DIR}"/*.json))
-  if [[ ${#FILES[@]} -le 0 ]]; then
-    /bin/echo "+++ $0 FILES = ${FILES}" >&2
-    exit
-  fi
-  LAST=$(echo "${#FILES[@]} -1 " | bc)
-  LAST="${FILES[${LAST}]##*/}"
-  if [ -n "${LAST}" ]; then
-    WHEN=$(echo "${LAST%.*}")
-    WHEN=$(echo $WHEN| sed 's/\(.*\)-.*-.*/\1/')
-    if [ -n "${WHEN}" ]; then
-      if [ -e /usr/bin/dateutils.dconv ]; then
-        THEN=$(/usr/bin/dateutils.dconv -i '%Y%m%d%H%M%S' $WHEN -f "%s")
-      elif [ -e /usr/local/bin/dateconv ]; then
-        THEN=$(/usr/local/bin/dateconv -i '%Y%m%d%H%M%S' $WHEN -f "%s")
-      fi
-      if [ -n "${THEN}" ]; then
-        NOW=$(date +%s)
-	INTERVAL=$(echo "$NOW - $THEN" | bc)
-	if [ -n "${INTERVAL}" ]; then
-	  # /bin/echo "+++ $0 -- WHEN ${WHEN} -- NOW ${NOW} THEN ${THEN}" >&2
-	  if [ $INTERVAL -le $MOTION_INTERVAL ]; then
-	    /bin/echo "+++ $0 -- SKIPPING ${IMAGE_FILE} -- INTERVAL ${INTERVAL} <= ${MOTION_INTERVAL}" >&2
-	    exit
-          else
-	    /bin/echo "+++ $0 -- PROCESSING ${IMAGE_FILE} -- INTERVAL ${INTERVAL} > ${MOTION_INTERVAL}" >&2
+  IMAGES=($(echo "${DIR}"/*.jpg))
+  if [[ ${#IMAGES[@]} -ge 2 ]]; then
+    NOW=$(echo "${#IMAGES[@]} - 1" | bc)
+    NOW="${IMAGES[${NOW}]##*/}"
+    LAST=$(echo "${#IMAGES[@]} - 2" | bc)
+    LAST="${IMAGES[${LAST}]##*/}"
+    if [ -n "${LAST}" ] && [ -n "${NOW}" ]; then
+      NOW=$(echo "${NOW%.*}")
+      NOW=$(echo $NOW| sed 's/\(.*\)-.*-.*/\1/')
+      LAST=$(echo "${LAST%.*}")
+      LAST=$(echo $LAST| sed 's/\(.*\)-.*-.*/\1/')
+      if [ -n "${LAST}" ] && [ -n "${NOW}" ]; then
+	if [ -e /usr/bin/dateutils.dconv ]; then
+	  NOW=$(/usr/bin/dateutils.dconv -i '%Y%m%d%H%M%S' $NOW -f "%s")
+	  LAST=$(/usr/bin/dateutils.dconv -i '%Y%m%d%H%M%S' $LAST -f "%s")
+	elif [ -e /usr/local/bin/dateconv ]; then
+	  NOW=$(/usr/local/bin/dateconv -i '%Y%m%d%H%M%S' $NOW -f "%s")
+	  LAST=$(/usr/local/bin/dateconv -i '%Y%m%d%H%M%S' $LAST -f "%s")
+	fi
+	if [ -n "${LAST}" ] && [ -n "${NOW}" ]; then
+	  INTERVAL=$(echo "$NOW - $LAST" | bc)
+	  if [ -n "${INTERVAL}" ]; then
+	    /bin/echo "+++ $0 -- LAST ${LAST} -- NOW ${NOW} LAST ${LAST}" >&2
+	    if [ $INTERVAL -le $MOTION_INTERVAL ]; then
+	      /bin/echo "+++ $0 -- SKIPPING ${IMAGE_FILE} -- INTERVAL ${INTERVAL} <= ${MOTION_INTERVAL}" >&2
+	      exit
+	    else
+	      /bin/echo "+++ $0 -- PROCESSING ${IMAGE_FILE} -- INTERVAL ${INTERVAL} > ${MOTION_INTERVAL}" >&2
+	    fi
+	  else
+	    /bin/echo "+++ $0 -- INTERVAL not defined" >&2
 	  fi
-        else
-	  /bin/echo "+++ $0 -- INTERVAL not defined" >&2
+	else
+	  /bin/echo "+++ $0 -- NOW/LAST not defined" >&2
 	fi
       else
-	/bin/echo "+++ $0 -- THEN not defined" >&2
+	/bin/echo "+++ $0 -- NOW/LAST not defined" >&2
       fi
     else
-      /bin/echo "+++ $0 -- WHEN not defined" >&2
+      /bin/echo "+++ $0 -- NOW/LAST not defined" >&2
     fi
   else
-    /bin/echo "+++ $0 -- LAST not defined" >&2
+    /bin/echo "+++ $0 -- nothing old" >&2
   fi
 else
   /bin/echo "+++ $0 -- MOTION_INTERVAL not defined" >&2
