@@ -156,6 +156,16 @@ if [ -n "${MOTION_THRESHOLD}" ]; then
 fi
 
 ##
+## MOTION INTERVAL
+##
+
+# Override MOTION_INTERVAL (seconds) default none
+if [ -n "${MOTION_INTERVAL}" ]; then
+   echo "Set interval to ${MOTION_INTERVAL}"
+   JSON="${JSON}"',"interval":'"${MOTION_INTERVAL}"
+fi
+
+##
 ## setup IBM IOTF
 ##
 
