@@ -21,12 +21,13 @@ fi
 
 if [ -n "${MOTION_INTERVAL}" ]; then
   DIR=$(echo "${IMAGE_FILE%/*}")
-  IMAGES=($(echo "${DIR}"/*.jpg))
-  if [[ ${#IMAGES[@]} -ge 2 ]]; then
-    NOW=$(echo "${#IMAGES[@]} - 1" | bc)
-    NOW="${IMAGES[${NOW}]##*/}"
-    LAST=$(echo "${#IMAGES[@]} - 2" | bc)
-    LAST="${IMAGES[${LAST}]##*/}"
+  JSONS=($(echo "${DIR}"/*.json))
+  JPGS=($(echo "${DIR}"/*.jpg))
+  if [[ ${#JPGS[@]} -ge 2 ]]; then
+    NOW=$(echo "${#JPGS[@]} - 1" | bc)
+    NOW="${JPGS[${NOW}]##*/}"
+    LAST=$(echo "${#JSONS[@]} - 2" | bc)
+    LAST="${JSONS[${LAST}]##*/}"
     if [ -n "${LAST}" ] && [ -n "${NOW}" ]; then
       NOW=$(echo "${NOW%.*}")
       NOW=$(echo $NOW| sed 's/\(.*\)-.*-.*/\1/')
@@ -68,7 +69,6 @@ if [ -n "${MOTION_INTERVAL}" ]; then
 else
   /bin/echo "+++ $0 -- MOTION_INTERVAL not defined" >&2
 fi
-
 # X coordinate in pixels of the center point of motion. Origin is upper left corner.
 # Y coordinate in pixels of the center point of motion. Origin is upper left corner and number is positive moving downwards 
 
