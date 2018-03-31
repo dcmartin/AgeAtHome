@@ -211,10 +211,11 @@ rm -f $diffs
 ## POST TO MQTT
 ##
 
-if ($?MQTT_ON && $?MQTT_HOST && $?AAH_LOCATION && -e "$LASTJSON" && -e "$composite" ) then
-  set MQTT_TOPIC = 'composite/'"$AAH_LOCATION"
-
+if ($?MQTT_ON && $?MQTT_HOST && $?AAH_LOCATION) then
+  set MQTT_TOPIC = 'image-composite/'"$AAH_LOCATION"
   mosquitto_pub -i "$DEVICE_NAME" -r -h "$MQTT_HOST" -t "$MQTT_TOPIC" -f "$composite"
+  set MQTT_TOPIC = 'image-animated/'"$AAH_LOCATION"
+  mosquitto_pub -i "$DEVICE_NAME" -r -h "$MQTT_HOST" -t "$MQTT_TOPIC" -f "$gif"
 endif
 
 cleanup:
