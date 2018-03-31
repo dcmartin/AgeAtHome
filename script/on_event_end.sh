@@ -1,12 +1,13 @@
 #!/bin/csh -fb
 
+setenv DEBUG
+setenv VERBOSE
+
 ##
 ## DEVICE_NAME only specified in production
 ##
 
 if ($?DEVICE_NAME == 0) then
-  setenv DEBUG
-  # setenv VERBOSE
   setenv MOTION_TARGET_DIR /var/lib/motion
   setenv MOTION_EVENT_GAP 30
   setenv MQTT_HOST 192.168.1.40
