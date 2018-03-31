@@ -67,7 +67,7 @@ JSON="${JSON}"',"image":{"width":'"${WIDTH}"',"height":'"${HEIGHT}"'}'
 if [ -n "${MOTION_TARGET_DIR}" ]; then
    sed -i "s/^target_dir\s.*/target_dir ${MOTION_TARGET_DIR}/g" /etc/motion/motion.conf
 else
-   MOTION_TARGET_DIR=$(cat /etc/motion/motion.conf|sed 's/^target_dir\s\(.*\)/\1/')
+   MOTION_TARGET_DIR=$(grep '^target_dir' /etc/motion/motion.conf | awk '{ print $2 }')
 fi
 export MOTION_TARGET_DIR
 echo "Set target_dir to ${MOTION_TARGET_DIR}"
@@ -77,7 +77,7 @@ JSON="${JSON}"',"target_dir":"'"${MOTION_TARGET_DIR}"'"'
 if [ -n "${MOTION_EVENT_GAP}" ]; then
    sed -i "s/^event_gap\s[0-9]\+/event_gap ${MOTION_EVENT_GAP}/g" /etc/motion/motion.conf
 else
-   MOTION_EVENT_GAP=$(cat /etc/motion/motion.conf|sed 's/^event_gap\s\(.*\)/\1/')
+   MOTION_EVENT_GAP=$(grep '^event_gap' /etc/motion/motion.conf | awk '{ print $2 }')
 fi
 export MOTION_EVENT_GAP
 echo "Set event_gap to ${MOTION_EVENT_GAP}"
