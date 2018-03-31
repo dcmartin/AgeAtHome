@@ -69,6 +69,7 @@ if [ -n "${MOTION_INTERVAL}" ]; then
 else
   /bin/echo "+++ $0 -- MOTION_INTERVAL not defined" >&2
 fi
+
 # X coordinate in pixels of the center point of motion. Origin is upper left corner.
 # Y coordinate in pixels of the center point of motion. Origin is upper left corner and number is positive moving downwards 
 
