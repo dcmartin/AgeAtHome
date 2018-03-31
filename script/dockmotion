@@ -67,11 +67,21 @@ JSON="${JSON}"',"image":{"width":'"${WIDTH}"',"height":'"${HEIGHT}"'}'
 if [ -n "${MOTION_TARGET_DIR}" ]; then
    echo "Set target_dir to ${MOTION_TARGET_DIR}"
    sed -i "s/^target_dir\s.*/target_dir ${MOTION_TARGET_DIR}/g" /etc/motion/motion.conf
-   JSON="${JSON}"',"target_dir":'"${MOTION_TARGET_DIR}"
 else
    MOTION_TARGET_DIR=$(sed 's/^target_dir\s\(.*\)/\1/' /etc/motion/motion.conf)
-   export MOTION_TARGET_DIR
 fi
+ JSON="${JSON}"',"target_dir":'"${MOTION_TARGET_DIR}"
+ export MOTION_TARGET_DIR
+
+# MOTION_EVENT_GAP (seconds) default 60
+if [ -n "${MOTION_EVENT_GAP}" ]; then
+   echo "Set event_gap to ${MOTION_EVENT_GAP}"
+   sed -i "s/^event_gap\s[0-9]\+/event_gap ${MOTION_EVENT_GAP}/g" /etc/motion/motion.conf
+else
+   MOTION_EVENT_GAP=$(sed 's/^event_gap\s\(.*\)/\1/' /etc/motion/motion.conf)
+fi
+JSON="${JSON}"',"event_gap":'"${MOTION_EVENT_GAP}"
+export MOTION_EVENT_GAP
 
 # set username and password
 if [ -n "${MOTION_USERNAME}" ]; then
@@ -97,12 +107,6 @@ if [ -n "${STREAM_PORT}" ]; then
     echo "Set stream_port to ${STREAM_PORT}"
     sed -i "s/^stream_port\s[0-9]\+/stream_port ${STREAM_PORT}/g" /etc/motion/motion.conf
     JSON="${JSON}"',"stream_port":'"${STREAM_PORT}"
-fi
-# Override EVENT_GAP (seconds) default 10
-if [ -n "${MOTION_EVENT_GAP}" ]; then
-   echo "Set event_gap to ${MOTION_EVENT_GAP}"
-   sed -i "s/^event_gap\s[0-9]\+/event_gap ${MOTION_EVENT_GAP}/g" /etc/motion/motion.conf
-   JSON="${JSON}"',"event_gap":'"${MOTION_EVENT_GAP}"
 fi
 # Override locate_motion_mode
 if [ -n "${MOTION_LOCATE_MODE}" ]; then

@@ -4,11 +4,11 @@
 ## DEVICE_NAME only specified in production
 ##
 
-if ($?AAH_PRODUCTION == 0) then
+if ($?DEVICE_NAME == 0) then
   setenv DEBUG
   # setenv VERBOSE
   setenv MOTION_TARGET_DIR /var/lib/motion
-  setenv MOTION_INTERVAL 30
+  setenv MOTION_EVENT_GAP 30
   setenv MQTT_HOST 192.168.1.40
   setenv MQTT_ON true
   setenv AAH_LOCATION test
@@ -42,10 +42,10 @@ else
 endif
 
 ##
-## PROCESS MOTION_INTERVAL
+## PROCESS MOTION_EVENT_GAP
 ##
 
-if ($?MOTION_TARGET_DIR && $?MOTION_INTERVAL) then
+if ($?MOTION_TARGET_DIR && $?MOTION_EVENT_GAP) then
   set DIR = $MOTION_TARGET_DIR
   set jsons = ( `echo "$DIR"/*.json` )
   set jpgs = ( `echo "$DIR"/*.jpg` )
@@ -60,10 +60,10 @@ if ($?MOTION_TARGET_DIR && $?MOTION_INTERVAL) then
     set NOW = `$dateconv -i '%Y%m%d%H%M%S' $NOW -f "%s"`
 
     @ INTERVAL = $NOW - $LAST
-    if ( $INTERVAL > $MOTION_INTERVAL) then
-      if ($?VERBOSE) echo "$0:t $$ -- $jpgs[$i] - INTERVAL $INTERVAL > $MOTION_INTERVAL" >& /dev/stderr
+    if ( $INTERVAL > $MOTION_EVENT_GAP) then
+      if ($?VERBOSE) echo "$0:t $$ -- $jpgs[$i] - INTERVAL $INTERVAL > $MOTION_EVENT_GAP" >& /dev/stderr
     else if ( $INTERVAL >= 0) then
-      if ($?VERBOSE) echo "$0:t $$ -- $jpgs[$i] - INTERVAL $INTERVAL <= $MOTION_INTERVAL" >& /dev/stderr
+      if ($?VERBOSE) echo "$0:t $$ -- $jpgs[$i] - INTERVAL $INTERVAL <= $MOTION_EVENT_GAP" >& /dev/stderr
       set frames = ( $jpgs[$i] $frames )
     else
       break
