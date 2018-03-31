@@ -198,7 +198,7 @@ endif
 ##
 
 set gif = $TMP/$LASTJPG:t:r.gif
-convert -loop 1 -delay $ms $kframes $gif
+convert -loop 0 -delay $ms $kframes $gif
 
 # optionally produce animated mask
 if ($?GIF_MASK) then
