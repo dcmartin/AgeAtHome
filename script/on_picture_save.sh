@@ -16,6 +16,15 @@ if [ -z "${IMAGE_FILE}" ]; then
 fi
 
 ##
+## POST IMAGE 
+##
+if [ -n "${MQTT_ON}" ] && [ -s "${IMAGE_FILE}" ] && [ -n "${MQTT_HOST}" ]; then
+  MQTT_TOPIC='image/'"${AAH_LOCATION}"
+
+  mosquitto_pub -i "${DEVICE_NAME}" -r -h "${MQTT_HOST}" -t "${MQTT_TOPIC}" -f "${IMAGE_FILE}"
+fi
+
+##
 ## PROCESS MOTION_INTERVAL
 ##
 
@@ -70,37 +79,34 @@ else
   /bin/echo "+++ $0 -- MOTION_INTERVAL not defined" >&2
 fi
 
+##
+## CALCULATE MOTION BOX
+##
+
 # X coordinate in pixels of the center point of motion. Origin is upper left corner.
-# Y coordinate in pixels of the center point of motion. Origin is upper left corner and number is positive moving downwards 
-
-# calculate imagebox
 MOTION_X=$(/bin/echo "${MOTION_MIDX} - ( ${MOTION_WIDTH} / 2 )" | /usr/bin/bc)
+# Y coordinate in pixels of the center point of motion. Origin is upper left corner and number is positive moving downwards 
 MOTION_Y=$(/bin/echo "${MOTION_MIDY} - ( ${MOTION_HEIGHT} / 2 )" | /usr/bin/bc)
-
+# DEFINE EXTANT
 IMAGE_BOX="${MOTION_WIDTH}x${MOTION_HEIGHT}+${MOTION_X}+${MOTION_Y}"
 
 /bin/echo "+++ $0 PROCESSING ${EVENT} ${IMAGE_ID} ${MOTION_MIDX} ${MOTION_MIDY} ${MOTION_WIDTH} ${MOTION_HEIGHT} == ${IMAGE_BOX}"
 
-#
-# Prepare output
-#
+##
+## PREPARE OUTPUT
+##
+
+# assign output file for JSON
 OUTPUT="${IMAGE_FILE%.*}.json"
 # drop prefix path
 IMAGE_ID=`echo "${OUTPUT##*/}"`
 # drop extension
 IMAGE_ID=`echo "${IMAGE_ID%.*}"`
 
-#
-# VISUAL RECOGNITION
-#
-# FACES
-# curl -L -o /tmp/$0:t.$$.json -X POST -F "images_file=@$IMAGE_FILE" -H "Accept-Language: en" "$TU/v3/detect_faces?api_key=$api_key&version=2016-05-20"
-# TEXT
-# curl -L -o /tmp/$0:t.$$.json -X POST -F "images_file=@$IMAGE_FILE" -H "Accept-Language: en" "$TU/v3/recognize_text?api_key=$api_key&version=2016-05-20"
+##
+## VISUAL RECOGNITION
+##
 
-#
-# CLASSIFICATION
-#
 # EXAMPLE
 # {"custom_classes":8,"images":[{"classifiers":[{"classes":[{"class":"cat","score":0.0440043},{"class":"david","score":0.682563},{"class":"dog","score":0.0426537},{"class":"ellen","score":0.0450058},{"class":"hali","score":0.0435302},{"class":"ian","score":0.936221},{"class":"keli","score":0.0293902},{"class":"riley","score":0.539559}],"classifier_id":"roughfog_879989469","name":"roughfog_879989469"},{"classes":[{"class":"kitchen","score":0.63,"type_hierarchy":"/room/kitchen"},{"class":"room","score":0.68},{"class":"people","score":0.573,"type_hierarchy":"/person/people"},{"class":"person","score":0.628},{"class":"cafe","score":0.557,"type_hierarchy":"/building/restaurant/cafe"},{"class":"restaurant","score":0.56},{"class":"building","score":0.56},{"class":"computer user","score":0.556,"type_hierarchy":"/person/computer user"},{"class":"wheelhouse","score":0.554,"type_hierarchy":"/room/compartment/wheelhouse"},{"class":"compartment","score":0.554},{"class":"reddish brown color","score":0.64},{"class":"chestnut color","score":0.623}],"classifier_id":"default","name":"default"}],"image":"input.jpg"}],"images_processed":1}
 #
@@ -131,9 +137,10 @@ else
     echo "+++ $0 VISUAL-RECOGNITION - OFF"
 fi
 
-#
-# DIGITS
-#
+##
+## DIGITS
+##
+
 # EXAMPLE
 # {"predictions":[["http://www.dcmartin.com/CGI/aah-index.cgi?db=quiet-water&ext=sample&class=road",90.09],["http://www.dcmartin.com/CGI/aah-index.cgi?db=quiet-water&ext=sample&class=motorcycle",9.76],["http://www.dcmartin.com/CGI/aah-index.cgi?db=quiet-water&ext=sample&class=car",0.06],["http://www.dcmartin.com/CGI/aah-index.cgi?db=quiet-water&ext=sample&class=builder",0.03],["http://www.dcmartin.com/CGI/aah-index.cgi?db=quiet-water&ext=sample&class=martin c70",0.02]]}
 
@@ -167,11 +174,9 @@ else
     echo "+++ $0 NO DIGITS_SERVER_URL specified"
 fi
 
-
-
-#
-# CREATE OUTPUT FROM COMBINATIONS OF RESULTS
-#
+##
+## COMBINE OUTPUT
+##
 
 if [ -s "${VR_OUTPUT}" ]; then
     echo "+++ $0 PROCESSING VISUAL_RECOGNITION ${VR_OUTPUT}"
@@ -220,11 +225,11 @@ else
     echo '}}' >> "${OUTPUT}"
 fi
 
-# debug
-jq -c '.' "${OUTPUT}"
-
 # remove tmp & originals
 rm -f "${OUTPUT}.$$" "${VR_OUTPUT}" "${DG_OUTPUT}"
+
+# debug
+jq -c '.' "${OUTPUT}"
 
 #
 # add date and time
@@ -351,16 +356,18 @@ if [ -n "${MQTT_ON}" ] && [ -s "${IMAGE_FILE}" ] && [ -s "${OUTPUT}" ] && [ -n "
   #
   image-annotate.csh "${IMAGE_FILE}" "${CLASS}" "${CROP}" > "${IMAGE_FILE}.$$"
 
+  # test if annotated image created
   if [ -s "${IMAGE_FILE}.$$" ]; then
     MQTT_TOPIC='image-annotated/'"${AAH_LOCATION}"
     mosquitto_pub -i "${DEVICE_NAME}" -r -h "${MQTT_HOST}" -t "${MQTT_TOPIC}" -f "${IMAGE_FILE}.$$"
-    rm -f "${IMAGE_FILE}.$$"
   fi
+  rm -f "${IMAGE_FILE}.$$"
+  # test if cropped image created
   if [ -s "${IMAGE_FILE%.*}.jpeg" ]; then
     MQTT_TOPIC='image-cropped/'"${AAH_LOCATION}"
     mosquitto_pub -i "${DEVICE_NAME}" -r -h "${MQTT_HOST}" -t "${MQTT_TOPIC}" -f "${IMAGE_FILE%.*}.jpeg"
-    rm -f "${IMAGE_FILE%.*}.jpeg"
   fi
+  # rm -f "${IMAGE_FILE%.*}.jpeg"
 fi
 
 # force image updates periodically (15 minutes; 1800 seconds)
@@ -374,4 +381,9 @@ if [ -n "${AAH_LAN_SERVER}" ]; then
     jq -c '.' "/tmp/images.${DATE}.json"
   fi
 fi
+
+##
+## ALL DONE
+##
+
 echo "+++ END: $0: $*" $(date) >&2
