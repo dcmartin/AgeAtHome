@@ -51,7 +51,7 @@ if [ -n "${MOTION_INTERVAL}" ]; then
 	if [ -n "${LAST}" ] && [ -n "${NOW}" ]; then
 	  INTERVAL=$(echo "$NOW - $LAST" | bc)
 	  if [ -n "${INTERVAL}" ]; then
-	    /bin/echo "+++ $0 -- LAST ${LAST} -- NOW ${NOW} LAST ${LAST}" >&2
+	    # /bin/echo "+++ $0 -- LAST ${LAST} -- NOW ${NOW} LAST ${LAST}" >&2
 	    if [ $INTERVAL -le $MOTION_INTERVAL ]; then
 	      /bin/echo "+++ $0 -- SKIPPING ${IMAGE_FILE} -- INTERVAL ${INTERVAL} <= ${MOTION_INTERVAL}" >&2
 	      exit
@@ -227,7 +227,9 @@ fi
 rm -f "${OUTPUT}.$$" "${VR_OUTPUT}" "${DG_OUTPUT}"
 
 # debug
-jq -c '.' "${OUTPUT}"
+if [ -s "${OUTPUT}" ]; then
+  jq -c '.' "${OUTPUT}"
+fi
 
 #
 # add date and time
@@ -243,9 +245,6 @@ if [ -s "${OUTPUT}" ]; then
 	MINUTE=`echo "${DATE_TIME}" | sed "s/^..........\(..\).*/\1/"`
 	SECOND=`echo "${DATE_TIME}" | sed "s/^............\(..\).*/\1/"`
 
-	# should think more about adding the event gap specification into the event record -- and maybe the date (in seconds since epoch)
-	    # sed 's/^{/{"year":"YEAR","month":"MONTH","day":"DAY","hour":"HOUR","minute":"MINUTE","second":"SECOND","eventgap":"MOTION_EVENT_GAP","imagebox":"IMAGE_BOX",/' | \
-            # sed "s/MOTION_EVENT_GAP/${MOTION_EVENT_GAP}/" | \
 	cat "${OUTPUT}" | \
 	    sed 's/^{/{"year":"YEAR","month":"MONTH","day":"DAY","hour":"HOUR","minute":"MINUTE","second":"SECOND","imagebox":"IMAGE_BOX",/' | \
 	    sed "s/YEAR/${YEAR}/" | \
@@ -285,8 +284,58 @@ else
     echo "+++ $0 NO CLOUDANT CHECK DEVICE_NAME"
 fi
 
-# make a noise
-if [ -z "${TALKTOME_OFF}" ] && [ -s "${OUTPUT}" ] && [ -n "${WATSON_TTS_URL}" ] && [ -n "${WATSON_TTS_CREDS}" ]; then
+##
+## PROCESS OUTPUT
+##
+
+if [ -n "${OUTPUT}" ] && [ -s "${OUTPUT}" ]; then
+  CLASS=`jq -r '.alchemy.text' "${OUTPUT}" | sed 's/ /_/g'`
+  MODEL=`jq -r '.alchemy.name' "${OUTPUT}" | sed 's/ /_/g'`
+  SCORE=`jq -r '.alchemy.score' "${OUTPUT}"`
+  SCORES=`jq -c '.visual.scores' "${OUTPUT}"`
+  CROP=`jq -r '.imagebox' "${OUTPUT}"`
+else
+  echo "+++ $0 -- NO OUTPUT"
+  exit
+fi
+
+##
+## POST to MQTT
+##
+if [ -n "${MQTT_ON}" ] && [ -n "${MQTT_HOST}" ]; then
+
+  # POST JSON OUTPUT
+  if [ -n "${CLASS}" ] && [ -n "${MODEL}" ] && [ -n "${SCORE}" ] && [ -n "${SCORES}" ]; then
+    WHAT='"class":"'"${CLASS}"'","model":"'"${MODEL}"'","score":'"${SCORE}"',"id":"'"${IMAGE_ID}"'","scores":'"${SCORES}"
+    MSG='{"device":"'"${DEVICE_NAME}"'","location":"'"${AAH_LOCATION}"'","date":'`date +%s`','"${WHAT}"'}'
+    MQTT_TOPIC='presence/'"${AAH_LOCATION}"'/'"${CLASS}"
+    mosquitto_pub -i "${DEVICE_NAME}" -r -h "${MQTT_HOST}" -t "${MQTT_TOPIC}" -m "${MSG}"
+  fi
+
+  # POST IMAGE/<LOCATION>/<ENTITY>
+  MQTT_TOPIC='image/'"${AAH_LOCATION}"'/'"${CLASS}"
+  mosquitto_pub -i "${DEVICE_NAME}" -r -h "${MQTT_HOST}" -t "${MQTT_TOPIC}" -f "${IMAGE_FILE}"
+
+  # ANNOTATE & CROP IMAGE
+  image-annotate.csh "${IMAGE_FILE}" "${CLASS}" "${CROP}" > "${IMAGE_FILE}.$$"
+  # test if annotated image created
+  if [ -s "${IMAGE_FILE}.$$" ]; then
+    MQTT_TOPIC='image-annotated/'"${AAH_LOCATION}"
+    mosquitto_pub -i "${DEVICE_NAME}" -r -h "${MQTT_HOST}" -t "${MQTT_TOPIC}" -f "${IMAGE_FILE}.$$"
+  fi
+  # test if cropped image created
+  if [ -s "${IMAGE_FILE%.*}.jpeg" ]; then
+    MQTT_TOPIC='image-cropped/'"${AAH_LOCATION}"
+    mosquitto_pub -i "${DEVICE_NAME}" -r -h "${MQTT_HOST}" -t "${MQTT_TOPIC}" -f "${IMAGE_FILE%.*}.jpeg"
+  fi
+  rm -f "${IMAGE_FILE}.$$"
+  # rm -f "${IMAGE_FILE%.*}.jpeg"
+fi
+
+##
+## make a noise
+##
+if [ -z "${TALKTOME_OFF}" ] && [ -n "${WATSON_TTS_URL}" ] && [ -n "${WATSON_TTS_CREDS}" ]; then
     # what entity to discuss/say
     WHAT=`jq -j '.alchemy.text' "${OUTPUT}"`
     # should be a lookup aah_whatToSay(<where>,<when>,[<entity>],<whom>?)
@@ -305,8 +354,10 @@ if [ -z "${TALKTOME_OFF}" ] && [ -s "${OUTPUT}" ] && [ -n "${WATSON_TTS_URL}" ] 
     play "${WHAT}.wav"
 fi
 
-# send an email
-if [ -n "${EMAILME_ON}" ] && [ -s "${OUTPUT}" ] && [ -n "${GMAIL_ACCOUNT}" ] && [ -n "${GMAIL_CREDS}" ] && [ -n "${EMAIL_ADDRESS}" ]; then
+##
+## send an email
+##
+if [ -n "${EMAILME_ON}" ] && [ -n "${GMAIL_ACCOUNT}" ] && [ -n "${GMAIL_CREDS}" ] && [ -n "${EMAIL_ADDRESS}" ]; then
     if [ ! -f "${WHAT}.txt" ]; then
         echo "From: ${AAH_LOCATION}" > "${WHAT}.txt"
         echo "Subject: ${WHAT}" >> "${WHAT}.txt"
@@ -315,58 +366,9 @@ if [ -n "${EMAILME_ON}" ] && [ -s "${OUTPUT}" ] && [ -n "${GMAIL_ACCOUNT}" ] && 
     rm -f "${WHAT}.txt"
 fi
 
-# post json to MQTT
-if [ -n "${MQTT_ON}" ] && [ -s "${OUTPUT}" ] && [ -n "${MQTT_HOST}" ]; then
-    CLASS=`jq -r '.alchemy.text' "${OUTPUT}" | sed 's/ /_/g'`
-    MODEL=`jq -r '.alchemy.name' "${OUTPUT}" | sed 's/ /_/g'`
-    SCORE=`jq -r '.alchemy.score' "${OUTPUT}"`
-    SCORES=`jq -c '.visual.scores' "${OUTPUT}"`
-
-    MQTT_TOPIC='presence/'"${AAH_LOCATION}"'/'"${CLASS}"
-    # what entity to discuss/say
-    if [ ! -z "${MQTT_JQUERY}" ]; then
-        WHAT=`jq -r "${MQTT_JQUERY}" "${OUTPUT}"`
-    else
-	WHAT='"class":"'"${CLASS}"'","model":"'"${MODEL}"'","score":'"${SCORE}"',"id":"'"${IMAGE_ID}"'","scores":'"${SCORES}"
-    fi
-    MSG='{"device":"'"${DEVICE_NAME}"'","location":"'"${AAH_LOCATION}"'","date":'`date +%s`','"${WHAT}"'}'
-    mosquitto_pub -i "${DEVICE_NAME}" -r -h "${MQTT_HOST}" -t "${MQTT_TOPIC}" -m "${MSG}"
-fi
-
-# post image to MQTT
-if [ -n "${MQTT_ON}" ] && [ -s "${IMAGE_FILE}" ] && [ -n "${MQTT_HOST}" ]; then
-  MQTT_TOPIC='image/'"${AAH_LOCATION}"'/'"${CLASS}"
-
-  mosquitto_pub -i "${DEVICE_NAME}" -r -h "${MQTT_HOST}" -t "${MQTT_TOPIC}" -f "${IMAGE_FILE}"
-fi
-
-# post annotated image to MQTT
-if [ -n "${MQTT_ON}" ] && [ -s "${IMAGE_FILE}" ] && [ -s "${OUTPUT}" ] && [ -n "${MQTT_HOST}" ]; then
-  CLASS=`jq -r '.alchemy.text' "${OUTPUT}" | sed 's/ /_/g'`
-  MODEL=`jq -r '.alchemy.name' "${OUTPUT}" | sed 's/ /_/g'`
-  SCORE=`jq -r '.alchemy.score' "${OUTPUT}"`
-  CROP=`jq -r '.imagebox' "${OUTPUT}"`
-
-  #
-  # CODE FROM aah-images-label.csh
-  #
-  image-annotate.csh "${IMAGE_FILE}" "${CLASS}" "${CROP}" > "${IMAGE_FILE}.$$"
-
-  # test if annotated image created
-  if [ -s "${IMAGE_FILE}.$$" ]; then
-    MQTT_TOPIC='image-annotated/'"${AAH_LOCATION}"
-    mosquitto_pub -i "${DEVICE_NAME}" -r -h "${MQTT_HOST}" -t "${MQTT_TOPIC}" -f "${IMAGE_FILE}.$$"
-  fi
-  rm -f "${IMAGE_FILE}.$$"
-  # test if cropped image created
-  if [ -s "${IMAGE_FILE%.*}.jpeg" ]; then
-    MQTT_TOPIC='image-cropped/'"${AAH_LOCATION}"
-    mosquitto_pub -i "${DEVICE_NAME}" -r -h "${MQTT_HOST}" -t "${MQTT_TOPIC}" -f "${IMAGE_FILE%.*}.jpeg"
-  fi
-  # rm -f "${IMAGE_FILE%.*}.jpeg"
-fi
-
-# force image updates periodically (15 minutes; 1800 seconds)
+##
+## force image updates periodically (15 minutes; 1800 seconds)
+##
 if [ -n "${AAH_LAN_SERVER}" ]; then
   TTL=1800
   SECONDS=$(date "+%s")
