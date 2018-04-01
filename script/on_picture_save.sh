@@ -19,9 +19,7 @@ fi
 ## POST IMAGE 
 ##
 if [ -n "${MQTT_ON}" ] && [ -s "${IMAGE_FILE}" ] && [ -n "${MQTT_HOST}" ]; then
-  MQTT_TOPIC='image/'"${AAH_LOCATION}"
-
-  mosquitto_pub -i "${DEVICE_NAME}" -r -h "${MQTT_HOST}" -t "${MQTT_TOPIC}" -f "${IMAGE_FILE}"
+  mosquitto_pub -i "${DEVICE_NAME}" -r -h "${MQTT_HOST}" -t 'image/'"${AAH_LOCATION}" -f "${IMAGE_FILE}"
 fi
 
 ##
@@ -324,9 +322,7 @@ if [ -n "${MQTT_ON}" ] && [ -s "${OUTPUT}" ] && [ -n "${MQTT_HOST}" ]; then
     SCORE=`jq -r '.alchemy.score' "${OUTPUT}"`
     SCORES=`jq -c '.visual.scores' "${OUTPUT}"`
 
-    if [ -z "${MQTT_TOPIC}" ]; then
-        MQTT_TOPIC='presence/'"${AAH_LOCATION}"'/'"${CLASS}"
-    fi
+    MQTT_TOPIC='presence/'"${AAH_LOCATION}"'/'"${CLASS}"
     # what entity to discuss/say
     if [ ! -z "${MQTT_JQUERY}" ]; then
         WHAT=`jq -r "${MQTT_JQUERY}" "${OUTPUT}"`
