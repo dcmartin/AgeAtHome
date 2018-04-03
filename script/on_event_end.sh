@@ -78,7 +78,7 @@ else
   /bin/echo "$0:t $$ -- not defined" >& /dev/stderr
 endif
 
-if ($?DEBUG) echo "$0:t $$ -- FRAMES: $frames" >& /dev/stderr
+if ($?DEBUG) echo "$0:t $$ -- FRAMES: $#frames" >& /dev/stderr
 
 ###
 ### PROCESS FRAMES
