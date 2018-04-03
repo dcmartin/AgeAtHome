@@ -1,5 +1,5 @@
 #!/bin/bash
-echo "+++ BEGIN: $0: $*" $(date) >&2
+/bin/echo "$0 $$ -- BEGIN: $*" $(date) >&2
 
 # get arguments
 EVENT=$1
@@ -11,7 +11,7 @@ MOTION_WIDTH=$6
 MOTION_HEIGHT=$7
 
 if [ -z "${IMAGE_FILE}" ]; then
-  /bin/echo "<EVENT> <IMAGE_FILE> <IMAGE_TYPE> <MIDX> <MIDY> <WIDTH> <HEIGHT>" >&2
+  /bin/echo "$0 $$ -- FAILURE $*" $(date) >&2
   exit
 fi
 
@@ -19,6 +19,7 @@ fi
 ## POST IMAGE 
 ##
 if [ -n "${MQTT_ON}" ] && [ -s "${IMAGE_FILE}" ] && [ -n "${MQTT_HOST}" ]; then
+  /bin/echo "$0 $$ -- POSTING ${EVENT} ${IMAGE_TILE} to image/" >&2
   mosquitto_pub -i "${DEVICE_NAME}" -r -h "${MQTT_HOST}" -t 'image/'"${AAH_LOCATION}" -f "${IMAGE_FILE}"
 fi
 
@@ -51,30 +52,29 @@ if [ -n "${MOTION_INTERVAL}" ]; then
 	if [ -n "${LAST}" ] && [ -n "${NOW}" ]; then
 	  INTERVAL=$(echo "$NOW - $LAST" | bc)
 	  if [ -n "${INTERVAL}" ]; then
-	    # /bin/echo "+++ $0 -- LAST ${LAST} -- NOW ${NOW} LAST ${LAST}" >&2
 	    if [ $INTERVAL -le $MOTION_INTERVAL ]; then
-	      /bin/echo "+++ $0 -- SKIPPING ${IMAGE_FILE} -- INTERVAL ${INTERVAL} <= ${MOTION_INTERVAL}" >&2
+	      /bin/echo "$0 $$ -- SKIPPING ${IMAGE_FILE} -- INTERVAL ${INTERVAL} <= ${MOTION_INTERVAL}" >&2
 	      exit
 	    else
-	      /bin/echo "+++ $0 -- PROCESSING ${IMAGE_FILE} -- INTERVAL ${INTERVAL} > ${MOTION_INTERVAL}" >&2
+	      /bin/echo "$0 $$ -- PROCESSING ${IMAGE_FILE} -- INTERVAL ${INTERVAL} > ${MOTION_INTERVAL}" >&2
 	    fi
 	  else
-	    /bin/echo "+++ $0 -- INTERVAL not defined" >&2
+	    /bin/echo "$0 $$ -- INTERVAL not defined" >&2
 	  fi
 	else
-	  /bin/echo "+++ $0 -- NOW/LAST not defined" >&2
+	  /bin/echo "$0 $$ -- NOW/LAST not defined" >&2
 	fi
       else
-	/bin/echo "+++ $0 -- NOW/LAST not defined" >&2
+	/bin/echo "$0 $$ -- NOW/LAST not defined" >&2
       fi
     else
-      /bin/echo "+++ $0 -- NOW/LAST not defined" >&2
+      /bin/echo "$0 $$ -- NOW/LAST not defined" >&2
     fi
   else
-    /bin/echo "+++ $0 -- nothing old" >&2
+    /bin/echo "$0 $$ -- nothing old" >&2
   fi
 else
-  /bin/echo "+++ $0 -- MOTION_INTERVAL not defined" >&2
+  /bin/echo "$0 $$ -- MOTION_INTERVAL not defined" >&2
 fi
 
 ##
@@ -88,7 +88,7 @@ MOTION_Y=$(/bin/echo "${MOTION_MIDY} - ( ${MOTION_HEIGHT} / 2 )" | /usr/bin/bc)
 # DEFINE EXTANT
 IMAGE_BOX="${MOTION_WIDTH}x${MOTION_HEIGHT}+${MOTION_X}+${MOTION_Y}"
 
-/bin/echo "+++ $0 PROCESSING ${EVENT} ${IMAGE_ID} ${MOTION_MIDX} ${MOTION_MIDY} ${MOTION_WIDTH} ${MOTION_HEIGHT} == ${IMAGE_BOX}"
+/bin/echo "$0 $$ -- PROCESSING ${EVENT} ${IMAGE_ID} ${MOTION_MIDX} ${MOTION_MIDY} ${MOTION_WIDTH} ${MOTION_HEIGHT} == ${IMAGE_BOX}"
 
 ##
 ## PREPARE OUTPUT
@@ -119,7 +119,7 @@ if [ -z "${VR_OFF}" ] && [ -n "${VR_APIKEY}" ] && [ -n "${VR_VERSION}" ] && [ -n
 	# custom classifier goes first; top1 from first classifier is encoded as alchemy
         VR_CLASSIFIER="${VR_CLASSIFIER},default"
     fi
-    echo "+++ $0 PROCESSING visual-recognition ${VR_CLASSIFIER} ${VR_VERSION} ${VR_DATE} ${VR_URL} ${IMAGE_FILE}"
+    echo "$0 PROCESSING visual-recognition ${VR_CLASSIFIER} ${VR_VERSION} ${VR_DATE} ${VR_URL} ${IMAGE_FILE}"
     # make the call
     curl -s -q -L \
         --header "X-Watson-Learning-Opt-Out: true" \
@@ -127,12 +127,12 @@ if [ -z "${VR_OFF}" ] && [ -n "${VR_APIKEY}" ] && [ -n "${VR_VERSION}" ] && [ -n
 	-o "${VR_OUTPUT}" \
 	"$VR_URL/$VR_VERSION/classify?api_key=$VR_APIKEY&classifier_ids=$VR_CLASSIFIER&threshold=0.0&version=$VR_DATE"
     if [ -s "${VR_OUTPUT}" ]; then
-	echo  "+++ $0 SUCCESS visual-recognition ${IMAGE_FILE}"
+	echo  "$0 $$ -- SUCCESS visual-recognition ${IMAGE_FILE}"
     else
-	echo "+++ $0 FAILURE visual-recognition ${IMAGE_FILE}"
+	echo "$0 $$ -- FAILURE visual-recognition ${IMAGE_FILE}"
     fi
 else
-    echo "+++ $0 VISUAL-RECOGNITION - OFF"
+    echo "$0 $$ -- VISUAL-RECOGNITION - OFF"
 fi
 
 ##
@@ -148,7 +148,7 @@ if [ -n "${DIGITS_SERVER_URL}" ]; then
     if [ -n "${DIGITS_JOB_ID}" ]; then
 	CMD="models/images/classification/classify_one.json"
 	# get inference
-        echo "+++ $0 PROCESSING DIGITS ${DIGITS_JOB_ID}"
+        echo "$0 $$ -- PROCESSING DIGITS ${DIGITS_JOB_ID}"
 	curl -s -q -L -X POST \
 	    -F "image_file=@$IMAGE_FILE" \
 	    -F "job_id=${DIGITS_JOB_ID}" \
@@ -161,15 +161,15 @@ if [ -n "${DIGITS_SERVER_URL}" ]; then
 		| sed 's/ /_/g' \
 		| awk -F, 'BEGIN { n=0 } { if (n>0) printf(","); n++; printf("{\"classifier_id\":\"%s\",\"name\":\"%s\",\"score\":%1.4f}", $1, $2, $3/100)}' > "${DG_OUTPUT}.$$"
 	    mv "${DG_OUTPUT}.$$" "${DG_OUTPUT}"
-            echo "+++ $0 SUCCESS DIGITS ${DIGITS_JOB_ID}"
+            echo "$0 $$ -- SUCCESS DIGITS ${DIGITS_JOB_ID}"
         else
-            echo "+++ $0 FAILURE DIGITS ${DIGITS_JOB_ID}"
+            echo "$0 $$ -- FAILURE DIGITS ${DIGITS_JOB_ID}"
 	fi
     else
-	echo "+++ $0 NO DIGITS_JOB_ID specified for server ${DIGITS_SERVER_URL}"
+	echo "$0 $$ -- NO DIGITS_JOB_ID specified for server ${DIGITS_SERVER_URL}"
     fi
 else
-    echo "+++ $0 NO DIGITS_SERVER_URL specified"
+    echo "$0 $$ -- NO DIGITS_SERVER_URL specified"
 fi
 
 ##
@@ -177,7 +177,7 @@ fi
 ##
 
 if [ -s "${VR_OUTPUT}" ]; then
-    echo "+++ $0 PROCESSING VISUAL_RECOGNITION ${VR_OUTPUT}"
+    echo "$0 PROCESSING VISUAL_RECOGNITION ${VR_OUTPUT}"
     # encode top1 across custom (iff specified above) and default classifiers; decorate with source: default, <hierarchy:default>, custom classifier_id
     jq -c \
       '[.images[0]|.classifiers[]|.classifier_id as $cid|.classes|sort_by(.score)[-1]|{text:.class,name:(if .type_hierarchy == null then $cid else .type_hierarchy end),score:.score}]|sort_by(.score)[-1]' \
@@ -188,16 +188,16 @@ if [ -s "${VR_OUTPUT}" ]; then
       "${VR_OUTPUT}" > "${OUTPUT}.visual.$$"
     # test if DIGITS too
     if [ -s "${DG_OUTPUT}" ]; then
-	echo "+++ $0 ADDING WATSON & DIGITS classifiers"
+	echo "$0 $$ -- ADDING WATSON & DIGITS classifiers"
 	sed 's/\(.*\)/{"alchemy":\1,"visual":/' "${OUTPUT}.alchemy.$$" | paste - "${OUTPUT}.visual.$$" | sed 's/]}$/,/' | paste - "${DG_OUTPUT}" | sed 's/$/]}}/' > "${OUTPUT}.$$"
     else
-	echo "+++ $0 ADDING WATSON WITH ALCHEMY AS TOP1 ACROSS DEFAULT & ANY CUSTOM CLASSIFIER"
+	echo "$0 $$ -- ADDING WATSON WITH ALCHEMY AS TOP1 ACROSS DEFAULT & ANY CUSTOM CLASSIFIER"
         # concatenate -- "alchemy" is _really_ "top1" and "visual" is _really_ the entire "set" of classifiers
 	sed 's/\(.*\)/{"alchemy":\1,"visual":/' "${OUTPUT}.alchemy.$$" | paste - "${OUTPUT}.visual.$$" | sed 's/]}$/]}}/' > "${OUTPUT}.$$"
     fi
     # process consolidated scores into sorted list
     if [ -s "${DG_OUTPUT}" ]; then
-	echo "+++ $0 REPLACING ALCHEMY WITH TOP1 ACROSS WATSON & DIGITS"
+	echo "$0 $$ -- REPLACING ALCHEMY WITH TOP1 ACROSS WATSON & DIGITS"
         # pick top1 across all classification results; sorted by score
         TOP1=$(jq -r '.visual.scores|sort_by(.score)[-1]|{"text":.classifier_id,"name":.name,"score":.score}' "${OUTPUT}.$$")
 	# change output to indicate (potentially) new top1
@@ -212,12 +212,12 @@ if [ -s "${VR_OUTPUT}" ]; then
     # cleanup
     rm -f "${OUTPUT}.alchemy.$$" "${OUTPUT}.visual.$$"
 elif [ -s "${DG_OUTPUT}" ]; then
-    echo "+++ $0 PROCESSING ${DG_OUTPUT} ONLY"
+    echo "$0 $$ -- PROCESSING ${DG_OUTPUT} ONLY"
     TOP1=$(echo '[' | paste - "${DG_OUTPUT}" | sed 's/$/]/' | jq '.|sort_by(.score)[-1]|{"text":.classifier_id,"name":.name,"score":.score}')
     CLASSIFIERS=$(echo '[' | paste - "${DG_OUTPUT}" | sed 's/$/]/' | jq '.|sort_by(.score)')
     echo '{"alchemy":'"${TOP1}"',"visual":{"image":"'"${IMAGE_ID}.jpg"'","scores":{"classifiers":'"${CLASSIFIERS}"'}}}' >! "${OUTPUT}"
 else
-    echo "+++ $0 NO OUTPUT"
+    echo "$0 $$ -- NO OUTPUT"
     echo '{ "alchemy":{"text":"NA","name":"NA","score":0},' > "${OUTPUT}.$$"
     echo '"visual":{"image":"'${IMAGE_ID}.jpg'","scores":[{"classifier_id":"NA","name":"NA","score":0}]' >> "${OUTPUT}.$$"
     echo '}}' >> "${OUTPUT}"
@@ -258,13 +258,13 @@ if [ -s "${OUTPUT}" ]; then
 	mv /tmp/OUTPUT.$$ "${OUTPUT}"
     fi
 else
-    echo "*** ERROR: $0 - NO OUTPUT"
+    echo "$0 $$ -- ERROR: $* - NO OUTPUT" $(date)
     exit
 fi
 
-#
-# CLOUDANT
-#
+##
+## CLOUDANT
+##
 
 if [ -z "${CLOUDANT_OFF}" ] && [ -s "${OUTPUT}" ] && [ -n "${CLOUDANT_URL}" ] && [ -n "${DEVICE_NAME}" ]; then
     DEVICE_DB=`curl -q -s -X GET "${CLOUDANT_URL}/${DEVICE_NAME}" | jq '.db_name'`
@@ -281,7 +281,7 @@ if [ -z "${CLOUDANT_OFF}" ] && [ -s "${OUTPUT}" ] && [ -n "${CLOUDANT_URL}" ] &&
 	curl -q -s -H "Content-type: application/json" -X PUT "$CLOUDANT_URL/${DEVICE_NAME}/${IMAGE_ID}" -d "@${OUTPUT}"
     fi
 else
-    echo "+++ $0 NO CLOUDANT CHECK DEVICE_NAME"
+    echo "$0 $$ -- NO CLOUDANT CHECK DEVICE_NAME"
 fi
 
 ##
@@ -295,7 +295,7 @@ if [ -n "${OUTPUT}" ] && [ -s "${OUTPUT}" ]; then
   SCORES=`jq -c '.visual.scores' "${OUTPUT}"`
   CROP=`jq -r '.imagebox' "${OUTPUT}"`
 else
-  echo "+++ $0 -- NO OUTPUT"
+  echo "$0 $$ -- NO OUTPUT"
   exit
 fi
 
@@ -384,4 +384,4 @@ fi
 ## ALL DONE
 ##
 
-echo "+++ END: $0: $*" $(date) >&2
+echo "$0 $$ -- END: $*" $(date) >&2

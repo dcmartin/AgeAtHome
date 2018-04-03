@@ -110,7 +110,10 @@ if ($file:e == "jpg") then
           if (-e "$random") then
             set composed = "$file:r.jpeg"
             composite -compose src -geometry +"$sx"+"$sy" "$cropped" "$random" "$composed"
+            if (! -e "$composed") unset composed
             /bin/rm -f "$random" "$cropped"
+          else
+            /bin/echo "$0 $$ -- $random failed" >&! /dev/stderr
           endif
           if ($?composed) then
             /bin/echo "$0 $$ -- SUCCESS composed ($composed)" >&! /dev/stderr
