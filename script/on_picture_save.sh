@@ -292,6 +292,9 @@ if [ -n "${OUTPUT}" ] && [ -s "${OUTPUT}" ]; then
   CLASS=`jq -r '.alchemy.text' "${OUTPUT}" | sed 's/ /_/g'`
   MODEL=`jq -r '.alchemy.name' "${OUTPUT}" | sed 's/ /_/g'`
   SCORE=`jq -r '.alchemy.score' "${OUTPUT}"`
+  if [ -z "${SCORE}" ]; then
+    SCORE='null'
+  fi
   SCORES=`jq -c '.visual.scores' "${OUTPUT}"`
   if [ -z "${SCORES}" ]; then
     SCORES='null'
