@@ -293,6 +293,9 @@ if [ -n "${OUTPUT}" ] && [ -s "${OUTPUT}" ]; then
   MODEL=`jq -r '.alchemy.name' "${OUTPUT}" | sed 's/ /_/g'`
   SCORE=`jq -r '.alchemy.score' "${OUTPUT}"`
   SCORES=`jq -c '.visual.scores' "${OUTPUT}"`
+  if [ -z "${SCORES}" ]; then
+    SCORES='null'
+  fi
   CROP=`jq -r '.imagebox' "${OUTPUT}"`
 else
   echo "$0 $$ -- NO OUTPUT"
