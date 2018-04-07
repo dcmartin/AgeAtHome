@@ -314,7 +314,7 @@ if [ -n "${MQTT_ON}" ] && [ -n "${MQTT_HOST}" ]; then
   if [ -n "${CLASS}" ] && [ -n "${MODEL}" ] && [ -n "${SCORE}" ] && [ -n "${SCORES}" ]; then
   # calculate size
     SIZE=$(/bin/echo "${MOTION_WIDTH} * ${MOTION_HEIGHT}" | /usr/bin/bc)
-    WHAT='"class":"'"${CLASS}"'","model":"'"${MODEL}"'","score":'"${SCORE}"',"id":"'"${IMAGE_ID}"'","box":"'"${CROP}"'","size":'"${SIZE}"'","scores":'"${SCORES}"
+    WHAT='"class":"'"${CLASS}"'","model":"'"${MODEL}"'","score":'"${SCORE}"',"id":"'"${IMAGE_ID}"'","box":"'"${CROP}"'","size":'"${SIZE}"',"scores":'"${SCORES}"
     MSG='{"device":"'"${DEVICE_NAME}"'","location":"'"${AAH_LOCATION}"'","date":'`date +%s`','"${WHAT}"'}'
     MQTT_TOPIC='presence/'"${AAH_LOCATION}"'/'"${CLASS}"
     mosquitto_pub -i "${DEVICE_NAME}" -r -h "${MQTT_HOST}" -t "${MQTT_TOPIC}" -m "${MSG}"
