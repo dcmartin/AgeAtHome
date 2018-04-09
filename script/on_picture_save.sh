@@ -31,7 +31,7 @@ IMAGE_ID=`echo "${IMAGE_ID%.*}"`
 ##
 if [ -n "${MQTT_ON}" ] && [ -s "${IMAGE_FILE}" ] && [ -n "${MQTT_HOST}" ]; then
   /bin/echo "$0 $$ -- POSTING ${EVENT} ${IMAGE_TILE} to image/" >&2
-  mosquitto_pub -i "${DEVICE_NAME}" -r -h "${MQTT_HOST}" -t 'image/'"${AAH_LOCATION}"'/ID/'"${IMAGE_ID}" -f "${IMAGE_FILE}"
+  mosquitto_pub -i "${DEVICE_NAME}" -r -h "${MQTT_HOST}" -t 'image/'"${AAH_LOCATION}"'/'"${IMAGE_ID}" -f "${IMAGE_FILE}"
 fi
 
 ##
@@ -322,7 +322,7 @@ if [ -n "${MQTT_ON}" ] && [ -n "${MQTT_HOST}" ]; then
   fi
 
   # POST IMAGE/<LOCATION>/<ENTITY>
-  MQTT_TOPIC='image/'"${AAH_LOCATION}"'/'"${CLASS}"
+  MQTT_TOPIC='image-classified/'"${AAH_LOCATION}"'/'"${CLASS}"
   mosquitto_pub -i "${DEVICE_NAME}" -r -h "${MQTT_HOST}" -t "${MQTT_TOPIC}" -f "${IMAGE_FILE}"
 
   # ANNOTATE & CROP IMAGE
