@@ -16,11 +16,22 @@ if [ -z "${IMAGE_FILE}" ]; then
 fi
 
 ##
+## PREPARE OUTPUT
+##
+
+# assign output file for JSON
+OUTPUT="${IMAGE_FILE%.*}.json"
+# drop prefix path
+IMAGE_ID=`echo "${OUTPUT##*/}"`
+# drop extension
+IMAGE_ID=`echo "${IMAGE_ID%.*}"`
+
+##
 ## POST IMAGE 
 ##
 if [ -n "${MQTT_ON}" ] && [ -s "${IMAGE_FILE}" ] && [ -n "${MQTT_HOST}" ]; then
   /bin/echo "$0 $$ -- POSTING ${EVENT} ${IMAGE_TILE} to image/" >&2
-  mosquitto_pub -i "${DEVICE_NAME}" -r -h "${MQTT_HOST}" -t 'image/'"${AAH_LOCATION}" -f "${IMAGE_FILE}"
+  mosquitto_pub -i "${DEVICE_NAME}" -r -h "${MQTT_HOST}" -t 'image/'"${AAH_LOCATION}"'/ID/'"${IMAGE_ID}" -f "${IMAGE_FILE}"
 fi
 
 ##
@@ -90,16 +101,6 @@ IMAGE_BOX="${MOTION_WIDTH}x${MOTION_HEIGHT}+${MOTION_X}+${MOTION_Y}"
 
 /bin/echo "$0 $$ -- PROCESSING ${EVENT} ${IMAGE_ID} ${MOTION_MIDX} ${MOTION_MIDY} ${MOTION_WIDTH} ${MOTION_HEIGHT} == ${IMAGE_BOX}"
 
-##
-## PREPARE OUTPUT
-##
-
-# assign output file for JSON
-OUTPUT="${IMAGE_FILE%.*}.json"
-# drop prefix path
-IMAGE_ID=`echo "${OUTPUT##*/}"`
-# drop extension
-IMAGE_ID=`echo "${IMAGE_ID%.*}"`
 
 ##
 ## VISUAL RECOGNITION
