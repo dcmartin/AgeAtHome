@@ -31,7 +31,8 @@ IMAGE_ID=`echo "${IMAGE_ID%.*}"`
 ##
 if [ -n "${MQTT_ON}" ] && [ -s "${IMAGE_FILE}" ] && [ -n "${MQTT_HOST}" ]; then
   /bin/echo "$0 $$ -- POSTING ${EVENT} ${IMAGE_TILE} to image/" >&2
-  mosquitto_pub -i "${DEVICE_NAME}" -r -h "${MQTT_HOST}" -t 'image/'"${AAH_LOCATION}"'/'"${IMAGE_ID}" -f "${IMAGE_FILE}"
+  # mosquitto_pub -i "${DEVICE_NAME}" -r -h "${MQTT_HOST}" -t 'image/'"${AAH_LOCATION}"'/'"${IMAGE_ID}" -f "${IMAGE_FILE}"
+  mosquitto_pub -i "${DEVICE_NAME}" -h "${MQTT_HOST}" -t 'image/'"${AAH_LOCATION}"'/'"${IMAGE_ID}" -f "${IMAGE_FILE}"
 fi
 
 ##
@@ -318,24 +319,28 @@ if [ -n "${MQTT_ON}" ] && [ -n "${MQTT_HOST}" ]; then
     WHAT='"class":"'"${CLASS}"'","model":"'"${MODEL}"'","score":'"${SCORE}"',"id":"'"${IMAGE_ID}"'","box":"'"${CROP}"'","size":'"${SIZE}"',"scores":'"${SCORES}"
     MSG='{"device":"'"${DEVICE_NAME}"'","location":"'"${AAH_LOCATION}"'","date":'`date +%s`','"${WHAT}"'}'
     MQTT_TOPIC='presence/'"${AAH_LOCATION}"'/'"${CLASS}"
-    mosquitto_pub -i "${DEVICE_NAME}" -r -h "${MQTT_HOST}" -t "${MQTT_TOPIC}" -m "${MSG}"
+    # mosquitto_pub -i "${DEVICE_NAME}" -r -h "${MQTT_HOST}" -t "${MQTT_TOPIC}" -m "${MSG}"
+    mosquitto_pub -i "${DEVICE_NAME}" -h "${MQTT_HOST}" -t "${MQTT_TOPIC}" -m "${MSG}"
   fi
 
   # POST IMAGE/<LOCATION>/<ENTITY>
   MQTT_TOPIC='image-classified/'"${AAH_LOCATION}"'/'"${CLASS}"
-  mosquitto_pub -i "${DEVICE_NAME}" -r -h "${MQTT_HOST}" -t "${MQTT_TOPIC}" -f "${IMAGE_FILE}"
+  # mosquitto_pub -i "${DEVICE_NAME}" -r -h "${MQTT_HOST}" -t "${MQTT_TOPIC}" -f "${IMAGE_FILE}"
+  mosquitto_pub -i "${DEVICE_NAME}" -h "${MQTT_HOST}" -t "${MQTT_TOPIC}" -f "${IMAGE_FILE}"
 
   # ANNOTATE & CROP IMAGE
   image-annotate.csh "${IMAGE_FILE}" "${CLASS}" "${CROP}" > "${IMAGE_FILE}.$$"
   # test if annotated image created
   if [ -s "${IMAGE_FILE}.$$" ]; then
     MQTT_TOPIC='image-annotated/'"${AAH_LOCATION}"
-    mosquitto_pub -i "${DEVICE_NAME}" -r -h "${MQTT_HOST}" -t "${MQTT_TOPIC}" -f "${IMAGE_FILE}.$$"
+    # mosquitto_pub -i "${DEVICE_NAME}" -r -h "${MQTT_HOST}" -t "${MQTT_TOPIC}" -f "${IMAGE_FILE}.$$"
+    mosquitto_pub -i "${DEVICE_NAME}" -h "${MQTT_HOST}" -t "${MQTT_TOPIC}" -f "${IMAGE_FILE}.$$"
   fi
   # test if cropped image created
   if [ -s "${IMAGE_FILE%.*}.jpeg" ]; then
     MQTT_TOPIC='image-cropped/'"${AAH_LOCATION}"
-    mosquitto_pub -i "${DEVICE_NAME}" -r -h "${MQTT_HOST}" -t "${MQTT_TOPIC}" -f "${IMAGE_FILE%.*}.jpeg"
+    # mosquitto_pub -i "${DEVICE_NAME}" -r -h "${MQTT_HOST}" -t "${MQTT_TOPIC}" -f "${IMAGE_FILE%.*}.jpeg"
+    mosquitto_pub -i "${DEVICE_NAME}" -h "${MQTT_HOST}" -t "${MQTT_TOPIC}" -f "${IMAGE_FILE%.*}.jpeg"
   fi
   rm -f "${IMAGE_FILE}.$$"
   # rm -f "${IMAGE_FILE%.*}.jpeg"
