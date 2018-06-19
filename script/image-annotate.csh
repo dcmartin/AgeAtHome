@@ -99,8 +99,10 @@ if ($file:e == "jpg") then
   if ($?CAMERA_MODEL_TRANSFORM) then
     switch ($CAMERA_MODEL_TRANSFORM)
       case "RESIZE":
+        if ($?DEBUG) echo "$0:t $$ -- UNIMPLEMENTED: CAMERA_MODEL_TRANSFORM=$CAMERA_MODEL_TRANSFORM" >&! /dev/stderr
         breaksw
       case "CROP":
+        if ($?DEBUG) echo "$0:t $$ -- TRANSFORMING $file using $CAMERA_MODEL_TRANSFORM" >&! /dev/stderr
         set cropped = "$file:r.$$.jpeg"
         convert \
  	  -crop "$xform" "$file" \
@@ -116,7 +118,7 @@ if ($file:e == "jpg") then
             if (! -e "$composed") unset composed
             /bin/rm -f "$random" "$cropped"
           else
-            if ($?DEBUG) echo "$0:t $$ -- $random failed" >&! /dev/stderr
+            if ($?DEBUG) echo "$0:t $$ -- RANDOM failed: $random" >&! /dev/stderr
           endif
           if ($?composed) then
             if ($?DEBUG) echo "$0:t $$ -- SUCCESS composed ($composed)" >&! /dev/stderr
@@ -136,6 +138,7 @@ else
 endif
 
 if ($?IMAGE_ANNOTATE_TEXT) then
+  if ($?DEBUG) echo "$0:t $$ -- annotating image (IMAGE_ANNOTATE_TEXT=$IMAGE_ANNOTATE_TEXT)" >&! /dev/stderr
   if ($?IMAGE_ANNOTATE_FONT == 0) then
     set fonts = ( `convert -list font | awk -F': ' '/glyphs/ { print $2 }' | sort | uniq` )
     if ($#fonts == 0) then
@@ -148,6 +151,7 @@ if ($?IMAGE_ANNOTATE_TEXT) then
     # use the first font
     if ($#fonts) set font = $fonts[1]
   else
+    if ($?DEBUG) echo "$0:t $$ -- using font $IMAGE_ANNOTATE_FONT from environment (IMAGE_ANNOTATE_FONT)" >&! /dev/stderr
     set font = "$IMAGE_ANNOTATE_FONT"
   endif
   if ($?font) then
@@ -166,6 +170,8 @@ if (-e "$out") then
   if ($?DEBUG) echo "$0:t $$ -- trying to convert $file into $out" >&! /dev/stderr
   convert "$out" -fill none -stroke red -strokewidth 3 -draw "rectangle $target" "$out.$$" >&! /dev/stderr
   mv "$out.$$" "$out"
+else
+  if ($?DEBUG) echo "$0:t $$ -- failed to convert $file into $out" >&! /dev/stderr
 endif
 
 if (-e "$out") then
@@ -174,8 +180,7 @@ if (-e "$out") then
   /bin/rm -f "$out"
   exit 0
 else if (-e "$file") then
-  if ($?DEBUG) echo "$0:t ($$) -- OUTPUT FAILURE $out (returning $file)" >&! /dev/stderr
-  /bin/dd if="$file"
+  if ($?DEBUG) echo "$0:t ($$) -- OUTPUT FAILURE $out" >&! /dev/stderr
   /bin/rm -f "$out"
   exit 1
 else if (! -e "$file") then

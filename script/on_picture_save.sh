@@ -1,7 +1,7 @@
 #!/bin/bash
 
-setenv DEBUG
-setenv VERBOSE
+DEBUG=true
+VERBOSE=true
 
 if [ -n "${DEBUG}" ]; then echo "$0:t $$ -- BEGIN: $*" $(date) >&2; fi
 
