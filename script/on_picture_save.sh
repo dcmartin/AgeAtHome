@@ -1,4 +1,4 @@
-#!/bin/bash
+#t!/bin/bash
 
 DEBUG=true
 VERBOSE=true
@@ -48,7 +48,7 @@ IMAGE_ID=`echo "${IMAGE_ID%.*}"`
 ## POST IMAGE 
 ##
 if [ -n "${MQTT_ON}" ] && [ -s "${IMAGE_FILE}" ] && [ -n "${MQTT_HOST}" ]; then
-  if [ -n "${DEBUG}" ]; then echo "${APP##*/} $$ -- ${IMAGE_TILE} -- POSTING TO $MQTT_HOST on topic image/${AAH_LOCATION}" >&2; fi
+  if [ -n "${DEBUG}" ]; then echo "${APP##*/} $$ -- ${IMAGE_ID} -- MQTT post to host $MQTT_HOST on topic image/${AAH_LOCATION}" >&2; fi
   mosquitto_pub -i "${DEVICE_NAME}" -h "${MQTT_HOST}" -t 'image/'"${AAH_LOCATION}" -f "${IMAGE_FILE}"
 fi
 
@@ -284,9 +284,10 @@ fi
 if [ -z "${CLOUDANT_OFF}" ] && [ -s "${OUTPUT}" ] && [ -n "${CLOUDANT_URL}" ] && [ -n "${DEVICE_NAME}" ]; then
     DEVICE_DB=$(curl -q -s -X GET "${CLOUDANT_URL}/${DEVICE_NAME}" | jq '.db_name')
     if [ "${DEVICE_DB}" == "null" ]; then
-	DEVICE_DB=$(curl -q -s -X PUT "${CLOUDANT_URL}/${DEVICE_NAME}" | jq '.ok')
+	SUCCESS=$(curl -q -s -X PUT "${CLOUDANT_URL}/${DEVICE_NAME}" | jq '.ok')
+        if [ "${SUCCESS}" == "true" ]; then DEVICE_DB="${DEVICE_NAME}"; else DEVICE_DB="null"; fi
     fi
-    if [ "${DEVICE_DB}" == "true" ]; then
+    if [ "${DEVICE_DB}" == "${DEVICE_NAME}" ]; then
       if [ -n "${VERBOSE}" ]; then echo "${APP##*/} $$ -- ${IMAGE_ID} -- success creating database: ${DEVICE_NAME}" >&2; fi
       SUCCESS=$(curl -q -s -H "Content-type: application/json" -X PUT "$CLOUDANT_URL/${DEVICE_NAME}/${IMAGE_ID}" -d "@${OUTPUT}" | jq '.ok')
       if [ "${SUCCESS}" != "true" ]; then
