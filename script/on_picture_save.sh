@@ -113,9 +113,9 @@ fi
 # Y coordinate in pixels of the center point of motion. Origin is upper left corner and number is positive moving downwards 
 
 MOTION_X=$(echo "${MOTION_MIDX} - ( ${MOTION_WIDTH} / 2 )" | bc)
-if [ ${MOTION_X} < 0 ]; then MOTION_X=0; fi
+if [[ ${MOTION_X} -lt 0 ]]; then MOTION_X=0; fi
 MOTION_Y=$(echo "${MOTION_MIDY} - ( ${MOTION_HEIGHT} / 2 )" | bc)
-if [ ${MOTION_Y} < 0 ]; then MOTION_Y=0; fi
+if [[ ${MOTION_Y} -lt 0 ]]; then MOTION_Y=0; fi
 IMAGE_BOX="${MOTION_WIDTH}x${MOTION_HEIGHT}+${MOTION_X}+${MOTION_Y}"
 
 if [ -n "${DEBUG}" ]; then echo "${APP##*/} $$ -- ${IMAGE_ID} -- EVENT: ${EVENT} BOX: ${IMAGE_BOX} X: ${MOTION_X} Y: ${MOTION_Y} W: ${MOTION_WIDTH} H: ${MOTION_HEIGHT}" >&2; fi
