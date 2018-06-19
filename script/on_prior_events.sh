@@ -1,5 +1,5 @@
 #!/bin/csh -fb
-echo "+++ BEGIN: $0 $* ($$)" `date` >& /dev/stderr
+if ($?DEBUG) echo "+++ BEGIN: $0 $* ($$)" `date` >& /dev/stderr
 # interval time in minutes
 set INTERVAL = 15
 # cache'ing directives
@@ -10,7 +10,7 @@ set PERIOD = `echo "($SECONDS/($INTERVAL*60))*($INTERVAL*60)" | bc`
 
 #
 if ($?DEVICE_NAME == 0) then
-    echo "+++ STATUS: $0 ($$)" `date` "no DEVICE_NAME specified" >& /dev/stderr
+    if ($?DEBUG) echo "+++ STATUS: $0 ($$)" `date` "no DEVICE_NAME specified" >& /dev/stderr
     setenv DEVICE_NAME "rough-fog"
 endif
 
@@ -31,7 +31,7 @@ set MINUTE = $argv[6]
 set SECOND = $argv[7]
 
 if (-e /tmp/$0:t.$PERIOD) then
-    echo "*** TOO SOON ***"
+    if ($?DEBUG) echo "*** TOO SOON ***" >& /dev/stderr
 else
     rm -f /tmp/$0:t.*
     touch /tmp/$0:t.$PERIOD
@@ -46,7 +46,7 @@ set INDEX = `echo "$YEAR" "$MONTH" "$DAY" "$HOUR" "$MINUTE" "$SECOND" | \
 	    strftime("%p",t),\
 	    strftime("%U",t),\
 	    strftime("%w",t) }'`
-echo "+++ STATUS: $0 ($$)" `date` "INDEX = $INDEX" >& /dev/stderr
+if ($?DEBUG) echo "+++ STATUS: $0 ($$)" `date` "INDEX = $INDEX" >& /dev/stderr
 
 set PRIOR_ID = ( `echo "$YEAR $MONTH $DAY $HOUR" | awk '{ printf("%04d%02d%02d%02d", $1, $2, $3, $4) }'` )
 # get events occuring in this hour as list oldest first
@@ -54,9 +54,9 @@ set PRIOR = ( `ls -1t "$DIR/$PRIOR_ID"*.json | sed "s|$DIR/\(.*\)-.*-.*.json|\1|
 
 # check if prior events exist
 if ($#PRIOR > 0) then
-    echo "+++ STATUS: $0 ($$)" `date` "PRIOR=[$PRIOR_ID] ($#PRIOR): $PRIOR" >& /dev/stderr
+    if ($?DEBUG) echo "+++ STATUS: $0 ($$)" `date` "PRIOR=[$PRIOR_ID] ($#PRIOR): $PRIOR" >& /dev/stderr
 else
-    echo "*** ERROR: $0" `date` "PRIOR=[] (0): $PRIOR" >& /dev/stderr
+    if ($?DEBUG) echo "*** ERROR: $0" `date` "PRIOR=[] (0): $PRIOR" >& /dev/stderr
     exit
 endif
 
@@ -78,18 +78,18 @@ foreach k ( $PRIOR )
 
    if ($t == $interval && $d >= 0) then
 	# event exists and in same time interval
-        echo "+++ STATUS: $0 ($$) `date` "EVENT $k [$t $h $m]($d) : $json" >& /dev/stderr
+        if ($?DEBUG) echo "+++ STATUS: $0 ($$) `date` "EVENT $k [$t $h $m]($d) : $json" >& /dev/stderr
         set prior = ( $prior $json )
         # identify EIC JSON
         set l = $DIR/$DEVICE_NAME-$k-*-*.json
         if ($#l > 0) then
-	    echo "+++ STATUS: $0 ($$) `date` "EIC $l" >& /dev/stderr
+	    if ($?DEBUG) echo "+++ STATUS: $0 ($$) `date` "EIC $l" >& /dev/stderr
 	    set eic = ( $eic $l )
 	endif
    endif
 end
 
-echo "+++ STATUS: $0 ($$)" `date` "INTERVAL=$interval : ($#prior): $prior" >& /dev/stderr
+if ($?DEBUG) echo "+++ STATUS: $0 ($$)" `date` "INTERVAL=$interval : ($#prior): $prior" >& /dev/stderr
 
 if ($#prior > 1) then
     set EVENT = "$prior[1]"
@@ -114,7 +114,7 @@ if ($#prior > 1) then
 	    set dow = `jq '.day' $eic[$e] | sed 's/"//g'`
 	    set int = `jq '.interval' $eic[$e] | sed 's/"//g'`
 	    if ($int != $interval) then
-		echo "ERROR - mismatch interval ($int != $interval)"
+		if ($?DEBUG) echo "ERROR - mismatch interval ($int != $interval)"
 		exit
 	    endif
 
@@ -134,9 +134,9 @@ if (-e "/tmp/$0.$$") then
 	set stdev = `jq '.days['$dow'].intervals['$interval'].stdev' $model | sed 's/"//g'`
 
 	# echo $model
-	echo "*** MODEL: $0 " `date` day=$dow interval=$interval \( $cstats \) $count \( $mstats \) $mean $stdev >& /dev/stderr
+	if ($?DEBUG) echo "*** MODEL: $0 " `date` day=$dow interval=$interval \( $cstats \) $count \( $mstats \) $mean $stdev >& /dev/stderr
     else
-	echo "*** NO MODEL: $models" >& /dev/stderr
+	if ($?DEBUG) echo "*** NO MODEL: $models" >& /dev/stderr
     endif
 endif
 # jq -c '.' $eic
@@ -163,7 +163,7 @@ set EIC = "$DIR/$DEVICE_NAME-$EVENT_ID-EIC.json"
 # define entity time-series (from EVENT)
 echo '{ "event":"'$EVENT_ID'","week":"'$week'","AMPM":"'$ampm'","day":"'$day'","interval":"'$interval'","classifiers":[' >! "$EIC"
 
-echo "+++ STATUS: $0 ($$)" `date` "$CLASSES" >& /dev/stderr
+if ($?DEBUG) echo "+++ STATUS: $0 ($$)" `date` "$CLASSES" >& /dev/stderr
 
 @ i = 0
 foreach CLASS ( $CLASSES )
@@ -178,7 +178,7 @@ foreach CLASS ( $CLASSES )
 	set TF = `echo "$SCORES[$i] < $MINIMUM_CLASSIFIER_SCORE" | bc`
 
 	if ($TF) then
-	    echo "+++ STATUS: $0 ($$)" `date` "$CLASS under minimum score ($SCORES[$i])" >& /dev/stderr
+	    if ($?DEBUG) echo "+++ STATUS: $0 ($$)" `date` "$CLASS under minimum score ($SCORES[$i])" >& /dev/stderr
 	    continue;
 	endif
     endif
@@ -192,7 +192,7 @@ foreach CLASS ( $CLASSES )
 	( curl -o "$MODEL.$$" -s -L "$WWW/aah-stats.cgi?db=$DEVICE_NAME&id=$CLASS" ; mv "$MODEL.$$" "$MODEL" ) &
 	# if there are no old models
 	if ( $#OLD_MODEL == 0 ) then
-	    echo "+++ STATUS: $0 ($$)" `date` "waiting on $MODEL" >& /dev/stderr
+	    if ($?DEBUG) echo "+++ STATUS: $0 ($$)" `date` "waiting on $MODEL" >& /dev/stderr
 	    while ( ! -e "$MODEL" )
 		sleep 5
 	    end
@@ -205,13 +205,13 @@ foreach CLASS ( $CLASSES )
 	    set MODEL = "$OLD_MODEL[1]"
 	    # remove oldest model
 	    if ($#OLD_MODEL > 1) then
-		echo "+++ STATUS: $0 ($$)" `date` "removing $OLD_MODEL[2-]" >& /dev/stderr
+		if ($?DEBUG) echo "+++ STATUS: $0 ($$)" `date` "removing $OLD_MODEL[2-]" >& /dev/stderr
 		rm -f $OLD_MODEL[2-]
 	    endif
 	endif
     endif
     if (! -e "$MODEL" ) then
-	echo "+++ STATUS: $0 ($$)" `date` "NO $MODEL"
+	if ($?DEBUG) echo "+++ STATUS: $0 ($$)" `date` "NO $MODEL"
 	unset continue
 	continue
     else
@@ -229,7 +229,7 @@ foreach CLASS ( $CLASSES )
 	# get counts for all days and all intervals
 	jq -c '.days[].intervals[].count' "$MODEL" | sed 's/"//g' | gawk 'BEGIN { t = 0; c = 0; s = 0 } { t++; if ($1 > 0) { c++; s += $1; m = s/c; vs += ($1 - m)^2; v=vs/c} } END { sd = sqrt(v/c); printf "{\"count\":\"%d\",\"non-zero\":\"%d\",\"sum\":\"%d\",\"mean\":\"%f\",\"stdev\":\"%f\"}\n", t, c, s, m, sd  }' > "$CLASS_COUNTS"
 
-	echo "+++ STATUS: $0 ($$)" `date` `jq . $CLASS_COUNTS` >& /dev/stderr
+	if ($?DEBUG) echo "+++ STATUS: $0 ($$)" `date` `jq . $CLASS_COUNTS` >& /dev/stderr
     endif
 
     # get entity time-series context (n.b. number of weeks)
@@ -256,4 +256,4 @@ end
 
 set seconds = `date +%s`
 set elapsed = ( `echo "$seconds - $SECONDS" | bc` )
-echo "+++ END: $0 ($$)" `date` " elapsed $elapsed " $EIC >& /dev/stderr
+if ($?DEBUG) echo "+++ END: $0 ($$)" `date` " elapsed $elapsed " $EIC >& /dev/stderr

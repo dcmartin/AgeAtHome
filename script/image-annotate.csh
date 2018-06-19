@@ -3,6 +3,9 @@ set file = $1
 set class = $2
 set crop = $3
 
+setenv DEBUG true
+setenv VERBOSE true
+
 if ($?CAMERA_IMAGE_WIDTH == 0) setenv CAMERA_IMAGE_WIDTH 640
 if ($?CAMERA_IMAGE_HEIGHT == 0) setenv CAMERA_IMAGE_HEIGHT 480
 if ($?MODEL_IMAGE_WIDTH == 0) setenv MODEL_IMAGE_WIDTH 224
@@ -10,10 +13,10 @@ if ($?MODEL_IMAGE_HEIGHT == 0) setenv MODEL_IMAGE_HEIGHT 224
 if ($?CAMERA_MODEL_TRANSFORM == 0) setenv CAMERA_MODEL_TRANSFORM "CROP"
 
 if (! -e "$file") then
-  /bin/echo "$0 $$ -- NO FILE ($file)" >&! /dev/stderr
+  if ($?DEBUG) echo "$0:t $$ -- NO FILE ($file)" >&! /dev/stderr
   exit(1) 
 else
-  /bin/echo "$0 $$ -- FILE ($file) ($class) ($crop)" >&! /dev/stderr
+  if ($?DEBUG) echo "$0:t $$ -- FILE ($file) ($class) ($crop)" >&! /dev/stderr
 endif
 
 switch ($file:e)
@@ -30,15 +33,15 @@ endsw
 
 set out = "$file:r.$$.$file:e"
 
-set xywh = ( `/bin/echo "$crop" | sed "s/\(.*\)x\(.*\)\([+-]\)\(.*\)\([+-]\)\(.*\)/\3\4 \5\6 \1 \2/"` )
+set xywh = ( `echo "$crop" | sed "s/\(.*\)x\(.*\)\([+-]\)\(.*\)\([+-]\)\(.*\)/\3\4 \5\6 \1 \2/"` )
 if ($?xywh == 0) then
-  /bin/echo "$0 $$ -- BAD CROP ($crop)" >&! /dev/stderr
+  if ($?DEBUG) echo "$0:t $$ -- BAD CROP ($crop)" >&! /dev/stderr
   exit(1)
 else if ($#xywh != 4) then
-  /bin/echo "$0 $$ -- INVALID CROP ($crop) ($xywh)" >&! /dev/stderr
+  if ($?DEBUG) echo "$0:t $$ -- INVALID CROP ($crop) ($xywh)" >&! /dev/stderr
   exit(1)
 else
-  /bin/echo "$0 $$ -- GOOD CROP ($crop) ($xywh)" >&! /dev/stderr
+  if ($?DEBUG) echo "$0:t $$ -- GOOD CROP ($crop) ($xywh)" >&! /dev/stderr
 endif
 
 
@@ -63,13 +66,13 @@ if ($file:e == "jpg") then
   @ eh = $y + $h
   set target = ( $x $y $ew $eh )
 
-  /bin/echo "$0 $$ -- FILE ($file) ($x $y $w $h)" >&! /dev/stderr
+  if ($?DEBUG) echo "$0:t $$ -- FILE ($file) ($x $y $w $h)" >&! /dev/stderr
 
   # calculate centroid of movement bounding box
   @ cx = `echo "$x + ( $w / 2 )" | bc`
   @ cy = $y + ( $h / 2 )
 
-  /bin/echo "$0 $$ -- Centroid ($cx $cy) Extant ($w $h)" >&! /dev/stderr
+  if ($?DEBUG) echo "$0:t $$ -- Centroid ($cx $cy) Extant ($w $h)" >&! /dev/stderr
 
   # subtract off half of model size
   @ sx = $cx - ( $MODEL_IMAGE_WIDTH / 2 )
@@ -83,7 +86,7 @@ if ($file:e == "jpg") then
   if ($sx + $sw > $CAMERA_IMAGE_WIDTH) @ sx = $CAMERA_IMAGE_WIDTH - $sw
   if ($sy + $sh > $CAMERA_IMAGE_HEIGHT) @ sy = $CAMERA_IMAGE_HEIGHT - $sh
 
-  /bin/echo "$0 $$ -- Start ($sx $sy) Extant ($sw $sh)" >&! /dev/stderr
+  if ($?DEBUG) echo "$0:t $$ -- Start ($sx $sy) Extant ($sw $sh)" >&! /dev/stderr
 
   # cropped rectangle of MODEL_IMAGE_WIDTH x MODEL_IMAGE_HEIGHT
   @ rw = $sx + $sw
@@ -92,7 +95,7 @@ if ($file:e == "jpg") then
 
   set xform = "$sw"x"$sh"+"$sx"+"$sy"
 
-  /bin/echo "$0 $$ -- Rect ($rect) Xform ($xform)" >&! /dev/stderr
+  if ($?DEBUG) echo "$0:t $$ -- Rect ($rect) Xform ($xform)" >&! /dev/stderr
   if ($?CAMERA_MODEL_TRANSFORM) then
     switch ($CAMERA_MODEL_TRANSFORM)
       case "RESIZE":
@@ -113,33 +116,33 @@ if ($file:e == "jpg") then
             if (! -e "$composed") unset composed
             /bin/rm -f "$random" "$cropped"
           else
-            /bin/echo "$0 $$ -- $random failed" >&! /dev/stderr
+            if ($?DEBUG) echo "$0:t $$ -- $random failed" >&! /dev/stderr
           endif
           if ($?composed) then
-            /bin/echo "$0 $$ -- SUCCESS composed ($composed)" >&! /dev/stderr
+            if ($?DEBUG) echo "$0:t $$ -- SUCCESS composed ($composed)" >&! /dev/stderr
           else
-            /bin/echo "$0 $$ -- FAILURE composing" >&! /dev/stderr
+            if ($?DEBUG) echo "$0:t $$ -- FAILURE composing" >&! /dev/stderr
           endif
         else
-          /bin/echo "$0 $$ -- FAILURE TO CROP ($cropped)" >&! /dev/stderr
+          if ($?DEBUG) echo "$0:t $$ -- FAILURE TO CROP ($cropped)" >&! /dev/stderr
         endif
         breaksw
       default:
-        /bin/echo "$0 $$ -- invalid CAMERA_MODEL_TRANSFORM ($CAMERA_MODEL_TRANSFORM)" >&! /dev/stderr
+        if ($?DEBUG) echo "$0:t $$ -- invalid CAMERA_MODEL_TRANSFORM ($CAMERA_MODEL_TRANSFORM)" >&! /dev/stderr
         breaksw
   endsw
 else
-  /bin/echo "$0 $$ -- no CAMERA_MODEL_TRANSFORM specified" >&! /dev/stderr
+  if ($?DEBUG) echo "$0:t $$ -- no CAMERA_MODEL_TRANSFORM specified" >&! /dev/stderr
 endif
 
 if ($?IMAGE_ANNOTATE_TEXT) then
   if ($?IMAGE_ANNOTATE_FONT == 0) then
     set fonts = ( `convert -list font | awk -F': ' '/glyphs/ { print $2 }' | sort | uniq` )
     if ($#fonts == 0) then
-      /bin/echo "$0 $$ -- found no fonts using convert(1) to list fonts" >&! /dev/stderr
+      if ($?DEBUG) echo "$0:t $$ -- found no fonts using convert(1) to list fonts" >&! /dev/stderr
       set fonts = ( `fc-list | awk -F: '{ print $1 }' | sort | uniq` )
       if ($#fonts == 0) then
-        /bin/echo "$0 $$ -- found no fonts using fc-list(1) to list fonts" >&! /dev/stderr
+        if ($?DEBUG) echo "$0:t $$ -- found no fonts using fc-list(1) to list fonts" >&! /dev/stderr
       endif 
     endif
     # use the first font
@@ -160,23 +163,23 @@ if ($?IMAGE_ANNOTATE_TEXT) then
 endif
 
 if (-e "$out") then
-  /bin/echo "$0 $$ -- trying to convert $file into $out" >&! /dev/stderr
+  if ($?DEBUG) echo "$0:t $$ -- trying to convert $file into $out" >&! /dev/stderr
   convert "$out" -fill none -stroke red -strokewidth 3 -draw "rectangle $target" "$out.$$" >&! /dev/stderr
   mv "$out.$$" "$out"
 endif
 
 if (-e "$out") then
-  /bin/echo "$0 ($$) -- OUTPUT SUCCESSFUL $out ($class $rect)" >&! /dev/stderr
+  if ($?DEBUG) echo "$0:t ($$) -- OUTPUT SUCCESSFUL $out ($class $rect)" >&! /dev/stderr
   /bin/dd if="$out"
   /bin/rm -f "$out"
   exit 0
 else if (-e "$file") then
-  /bin/echo "$0 ($$) -- OUTPUT FAILURE $out (returning $file)" >&! /dev/stderr
+  if ($?DEBUG) echo "$0:t ($$) -- OUTPUT FAILURE $out (returning $file)" >&! /dev/stderr
   /bin/dd if="$file"
   /bin/rm -f "$out"
   exit 1
 else if (! -e "$file") then
-  /bin/echo "$0 ($$) -- NO INPUT ($file)" >&! /dev/stderr
+  if ($?DEBUG) echo "$0:t ($$) -- NO INPUT ($file)" >&! /dev/stderr
   /bin/rm -f "$out"
   exit 1
 endif

@@ -1,7 +1,7 @@
 #!/bin/csh -fb
 
-setenv DEBUG
-setenv VERBOSE
+unsetenv DEBUG
+unsetenv VERBOSE
 
 ##
 ## DEVICE_NAME only specified in production
@@ -72,10 +72,10 @@ if ($?MOTION_TARGET_DIR && $?MOTION_EVENT_GAP) then
     @ i--
   end
   else
-    /bin/echo "$0:t $$ -- insufficient jpgs" >& /dev/stderr
+    if ($?DEBUG) echo "$0:t $$ -- insufficient jpgs" >& /dev/stderr
   endif
 else
-  /bin/echo "$0:t $$ -- not defined" >& /dev/stderr
+  if ($?DEBUG) echo "$0:t $$ -- not defined" >& /dev/stderr
 endif
 
 if ($?DEBUG) echo "$0:t $$ -- FRAMES: $#frames" >& /dev/stderr

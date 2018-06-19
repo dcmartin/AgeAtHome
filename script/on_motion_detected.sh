@@ -4,7 +4,7 @@ if ($?ON_MOTION_DETECT == 0) then
     exit
 endif
 
-echo "+++ BEGIN: $0 $* ($$)" `date` >& /dev/stderr
+if ($?DEBUG) echo "+++ BEGIN: $0:t $* ($$)" `date` >& /dev/stderr
 # get start
 set SECONDS = `date +%s`
 
@@ -21,13 +21,13 @@ set DATE = `echo $SECONDS \/ $TTL \* $TTL | bc`
 
 # test for DEVICE_NAME
 if ($?DEVICE_NAME == 0) then
-    echo "*** STATUS: $0 ($$)" `date` "no DEVICE_NAME specified" >& /dev/stderr
+    if ($?DEBUG) echo "*** STATUS: $0:t ($$)" `date` "no DEVICE_NAME specified" >& /dev/stderr
     setenv DEVICE_NAME "rough-fog"
 endif
 
 # test periodicity - only process motion detection events every INTERVAL seconds
 if (-e /tmp/$0:t.$PERIOD) then
-    echo "*** TOO SOON ($PERIOD) ***"
+    if ($?DEBUG) echo "*** TOO SOON ($PERIOD) ***"
     if ($?PERIOD_TEST) goto done
 else
     rm -f /tmp/$0:t.*
@@ -56,7 +56,7 @@ if ($#argv >= 7) then
     set MINUTE = $argv[6]
     set SECOND = $argv[7]
 else
-    echo "*** ARGUMENT COUNT = $#argv ***"
+    if ($?DEBUG) echo "*** ARGUMENT COUNT = $#argv ***"
     exit
 endif
 
@@ -66,9 +66,9 @@ set PRIOR = ( `ls -1t "$DIR/$PRIOR_ID"*.json | sed "s|$DIR/\(.*\)-.*-.*.json|\1|
 
 # check if prior events exist
 if ($#PRIOR > 0) then
-    # echo "+++ STATUS: $0 ($$)" `date` "PRIOR=[$PRIOR_ID] COUNT=$#PRIOR" >& /dev/stderr
+    # if ($?DEBUG) echo "+++ STATUS: $0:t ($$)" `date` "PRIOR=[$PRIOR_ID] COUNT=$#PRIOR" >& /dev/stderr
 else
-    echo "*** ERROR: $0" `date` "PRIOR=[] (0): $PRIOR" >& /dev/stderr
+    if ($?DEBUG) echo "*** ERROR: $0" `date` "PRIOR=[] (0): $PRIOR" >& /dev/stderr
     exit
 endif
 
@@ -81,7 +81,7 @@ set INDEX = `echo "$YEAR" "$MONTH" "$DAY" "$HOUR" "$MINUTE" "$SECOND" | \
 	    strftime("%p",t),\
 	    strftime("%U",t),\
 	    strftime("%w",t) }'`
-echo "+++ STATUS: $0 ($$)" `date` "INDEX = $INDEX" >& /dev/stderr
+if ($?DEBUG) echo "+++ STATUS: $0:t ($$)" `date` "INDEX = $INDEX" >& /dev/stderr
 # get interval from current time series
 set interval = `echo "$INDEX" | jq '.interval' | sed 's/"//g'`
 
@@ -101,12 +101,12 @@ foreach k ( $PRIOR )
 
    if ($t == $interval && $d >= 0) then
 	# event exists and in same time interval
-        echo "+++ STATUS: $0 ($$)" `date` "EVENT $k [$t $h $m]($d) : $event" >& /dev/stderr
+        if ($?DEBUG) echo "+++ STATUS: $0:t ($$)" `date` "EVENT $k [$t $h $m]($d) : $event" >& /dev/stderr
         set prior = ( $prior $event )
    endif
 end
 
-echo "+++ STATUS: $0 ($$)" `date` "INTERVAL=$interval : ($#prior): $prior" >& /dev/stderr
+if ($?DEBUG) echo "+++ STATUS: $0:t ($$)" `date` "INTERVAL=$interval : ($#prior): $prior" >& /dev/stderr
 
 #
 # build "event in context" (EIC) for all prior events across each EVENT classifier's MODEL
@@ -114,7 +114,7 @@ echo "+++ STATUS: $0 ($$)" `date` "INTERVAL=$interval : ($#prior): $prior" >& /d
 if ($#prior == 0) goto done
 
 foreach EVENT ( $prior )
-    echo "+++ STATUS: $0 ($$)" `date` "EVENT = $EVENT" >& /dev/stderr
+    if ($?DEBUG) echo "+++ STATUS: $0:t ($$)" `date` "EVENT = $EVENT" >& /dev/stderr
     # get time series for EVENT
     set year = `cat "$EVENT" | jq '.year' | sed 's/"//g'`
     set month = `cat "$EVENT" | jq '.month' | sed 's/"//g'`
@@ -132,7 +132,7 @@ foreach EVENT ( $prior )
 	    strftime("%p",t),\
 	    strftime("%U",t),\
 	    strftime("%w",t) }'`
-    echo "+++ STATUS: $0 ($$)" `date` "index = $index" >& /dev/stderr
+    if ($?DEBUG) echo "+++ STATUS: $0:t ($$)" `date` "index = $index" >& /dev/stderr
 
     set ampm = `echo "$index" | jq '.AMPM' | sed 's/"//g'`
     set week = `echo "$index" | jq '.week' | sed 's/"//g'`
@@ -141,7 +141,7 @@ foreach EVENT ( $prior )
 
     # identify EVENT in context
     set EIC = "$DIR/EIC-$EVENT:t"
-    # echo "+++ STATUS: $0 ($$)" `date` "INITIATE EIC: $EIC" >& /dev/stderr
+    # if ($?DEBUG) echo "+++ STATUS: $0:t ($$)" `date` "INITIATE EIC: $EIC" >& /dev/stderr
     $0:h/make-eic "$EVENT" "$EIC"
 
     # union Alchemy and VisualInsights classifiers and scores
@@ -163,4 +163,4 @@ done:
 
 set seconds = `date +%s`
 set elapsed = ( `echo "$seconds - $SECONDS" | bc` )
-echo "+++ END: $0 ($$)" `date` "elapsed $elapsed" >& /dev/stderr
+if ($?DEBUG) echo "+++ END: $0:t ($$)" `date` "elapsed $elapsed" >& /dev/stderr

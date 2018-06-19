@@ -1,5 +1,5 @@
 #!/bin/csh -fb
-echo "+++ BEGIN: $0 $* ($$)" `date` >& /dev/stderr
+echo "+++ BEGIN: $0:t $* ($$)" `date` >& /dev/stderr
 # interval time in minutes
 set INTERVAL = 15
 # cache'ing directives
@@ -10,7 +10,7 @@ set PERIOD = `echo "($SECONDS/($INTERVAL*60))*($INTERVAL*60)" | bc`
 
 #
 if ($?DEVICE_NAME == 0) then
-    echo "+++ STATUS: $0 ($$)" `date` "no DEVICE_NAME specified" >& /dev/stderr
+    echo "+++ STATUS: $0:t ($$)" `date` "no DEVICE_NAME specified" >& /dev/stderr
     setenv DEVICE_NAME "rough-fog"
 endif
 
@@ -26,7 +26,7 @@ set EVENT = "$argv[1]"
 set EIC = "$argv[2]"
 
 if (!(-e "$EIC") || ((-M "$EVENT") > (-M "$EIC")))  then
-    echo "+++ STATUS: $0 ($$)" `date` "BUILDING EIC: $EIC" >& /dev/stderr
+    echo "+++ STATUS: $0:t ($$)" `date` "BUILDING EIC: $EIC" >& /dev/stderr
     # get time series for EVENT
     set year = `cat "$EVENT" | jq '.year' | sed 's/"//g'`
     set month = `cat "$EVENT" | jq '.month' | sed 's/"//g'`
@@ -44,7 +44,7 @@ if (!(-e "$EIC") || ((-M "$EVENT") > (-M "$EIC")))  then
             strftime("%p",t),\
             strftime("%U",t),\
             strftime("%w",t) }'`
-    echo "+++ STATUS: $0 ($$)" `date` "index = $index" >& /dev/stderr
+    echo "+++ STATUS: $0:t ($$)" `date` "index = $index" >& /dev/stderr
 
     set ampm = `echo "$index" | jq '.AMPM' | sed 's/"//g'`
     set week = `echo "$index" | jq '.week' | sed 's/"//g'`
@@ -69,7 +69,7 @@ if (!(-e "$EIC") || ((-M "$EVENT") > (-M "$EIC")))  then
 	if ($CLASS == "NO_TAGS") continue;
 	if ($CLASS == \"\") continue;
 
-	echo "+++ STATUS: $0 ($$)" `date` "PROCESSING CLASS=$CLASS : $EIC" >& /dev/stderr
+	echo "+++ STATUS: $0:t ($$)" `date` "PROCESSING CLASS=$CLASS : $EIC" >& /dev/stderr
 
 	# keep track of index into SCORES
 	@ i++
@@ -81,7 +81,7 @@ if (!(-e "$EIC") || ((-M "$EVENT") > (-M "$EIC")))  then
 	    set TF = `echo "$SCORES[$i] < $MINIMUM_CLASSIFIER_SCORE" | bc`
 
 	    if ($TF) then
-		echo "+++ STATUS: $0 ($$)" `date` "$CLASS under minimum score ($SCORES[$i])" >& /dev/stderr
+		echo "+++ STATUS: $0:t ($$)" `date` "$CLASS under minimum score ($SCORES[$i])" >& /dev/stderr
 		continue;
 	    endif
 	endif
@@ -96,13 +96,13 @@ if (!(-e "$EIC") || ((-M "$EVENT") > (-M "$EIC")))  then
 	    ( curl -o "$MODEL.$$" -s -L "$WWW/aah-stats.cgi?db=$DEVICE_NAME&id=$CLASS" ; mv "$MODEL.$$" "$MODEL" ) &
 	    # if there are no old models
 	    if ( $#OLD_MODEL == 0 ) then
-		echo "+++ STATUS: $0 ($$)" `date` "waiting on $MODEL" >& /dev/stderr
+		echo "+++ STATUS: $0:t ($$)" `date` "waiting on $MODEL" >& /dev/stderr
 		while ( ! -e "$MODEL" ) 
 		    sleep 5
 		end
 		set err = `jq '.error' "$MODEL" | sed 's/"//g'`
 		if ($err != "null") then
-		    echo "*** ERROR: $0 ($$)" `date` "FAILURE ($err) OF MODEL: $MODEL" >& /dev/stderr
+		    echo "*** ERROR: $0:t ($$)" `date` "FAILURE ($err) OF MODEL: $MODEL" >& /dev/stderr
 		    rm -f "$MODEL"
 		endif
 	    else
@@ -110,21 +110,21 @@ if (!(-e "$EIC") || ((-M "$EVENT") > (-M "$EIC")))  then
 		set MODEL = "$OLD_MODEL[1]"
 		# remove olders model(s)
 		if ($#OLD_MODEL > 1) then
-		    echo "+++ STATUS: $0 ($$)" `date` "removing $OLD_MODEL[2-]" >& /dev/stderr
+		    echo "+++ STATUS: $0:t ($$)" `date` "removing $OLD_MODEL[2-]" >& /dev/stderr
 		    rm -f $OLD_MODEL[2-]
 		endif
 	    endif
 	endif
 	# assert existing model
 	if (! -e "$MODEL" ) then
-	    echo "*** ASSERT: $0 ($$)" `date` "ASSERTION FAILURE (EXIST) FOR MODEL: $MODEL" >& /dev/stderr
+	    echo "*** ASSERT: $0:t ($$)" `date` "ASSERTION FAILURE (EXIST) FOR MODEL: $MODEL" >& /dev/stderr
 	    unset continue
 	    continue
 	endif
 	# assert good model
 	set err = `jq '.error' "$MODEL"`
 	if ($err == "not_found") then
-	    echo "*** ASSERT: $0 ($$)" `date` "BAD MODEL ($err) REMOVING: $MODEL" >& /dev/stderr
+	    echo "*** ASSERT: $0:t ($$)" `date` "BAD MODEL ($err) REMOVING: $MODEL" >& /dev/stderr
 	    rm -f "$MODEL"
 	    unset continue
 	    continue
@@ -133,7 +133,7 @@ if (!(-e "$EIC") || ((-M "$EVENT") > (-M "$EIC")))  then
 	# 
 	# get entity context from MODEL (n.b. time-series statistical model over weeks of year, days of week and intervals of day)
 	#
-	echo "+++ STATUS: $0 ($$)" `date` ": CLASS=$CLASS SCORE=$SCORES[$i] MODEL=$MODEL" >& /dev/stderr
+	echo "+++ STATUS: $0:t ($$)" `date` ": CLASS=$CLASS SCORE=$SCORES[$i] MODEL=$MODEL" >& /dev/stderr
 	echo -n '{ "class":"'$CLASS'",' >> "$EIC"
 	echo -n '"score":"'$SCORES[$i]'",' >> "$EIC"
 	echo -n '"model":' `jq '.days['$day'].intervals['$interval']' "$MODEL"` ',' >> "$EIC"
@@ -146,7 +146,7 @@ if (!(-e "$EIC") || ((-M "$EVENT") > (-M "$EIC")))  then
 	set CLASS_COUNTS = "$MODEL:r-$CLASS.json"
 	# test existence and modfication times for MODEL vs CLASS_COUNTS
 	if (!(-e "$CLASS_COUNTS") || (-z "$CLASS_COUNTS") || ((-M "$MODEL") > (-M "$CLASS_COUNTS"))) then
-	    echo "+++ STATUS: $0 ($$)" `date` "CALCULATING $CLASS COUNTS" >& /dev/stderr
+	    echo "+++ STATUS: $0:t ($$)" `date` "CALCULATING $CLASS COUNTS" >& /dev/stderr
 	    # list old count(s)
 	    ls -alt "$MODEL:r:r*-$CLASS.json"
 	    # (re)calculate population statistics for this CLASS across all days and all intervals of MODEL
@@ -167,4 +167,4 @@ endif
 done:
     set seconds = `date +%s`
     set elapsed = ( `echo "$seconds - $SECONDS" | bc` )
-    echo "+++ END: $0 ($$)" `date` " elapsed $elapsed" >& /dev/stderr
+    echo "+++ END: $0:t ($$)" `date` " elapsed $elapsed" >& /dev/stderr
