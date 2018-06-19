@@ -1,5 +1,9 @@
 #!/bin/bash
-if ($?DEBUG) echo "$0:t $$ -- BEGIN: $*" $(date) >&2
+
+setenv DEBUG
+setenv VERBOSE
+
+if [ -n "${DEBUG}" ]; then echo "$0:t $$ -- BEGIN: $*" $(date) >&2; fi
 
 # get arguments
 EVENT=$1
@@ -11,7 +15,7 @@ MOTION_WIDTH=$6
 MOTION_HEIGHT=$7
 
 if [ -z "${IMAGE_FILE}" ]; then
-  if ($?DEBUG) echo "$0:t $$ -- FAILURE $*" $(date) >&2
+  if [ -n "${DEBUG}" ]; then echo "$0:t $$ -- FAILURE $*" $(date) >&2; fi
   exit
 fi
 
@@ -30,7 +34,7 @@ IMAGE_ID=`echo "${IMAGE_ID%.*}"`
 ## POST IMAGE 
 ##
 if [ -n "${MQTT_ON}" ] && [ -s "${IMAGE_FILE}" ] && [ -n "${MQTT_HOST}" ]; then
-  if ($?DEBUG) echo "$0:t $$ -- POSTING ${EVENT} ${IMAGE_TILE} to image/" >&2
+  if [ -n "${DEBUG}" ]; then echo "$0:t $$ -- POSTING ${EVENT} ${IMAGE_TILE} to image/" >&2; fi
   # mosquitto_pub -i "${DEVICE_NAME}" -r -h "${MQTT_HOST}" -t 'image/'"${AAH_LOCATION}"'/'"${IMAGE_ID}" -f "${IMAGE_FILE}"
   mosquitto_pub -i "${DEVICE_NAME}" -h "${MQTT_HOST}" -t 'image/'"${AAH_LOCATION}"'/'"${IMAGE_ID}" -f "${IMAGE_FILE}"
 fi
@@ -65,28 +69,28 @@ if [ -n "${MOTION_INTERVAL}" ]; then
 	  INTERVAL=$(echo "$NOW - $LAST" | bc)
 	  if [ -n "${INTERVAL}" ]; then
 	    if [ $INTERVAL -le $MOTION_INTERVAL ]; then
-	      if ($?DEBUG) echo "$0:t $$ -- SKIPPING ${IMAGE_FILE} -- INTERVAL ${INTERVAL} <= ${MOTION_INTERVAL}" >&2
+	      if [ -n "${DEBUG}" ]; then echo "$0:t $$ -- SKIPPING ${IMAGE_FILE} -- INTERVAL ${INTERVAL} <= ${MOTION_INTERVAL}" >&2; fi
 	      exit
 	    else
-	      if ($?DEBUG) echo "$0:t $$ -- PROCESSING ${IMAGE_FILE} -- INTERVAL ${INTERVAL} > ${MOTION_INTERVAL}" >&2
+	      if [ -n "${DEBUG}" ]; then echo "$0:t $$ -- PROCESSING ${IMAGE_FILE} -- INTERVAL ${INTERVAL} > ${MOTION_INTERVAL}" >&2; fi
 	    fi
 	  else
-	    if ($?DEBUG) echo "$0:t $$ -- INTERVAL not defined" >&2
+	    if [ -n "${DEBUG}" ]; then echo "$0:t $$ -- INTERVAL not defined" >&2; fi
 	  fi
 	else
-	  if ($?DEBUG) echo "$0:t $$ -- NOW/LAST not defined" >&2
+	  if [ -n "${DEBUG}" ]; then echo "$0:t $$ -- NOW/LAST not defined" >&2; fi
 	fi
       else
-	if ($?DEBUG) echo "$0:t $$ -- NOW/LAST not defined" >&2
+	if [ -n "${DEBUG}" ]; then echo "$0:t $$ -- NOW/LAST not defined" >&2; fi
       fi
     else
-      if ($?DEBUG) echo "$0:t $$ -- NOW/LAST not defined" >&2
+      if [ -n "${DEBUG}" ]; then echo "$0:t $$ -- NOW/LAST not defined" >&2; fi
     fi
   else
-    if ($?DEBUG) echo "$0:t $$ -- nothing old" >&2
+    if [ -n "${DEBUG}" ]; then echo "$0:t $$ -- nothing old" >&2; fi
   fi
 else
-  if ($?DEBUG) echo "$0:t $$ -- MOTION_INTERVAL not defined" >&2
+  if [ -n "${DEBUG}" ]; then echo "$0:t $$ -- MOTION_INTERVAL not defined" >&2; fi
 fi
 
 ##
@@ -100,7 +104,7 @@ MOTION_Y=$(echo "${MOTION_MIDY} - ( ${MOTION_HEIGHT} / 2 )" | /usr/bin/bc)
 # DEFINE EXTANT
 IMAGE_BOX="${MOTION_WIDTH}x${MOTION_HEIGHT}+${MOTION_X}+${MOTION_Y}"
 
-if ($?DEBUG) echo "$0:t $$ -- PROCESSING ${EVENT} ${IMAGE_ID} ${MOTION_MIDX} ${MOTION_MIDY} ${MOTION_WIDTH} ${MOTION_HEIGHT} == ${IMAGE_BOX}"
+if [ -n "${DEBUG}" ]; then echo "$0:t $$ -- ID: ${IMAGE_ID} EVENT: ${EVENT} BOX: ${IMAGE_BOX} X: ${MOTION_MIDX} Y: ${MOTION_MIDY} W: ${MOTION_WIDTH} H: ${MOTION_HEIGHT}" >&2; fi
 
 
 ##
@@ -121,7 +125,7 @@ if [ -z "${VR_OFF}" ] && [ -n "${VR_APIKEY}" ] && [ -n "${VR_VERSION}" ] && [ -n
 	# custom classifier goes first; top1 from first classifier is encoded as alchemy
         VR_CLASSIFIER="${VR_CLASSIFIER},default"
     fi
-    if ($?DEBUG) echo "$0:t PROCESSING visual-recognition ${VR_CLASSIFIER} ${VR_VERSION} ${VR_DATE} ${VR_URL} ${IMAGE_FILE}"
+    if [ -n "${DEBUG}" ]; then echo "$0:t PROCESSING visual-recognition ${VR_CLASSIFIER} ${VR_VERSION} ${VR_DATE} ${VR_URL} ${IMAGE_FILE}"; fi
     # make the call
     curl -s -q -L \
         --header "X-Watson-Learning-Opt-Out: true" \
@@ -129,12 +133,12 @@ if [ -z "${VR_OFF}" ] && [ -n "${VR_APIKEY}" ] && [ -n "${VR_VERSION}" ] && [ -n
 	-o "${VR_OUTPUT}" \
 	"$VR_URL/$VR_VERSION/classify?api_key=$VR_APIKEY&classifier_ids=$VR_CLASSIFIER&threshold=0.0&version=$VR_DATE"
     if [ -s "${VR_OUTPUT}" ]; then
-	if ($?DEBUG) echo  "$0:t $$ -- SUCCESS visual-recognition ${IMAGE_FILE}"
+	if [ -n "${DEBUG}" ]; then echo  "$0:t $$ -- SUCCESS visual-recognition ${IMAGE_FILE}"; fi
     else
-	if ($?DEBUG) echo "$0:t $$ -- FAILURE visual-recognition ${IMAGE_FILE}"
+	if [ -n "${DEBUG}" ]; then echo "$0:t $$ -- FAILURE visual-recognition ${IMAGE_FILE}"; fi
     fi
 else
-    if ($?DEBUG) echo "$0:t $$ -- VISUAL-RECOGNITION - OFF"
+    if [ -n "${DEBUG}" ]; then echo "$0:t $$ -- VISUAL-RECOGNITION - OFF"; fi
 fi
 
 ##
@@ -150,7 +154,7 @@ if [ -n "${DIGITS_SERVER_URL}" ]; then
     if [ -n "${DIGITS_JOB_ID}" ]; then
 	CMD="models/images/classification/classify_one.json"
 	# get inference
-        if ($?DEBUG) echo "$0:t $$ -- PROCESSING DIGITS ${DIGITS_JOB_ID}"
+        if [ -n "${DEBUG}" ]; then echo "$0:t $$ -- PROCESSING DIGITS ${DIGITS_JOB_ID}"; fi
 	curl -s -q -L -X POST \
 	    -F "image_file=@$IMAGE_FILE" \
 	    -F "job_id=${DIGITS_JOB_ID}" \
@@ -163,15 +167,15 @@ if [ -n "${DIGITS_SERVER_URL}" ]; then
 		| sed 's/ /_/g' \
 		| awk -F, 'BEGIN { n=0 } { if (n>0) printf(","); n++; printf("{\"classifier_id\":\"%s\",\"name\":\"%s\",\"score\":%1.4f}", $1, $2, $3/100)}' > "${DG_OUTPUT}.$$"
 	    mv "${DG_OUTPUT}.$$" "${DG_OUTPUT}"
-            if ($?DEBUG) echo "$0:t $$ -- SUCCESS DIGITS ${DIGITS_JOB_ID}"
+            if [ -n "${DEBUG}" ]; then echo "$0:t $$ -- SUCCESS DIGITS ${DIGITS_JOB_ID}"; fi
         else
-            if ($?DEBUG) echo "$0:t $$ -- FAILURE DIGITS ${DIGITS_JOB_ID}" >&2
+            if [ -n "${DEBUG}" ]; then echo "$0:t $$ -- FAILURE DIGITS ${DIGITS_JOB_ID}" >&2; fi
 	fi
     else
-	if ($?DEBUG) echo "$0:t $$ -- NO DIGITS_JOB_ID specified for server ${DIGITS_SERVER_URL}" >&2
+	if [ -n "${DEBUG}" ]; then echo "$0:t $$ -- NO DIGITS_JOB_ID specified for server ${DIGITS_SERVER_URL}" >&2; fi
     fi
 else
-    if ($?DEBUG) echo "$0:t $$ -- NO DIGITS_SERVER_URL specified" >&2
+    if [ -n "${DEBUG}" ]; then echo "$0:t $$ -- NO DIGITS_SERVER_URL specified" >&2; fi
 fi
 
 ##
@@ -179,7 +183,7 @@ fi
 ##
 
 if [ -s "${VR_OUTPUT}" ]; then
-    if ($?DEBUG) echo "$0:t PROCESSING VISUAL_RECOGNITION ${VR_OUTPUT}" >&2
+    if [ -n "${DEBUG}" ]; then echo "$0:t PROCESSING VISUAL_RECOGNITION ${VR_OUTPUT}" >&2; fi
     # encode top1 across custom (iff specified above) and default classifiers; decorate with source: default, <hierarchy:default>, custom classifier_id
     jq -c \
       '[.images[0]|.classifiers[]|.classifier_id as $cid|.classes|sort_by(.score)[-1]|{text:.class,name:(if .type_hierarchy == null then $cid else .type_hierarchy end),score:.score}]|sort_by(.score)[-1]' \
@@ -190,16 +194,16 @@ if [ -s "${VR_OUTPUT}" ]; then
       "${VR_OUTPUT}" > "${OUTPUT}.visual.$$"
     # test if DIGITS too
     if [ -s "${DG_OUTPUT}" ]; then
-	if ($?DEBUG) echo "$0:t $$ -- ADDING WATSON & DIGITS classifiers" >&2
+	if [ -n "${DEBUG}" ]; then echo "$0:t $$ -- ADDING WATSON & DIGITS classifiers" >&2; fi
 	sed 's/\(.*\)/{"alchemy":\1,"visual":/' "${OUTPUT}.alchemy.$$" | paste - "${OUTPUT}.visual.$$" | sed 's/]}$/,/' | paste - "${DG_OUTPUT}" | sed 's/$/]}}/' > "${OUTPUT}.$$"
     else
-	if ($?DEBUG) echo "$0:t $$ -- ADDING WATSON WITH ALCHEMY AS TOP1 ACROSS DEFAULT & ANY CUSTOM CLASSIFIER" >&2
+	if [ -n "${DEBUG}" ]; then echo "$0:t $$ -- ADDING WATSON WITH ALCHEMY AS TOP1 ACROSS DEFAULT & ANY CUSTOM CLASSIFIER" >&2; fi
         # concatenate -- "alchemy" is _really_ "top1" and "visual" is _really_ the entire "set" of classifiers
 	sed 's/\(.*\)/{"alchemy":\1,"visual":/' "${OUTPUT}.alchemy.$$" | paste - "${OUTPUT}.visual.$$" | sed 's/]}$/]}}/' > "${OUTPUT}.$$"
     fi
     # process consolidated scores into sorted list
     if [ -s "${DG_OUTPUT}" ]; then
-	if ($?DEBUG) echo "$0:t $$ -- REPLACING ALCHEMY WITH TOP1 ACROSS WATSON & DIGITS" >&2
+	if [ -n "${DEBUG}" ]; then echo "$0:t $$ -- REPLACING ALCHEMY WITH TOP1 ACROSS WATSON & DIGITS" >&2; fi
         # pick top1 across all classification results; sorted by score
         TOP1=$(jq -r '.visual.scores|sort_by(.score)[-1]|{"text":.classifier_id,"name":.name,"score":.score}' "${OUTPUT}.$$")
 	# change output to indicate (potentially) new top1
@@ -260,7 +264,7 @@ if [ -s "${OUTPUT}" ]; then
 	mv /tmp/OUTPUT.$$ "${OUTPUT}"
     fi
 else
-    if ($?DEBUG) echo "$0:t $$ -- ERROR: $* - NO OUTPUT" $(date) >&2
+    if [ -n "${DEBUG}" ]; then echo "$0:t $$ -- ERROR: $* - NO OUTPUT" $(date) >&2; fi
     exit
 fi
 
@@ -283,7 +287,7 @@ if [ -z "${CLOUDANT_OFF}" ] && [ -s "${OUTPUT}" ] && [ -n "${CLOUDANT_URL}" ] &&
 	curl -q -s -H "Content-type: application/json" -X PUT "$CLOUDANT_URL/${DEVICE_NAME}/${IMAGE_ID}" -d "@${OUTPUT}"
     fi
 else
-    if ($?DEBUG) echo "$0:t $$ -- NO CLOUDANT CHECK DEVICE_NAME" >&2
+    if [ -n "${DEBUG}" ]; then echo "$0:t $$ -- NO CLOUDANT CHECK DEVICE_NAME" >&2; fi
 fi
 
 ##
@@ -303,7 +307,7 @@ if [ -n "${OUTPUT}" ] && [ -s "${OUTPUT}" ]; then
   fi
   CROP=`jq -r '.imagebox' "${OUTPUT}"`
 else
-  if ($?DEBUG) echo "$0:t $$ -- NO OUTPUT" >&2
+  if [ -n "${DEBUG}" ]; then echo "$0:t $$ -- NO OUTPUT" >&2; fi
   exit
 fi
 
@@ -398,4 +402,4 @@ fi
 ## ALL DONE
 ##
 
-if ($?DEBUG) echo "$0:t $$ -- END: $*" $(date) >&2
+if [ -n "${DEBUG}" ]; then echo "$0:t $$ -- END: $*" $(date) >&2; fi
