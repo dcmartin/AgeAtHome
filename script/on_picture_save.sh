@@ -1,4 +1,4 @@
-#t!/bin/bash
+#!/bin/bash
 
 DEBUG=true
 VERBOSE=true
@@ -70,13 +70,8 @@ if [ -n "${MOTION_INTERVAL}" ]; then
       LAST=$(echo "${LAST%.*}")
       LAST=$(echo $LAST| sed 's/\(.*\)-.*-.*/\1/')
       if [ -n "${LAST}" ] && [ -n "${NOW}" ]; then
-	if [ -e dateutils.dconv ]; then
-	  NOW=$(dateutils.dconv -i '%Y%m%d%H%M%S' $NOW -f "%s")
-	  LAST=$(dateutils.dconv -i '%Y%m%d%H%M%S' $LAST -f "%s")
-	elif [ -e /usr/local/bin/dateconv ]; then
-	  NOW=$(/usr/local/bin/dateconv -i '%Y%m%d%H%M%S' $NOW -f "%s")
-	  LAST=$(/usr/local/bin/dateconv -i '%Y%m%d%H%M%S' $LAST -f "%s")
-	fi
+	NOW=$($dateconv -i '%Y%m%d%H%M%S' $NOW -f "%s")
+	LAST=$($dateconv -i '%Y%m%d%H%M%S' $LAST -f "%s")
 	if [ -n "${LAST}" ] && [ -n "${NOW}" ]; then
 	  INTERVAL=$(echo "$NOW - $LAST" | bc)
 	  if [ -n "${INTERVAL}" ]; then
@@ -105,7 +100,7 @@ else
   if [ -n "${DEBUG}" ]; then echo "${0##*/} $$ -- ${IMAGE_ID} -- MOTION_INTERVAL not defined" >&2; fi
 fi
 
-if [ -n "${DEBUG}" ]; then echo "${0##*/} $$ -- ${IMAGE_ID} -- CHECKPOINT" >&2; fi
+if [ -n "${DEBUG}" ]; then echo "${0##*/} $$ -- ${IMAGE_ID} -- CHECKPOINT ${NOW}" >&2; fi
 
 ##
 ## CALCULATE MOTION BOX
@@ -257,6 +252,7 @@ if [ -s "${OUTPUT}" ]; then
   MINUTE=`echo "${DATE_TIME}" | sed "s/^..........\(..\).*/\1/"`
   SECOND=`echo "${DATE_TIME}" | sed "s/^............\(..\).*/\1/"`
 
+  
   DATE=$(echo "${YEAR}/${MONTH}/${DAY} ${HOUR}:${MINUTE}:${SECOND}" | ${dateconv} -i "%Y/%M/%D %H:%M:%S" -f "%s")
   SIZE=$(echo "${MOTION_WIDTH} * ${MOTION_HEIGHT}" | bc)
 
