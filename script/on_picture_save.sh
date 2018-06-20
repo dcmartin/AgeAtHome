@@ -2,7 +2,6 @@
 
 DEBUG=true
 VERBOSE=true
-APP=$0
 
 ###
 ### dateutils REQUIRED
@@ -17,7 +16,7 @@ else
   exit 1
 fi
 
-if [ -n "${DEBUG}" ]; then echo "${APP##*/} $$ -- BEGIN: $*" $(date) >&2; fi
+if [ -n "${DEBUG}" ]; then echo "${0##*/} $$ -- BEGIN: $*" $(date) >&2; fi
 
 # get arguments
 EVENT=$1
@@ -29,7 +28,7 @@ MOTION_WIDTH=$6
 MOTION_HEIGHT=$7
 
 if [ -z "${IMAGE_FILE}" ]; then
-  if [ -n "${DEBUG}" ]; then echo "${APP##*/} $$ -- FAILURE $*" $(date) >&2; fi
+  if [ -n "${DEBUG}" ]; then echo "${0##*/} $$ -- FAILURE $*" $(date) >&2; fi
   exit
 fi
 
@@ -48,7 +47,7 @@ IMAGE_ID=`echo "${IMAGE_ID%.*}"`
 ## POST IMAGE 
 ##
 if [ -n "${MQTT_ON}" ] && [ -s "${IMAGE_FILE}" ] && [ -n "${MQTT_HOST}" ]; then
-  if [ -n "${DEBUG}" ]; then echo "${APP##*/} $$ -- ${IMAGE_ID} -- MQTT post to host $MQTT_HOST on topic image/${AAH_LOCATION}" >&2; fi
+  if [ -n "${DEBUG}" ]; then echo "${0##*/} $$ -- ${IMAGE_ID} -- MQTT post to host $MQTT_HOST on topic image/${AAH_LOCATION}" >&2; fi
   mosquitto_pub -i "${DEVICE_NAME}" -h "${MQTT_HOST}" -t 'image/'"${AAH_LOCATION}" -f "${IMAGE_FILE}"
 fi
 
@@ -82,29 +81,31 @@ if [ -n "${MOTION_INTERVAL}" ]; then
 	  INTERVAL=$(echo "$NOW - $LAST" | bc)
 	  if [ -n "${INTERVAL}" ]; then
 	    if [ $INTERVAL -le $MOTION_INTERVAL ]; then
-	      if [ -n "${DEBUG}" ]; then echo "${APP##*/} $$ -- ${IMAGE_ID} -- SKIPPING ${INTERVAL} <= ${MOTION_INTERVAL}" >&2; fi
+	      if [ -n "${DEBUG}" ]; then echo "${0##*/} $$ -- ${IMAGE_ID} -- SKIPPING ${INTERVAL} <= ${MOTION_INTERVAL}" >&2; fi
 	      exit
 	    else
-	      if [ -n "${DEBUG}" ]; then echo "${APP##*/} $$ -- ${IMAGE_ID} -- PROCEEDING ${INTERVAL} > ${MOTION_INTERVAL}" >&2; fi
+	      if [ -n "${DEBUG}" ]; then echo "${0##*/} $$ -- ${IMAGE_ID} -- PROCEEDING ${INTERVAL} > ${MOTION_INTERVAL}" >&2; fi
 	    fi
 	  else
-	    if [ -n "${DEBUG}" ]; then echo "${APP##*/} $$ -- ${IMAGE_ID} -- INTERVAL not defined" >&2; fi
+	    if [ -n "${DEBUG}" ]; then echo "${0##*/} $$ -- ${IMAGE_ID} -- INTERVAL not defined" >&2; fi
 	  fi
 	else
-	  if [ -n "${DEBUG}" ]; then echo "${APP##*/} $$ -- ${IMAGE_ID} -- NOW/LAST not defined" >&2; fi
+	  if [ -n "${DEBUG}" ]; then echo "${0##*/} $$ -- ${IMAGE_ID} -- NOW/LAST not defined" >&2; fi
 	fi
       else
-	if [ -n "${DEBUG}" ]; then echo "${APP##*/} $$ -- ${IMAGE_ID} -- NOW/LAST not defined" >&2; fi
+	if [ -n "${DEBUG}" ]; then echo "${0##*/} $$ -- ${IMAGE_ID} -- NOW/LAST not defined" >&2; fi
       fi
     else
-      if [ -n "${DEBUG}" ]; then echo "${APP##*/} $$ -- ${IMAGE_ID} -- NOW/LAST not defined" >&2; fi
+      if [ -n "${DEBUG}" ]; then echo "${0##*/} $$ -- ${IMAGE_ID} -- NOW/LAST not defined" >&2; fi
     fi
   else
-    if [ -n "${DEBUG}" ]; then echo "${APP##*/} $$ -- ${IMAGE_ID} -- nothing old" >&2; fi
+    if [ -n "${DEBUG}" ]; then echo "${0##*/} $$ -- ${IMAGE_ID} -- nothing old" >&2; fi
   fi
 else
-  if [ -n "${DEBUG}" ]; then echo "${APP##*/} $$ -- ${IMAGE_ID} -- MOTION_INTERVAL not defined" >&2; fi
+  if [ -n "${DEBUG}" ]; then echo "${0##*/} $$ -- ${IMAGE_ID} -- MOTION_INTERVAL not defined" >&2; fi
 fi
+
+if [ -n "${DEBUG}" ]; then echo "${0##*/} $$ -- ${IMAGE_ID} -- CHECKPOINT" >&2; fi
 
 ##
 ## CALCULATE MOTION BOX
@@ -112,14 +113,13 @@ fi
 # X coordinate in pixels of the center point of motion. Origin is upper left corner.
 # Y coordinate in pixels of the center point of motion. Origin is upper left corner and number is positive moving downwards 
 
-MOTION_X=$(echo "${MOTION_MIDX} - ( ${MOTION_WIDTH} / 2 )" | bc)
+MOTION_X=`echo "${MOTION_MIDX} - ( ${MOTION_WIDTH} / 2 )" | bc`
 if [[ ${MOTION_X} -lt 0 ]]; then MOTION_X=0; fi
-MOTION_Y=$(echo "${MOTION_MIDY} - ( ${MOTION_HEIGHT} / 2 )" | bc)
+MOTION_Y=`echo "${MOTION_MIDY} - ( ${MOTION_HEIGHT} / 2 )" | bc`
 if [[ ${MOTION_Y} -lt 0 ]]; then MOTION_Y=0; fi
 IMAGE_BOX="${MOTION_WIDTH}x${MOTION_HEIGHT}+${MOTION_X}+${MOTION_Y}"
 
-if [ -n "${DEBUG}" ]; then echo "${APP##*/} $$ -- ${IMAGE_ID} -- EVENT: ${EVENT} BOX: ${IMAGE_BOX} X: ${MOTION_X} Y: ${MOTION_Y} W: ${MOTION_WIDTH} H: ${MOTION_HEIGHT}" >&2; fi
-
+if [ -n "${DEBUG}" ]; then echo "${0##*/} $$ -- ${IMAGE_ID} -- EVENT: ${EVENT} BOX: ${IMAGE_BOX} X: ${MOTION_X} Y: ${MOTION_Y} W: ${MOTION_WIDTH} H: ${MOTION_HEIGHT}" >&2; fi
 
 ##
 ## VISUAL RECOGNITION
@@ -139,7 +139,7 @@ if [ -z "${VR_OFF}" ] && [ -n "${VR_APIKEY}" ] && [ -n "${VR_VERSION}" ] && [ -n
 	# custom classifier goes first; top1 from first classifier is encoded as alchemy
         VR_CLASSIFIER="${VR_CLASSIFIER},default"
     fi
-    if [ -n "${VERBOSE}" ]; then echo "${APP##*/} $$ -- ${IMAGE_ID} -- Watson Visual Recognition using classifier ${VR_CLASSIFIER}"; fi
+    if [ -n "${VERBOSE}" ]; then echo "${0##*/} $$ -- ${IMAGE_ID} -- Watson Visual Recognition using classifier ${VR_CLASSIFIER}"; fi
     # make the call
     curl -s -q -L \
         --header "X-Watson-Learning-Opt-Out: true" \
@@ -147,12 +147,12 @@ if [ -z "${VR_OFF}" ] && [ -n "${VR_APIKEY}" ] && [ -n "${VR_VERSION}" ] && [ -n
 	-o "${VR_OUTPUT}" \
 	"$VR_URL/$VR_VERSION/classify?api_key=$VR_APIKEY&classifier_ids=$VR_CLASSIFIER&threshold=0.0&version=$VR_DATE"
     if [ -s "${VR_OUTPUT}" ]; then
-	if [ -n "${VERBOSE}" ]; then echo  "${APP##*/} $$ -- ${IMAGE_ID} -- SUCCESS: Watson Visual Recognition"; fi
+	if [ -n "${VERBOSE}" ]; then echo  "${0##*/} $$ -- ${IMAGE_ID} -- SUCCESS: Watson Visual Recognition"; fi
     else
-	if [ -n "${DEBUG}" ]; then echo "${APP##*/} $$ -- ${IMAGE_ID} -- FAILURE: Watson Visual Recognition"; fi
+	if [ -n "${DEBUG}" ]; then echo "${0##*/} $$ -- ${IMAGE_ID} -- FAILURE: Watson Visual Recognition"; fi
     fi
 else
-    if [ -n "${VERBOSE}" ]; then echo "${APP##*/} $$ -- ${IMAGE_ID} -- DISABLED: Watson Visual Recognition is not enabled"; fi
+    if [ -n "${VERBOSE}" ]; then echo "${0##*/} $$ -- ${IMAGE_ID} -- DISABLED: Watson Visual Recognition is not enabled"; fi
 fi
 
 ##
@@ -167,7 +167,7 @@ DG_OUTPUT="${IMAGE_FILE%.*}-dg.json"
 if [ -n "${DIGITS_SERVER_URL}" ] && [ -n "${DIGITS_JOB_ID}" ]; then
   CMD="models/images/classification/classify_one.json"
   # get inference
-  if [ -n "${VERBOSE}" ]; then echo "${APP##*/} $$ -- ${IMAGE_ID} -- DIGITS using classifier ${DIGITS_JOB_ID}"; fi
+  if [ -n "${VERBOSE}" ]; then echo "${0##*/} $$ -- ${IMAGE_ID} -- DIGITS using classifier ${DIGITS_JOB_ID}"; fi
   curl -s -q -L -X POST \
       -F "image_file=@$IMAGE_FILE" \
       -F "job_id=${DIGITS_JOB_ID}" \
@@ -180,12 +180,12 @@ if [ -n "${DIGITS_SERVER_URL}" ] && [ -n "${DIGITS_JOB_ID}" ]; then
 	  | sed 's/ /_/g' \
 	  | awk -F, 'BEGIN { n=0 } { if (n>0) printf(","); n++; printf("{\"classifier_id\":\"%s\",\"name\":\"%s\",\"score\":%1.4f}", $1, $2, $3/100)}' > "${DG_OUTPUT}.$$"
       mv "${DG_OUTPUT}.$$" "${DG_OUTPUT}"
-      if [ -n "${VERBOSE}" ]; then echo "${APP##*/} $$ -- ${IMAGE_ID} -- SUCCESS: DIGITS"; fi
+      if [ -n "${VERBOSE}" ]; then echo "${0##*/} $$ -- ${IMAGE_ID} -- SUCCESS: DIGITS"; fi
   else
-      if [ -n "${DEBUG}" ]; then echo "${APP##*/} $$ -- ${IMAGE_ID} -- FAILURE: DIGITS" >&2; fi
+      if [ -n "${DEBUG}" ]; then echo "${0##*/} $$ -- ${IMAGE_ID} -- FAILURE: DIGITS" >&2; fi
   fi
 else
-  if [ -n "${VERBOSE}" ]; then echo "${APP##*/} $$ -- ${IMAGE_ID} -- DISABLED: DIGITS" >&2; fi
+  if [ -n "${VERBOSE}" ]; then echo "${0##*/} $$ -- ${IMAGE_ID} -- DISABLED: DIGITS" >&2; fi
 fi
 
 ##
@@ -193,7 +193,7 @@ fi
 ##
 
 if [ -s "${VR_OUTPUT}" ]; then
-    if [ -n "${VERBOSE}" ]; then echo "${APP##*/} $$ -- ${IMAGE_ID} -- processing WVR output" >&2; fi
+    if [ -n "${VERBOSE}" ]; then echo "${0##*/} $$ -- ${IMAGE_ID} -- processing WVR output" >&2; fi
     # encode top1 across custom (iff specified above) and default classifiers; decorate with source: default, <hierarchy:default>, custom classifier_id
     jq -c \
       '[.images[0]|.classifiers[]|.classifier_id as $cid|.classes|sort_by(.score)[-1]|{text:.class,name:(if .type_hierarchy == null then $cid else .type_hierarchy end),score:.score}]|sort_by(.score)[-1]' \
@@ -205,16 +205,16 @@ if [ -s "${VR_OUTPUT}" ]; then
 
     # test if DIGITS too
     if [ -s "${DG_OUTPUT}" ]; then
-	if [ -n "${VERBOSE}" ]; then echo "${APP##*/} $$ -- ${IMAGE_ID} -- joining DIGITS output" >&2; fi
+	if [ -n "${VERBOSE}" ]; then echo "${0##*/} $$ -- ${IMAGE_ID} -- joining DIGITS output" >&2; fi
 	sed 's/\(.*\)/{"alchemy":\1,"visual":/' "${OUTPUT}.alchemy.$$" | paste - "${OUTPUT}.visual.$$" | sed 's/]}$/,/' | paste - "${DG_OUTPUT}" | sed 's/$/]}}/' > "${OUTPUT}.$$"
     else
-	if [ -n "${VERBOSE}" ]; then echo "${APP##*/} $$ -- ${IMAGE_ID} -- processing calculating TOP1 from WVR (no DIGITS)" >&2; fi
+	if [ -n "${VERBOSE}" ]; then echo "${0##*/} $$ -- ${IMAGE_ID} -- processing calculating TOP1 from WVR (no DIGITS)" >&2; fi
         # concatenate -- "alchemy" is _really_ "top1" and "visual" is _really_ the entire "set" of classifiers
 	sed 's/\(.*\)/{"alchemy":\1,"visual":/' "${OUTPUT}.alchemy.$$" | paste - "${OUTPUT}.visual.$$" | sed 's/]}$/]}}/' > "${OUTPUT}.$$"
     fi
     # process consolidated scores into sorted list
     if [ -s "${DG_OUTPUT}" ]; then
-	if [ -n "${DEBUG}" ]; then echo "${APP##*/} $$ -- ${IMAGE_ID} -- calculating TOP1 from WVR & DIGITS" >&2; fi
+	if [ -n "${DEBUG}" ]; then echo "${0##*/} $$ -- ${IMAGE_ID} -- calculating TOP1 from WVR & DIGITS" >&2; fi
         # pick top1 across all classification results; sorted by score
         TOP1=$(jq -r '.visual.scores|sort_by(.score)[-1]|{"text":.classifier_id,"name":.name,"score":.score}' "${OUTPUT}.$$")
 	# change output to indicate (potentially) new top1
@@ -229,12 +229,12 @@ if [ -s "${VR_OUTPUT}" ]; then
     # cleanup
     rm -f "${OUTPUT}.alchemy.$$" "${OUTPUT}.visual.$$"
 elif [ -s "${DG_OUTPUT}" ]; then
-    if [ -n "${VERBOSE}" ]; then echo "${APP##*/} $$ -- ${IMAGE_ID} -- calculating TOP1 from DIGITS (no WVR)" >&2; fi
+    if [ -n "${VERBOSE}" ]; then echo "${0##*/} $$ -- ${IMAGE_ID} -- calculating TOP1 from DIGITS (no WVR)" >&2; fi
     TOP1=$(echo '[' | paste - "${DG_OUTPUT}" | sed 's/$/]/' | jq '.|sort_by(.score)[-1]|{"text":.classifier_id,"name":.name,"score":.score}')
     CLASSIFIERS=$(echo '[' | paste - "${DG_OUTPUT}" | sed 's/$/]/' | jq '.|sort_by(.score)')
     echo '{"alchemy":'"${TOP1}"',"visual":{"image":"'"${IMAGE_ID}.jpg"'","scores":{"classifiers":'"${CLASSIFIERS}"'}}}' >! "${OUTPUT}"
 else
-    if [ -n "${DEBUG}" ]; then echo "${APP##*/} $$ -- ${IMAGE_ID} -- ERROR: no classification output" >&2; fi
+    if [ -n "${DEBUG}" ]; then echo "${0##*/} $$ -- ${IMAGE_ID} -- ERROR: no classification output" >&2; fi
     echo '{ "alchemy":{"text":"NA","name":"NA","score":0},' > "${OUTPUT}.$$"
     echo '"visual":{"image":"'${IMAGE_ID}.jpg'","scores":[{"classifier_id":"NA","name":"NA","score":0}]' >> "${OUTPUT}.$$"
     echo '}}' >> "${OUTPUT}"
@@ -247,7 +247,7 @@ rm -f "${OUTPUT}.$$" "${VR_OUTPUT}" "${DG_OUTPUT}"
 # add date and time
 #
 if [ -s "${OUTPUT}" ]; then
-  if [ -n "${VERBOSE}" ]; then echo "${APP##*/} $$ -- ${IMAGE_ID} -- " $(jq -c '.' "${OUTPUT}") >&2; fi
+  if [ -n "${VERBOSE}" ]; then echo "${0##*/} $$ -- ${IMAGE_ID} -- " $(jq -c '.' "${OUTPUT}") >&2; fi
   # add datetime and bounding box information
   DATE_TIME=`echo "${IMAGE_ID}" | sed "s/\(.*\)-.*-.*/\1/"`
   YEAR=`echo "${DATE_TIME}" | sed "s/^\(....\).*/\1/"`
@@ -274,7 +274,7 @@ if [ -s "${OUTPUT}" ]; then
       mv /tmp/OUTPUT.$$ "${OUTPUT}"
 
 else
-  if [ -n "${DEBUG}" ]; then echo "${APP##*/} $$ -- ${IMAGE_ID} -- ERROR: no output from classification" >&2; fi
+  if [ -n "${DEBUG}" ]; then echo "${0##*/} $$ -- ${IMAGE_ID} -- ERROR: no output from classification" >&2; fi
 fi
 
 ##
@@ -288,18 +288,18 @@ if [ -z "${CLOUDANT_OFF}" ] && [ -s "${OUTPUT}" ] && [ -n "${CLOUDANT_URL}" ] &&
         if [ "${SUCCESS}" == "true" ]; then DEVICE_DB="${DEVICE_NAME}"; else DEVICE_DB="null"; fi
     fi
     if [ "${DEVICE_DB}" == "${DEVICE_NAME}" ]; then
-      if [ -n "${VERBOSE}" ]; then echo "${APP##*/} $$ -- ${IMAGE_ID} -- success creating database: ${DEVICE_NAME}" >&2; fi
+      if [ -n "${VERBOSE}" ]; then echo "${0##*/} $$ -- ${IMAGE_ID} -- success creating database: ${DEVICE_NAME}" >&2; fi
       SUCCESS=$(curl -q -s -H "Content-type: application/json" -X PUT "$CLOUDANT_URL/${DEVICE_NAME}/${IMAGE_ID}" -d "@${OUTPUT}" | jq '.ok')
       if [ "${SUCCESS}" != "true" ]; then
-        if [ -n "${VERBOSE}" ]; then echo "${APP##*/} $$ -- ${IMAGE_ID} -- success posting database: ${DEVICE_NAME}" >&2; fi
+        if [ -n "${VERBOSE}" ]; then echo "${0##*/} $$ -- ${IMAGE_ID} -- success posting database: ${DEVICE_NAME}" >&2; fi
       else
-        if [ -n "${DEBUG}" ]; then echo "${APP##*/} $$ -- ${IMAGE_ID} -- failure posting to database: ${DEVICE_NAME}" >&2; fi
+        if [ -n "${DEBUG}" ]; then echo "${0##*/} $$ -- ${IMAGE_ID} -- failure posting to database: ${DEVICE_NAME}" >&2; fi
       fi
     else
-      if [ -n "${DEBUG}" ]; then echo "${APP##*/} $$ -- ${IMAGE_ID} -- failure creating database: ${DEVICE_NAME}" >&2; fi
+      if [ -n "${DEBUG}" ]; then echo "${0##*/} $$ -- ${IMAGE_ID} -- failure creating database: ${DEVICE_NAME}" >&2; fi
     fi
 else
-  if [ -n "${DEBUG}" ]; then echo "${APP##*/} $$ -- ${IMAGE_ID} -- DISABLED: database (${DEVICE_NAME})" >&2; fi
+  if [ -n "${DEBUG}" ]; then echo "${0##*/} $$ -- ${IMAGE_ID} -- DISABLED: database (${DEVICE_NAME})" >&2; fi
 fi
 
 ##
@@ -325,7 +325,7 @@ if [ -n "${MQTT_ON}" ] && [ -n "${MQTT_HOST}" ]; then
     MSG='{"device":"'"${DEVICE_NAME}"'","location":"'"${AAH_LOCATION}"'","date":'"${DATE}"','"${WHAT}"'}'
     MQTT_TOPIC='presence/'"${AAH_LOCATION}"'/'"${CLASS}"
     # POST JSON 
-    if [ -n "${VERBOSE}" ]; then echo "${APP##*/} $$ -- ${IMAGE_ID} -- MQTT to ${MQTT_HOST} topic ${MQTT_TOPIC}" >&2; fi
+    if [ -n "${VERBOSE}" ]; then echo "${0##*/} $$ -- ${IMAGE_ID} -- MQTT to ${MQTT_HOST} topic ${MQTT_TOPIC}" >&2; fi
     mosquitto_pub -i "${DEVICE_NAME}" -h "${MQTT_HOST}" -t "${MQTT_TOPIC}" -m "${MSG}"
   fi
 
@@ -342,7 +342,7 @@ if [ -n "${MQTT_ON}" ] && [ -n "${MQTT_HOST}" ]; then
     mosquitto_pub -i "${DEVICE_NAME}" -h "${MQTT_HOST}" -t "${MQTT_TOPIC}" -f "${IMAGE_FILE}.$$"
     rm -f "${IMAGE_FILE}.$$"
   else
-    if [ -n "${DEBUG}" ]; then echo "${APP##*/} $$ -- ${IMAGE_ID} -- no image for ${MQTT_TOPIC}" >&2; fi
+    if [ -n "${DEBUG}" ]; then echo "${0##*/} $$ -- ${IMAGE_ID} -- no image for ${MQTT_TOPIC}" >&2; fi
   fi
 
   # test if cropped image created as side-effect
@@ -350,7 +350,7 @@ if [ -n "${MQTT_ON}" ] && [ -n "${MQTT_HOST}" ]; then
     MQTT_TOPIC='image-cropped/'"${AAH_LOCATION}"
     mosquitto_pub -i "${DEVICE_NAME}" -h "${MQTT_HOST}" -t "${MQTT_TOPIC}" -f "${IMAGE_FILE%.*}.jpeg"
   else
-    if [ -n "${DEBUG}" ]; then echo "${APP##*/} $$ -- ${IMAGE_ID} -- no image for ${MQTT_TOPIC}" >&2; fi
+    if [ -n "${DEBUG}" ]; then echo "${0##*/} $$ -- ${IMAGE_ID} -- no image for ${MQTT_TOPIC}" >&2; fi
     rm -f "${IMAGE_FILE%.*}.jpeg"
   fi
 fi
@@ -397,7 +397,7 @@ if [ -n "${AAH_LAN_SERVER}" ]; then
   SECONDS=$(date "+%s")
   DATE=$(echo "${SECONDS} / ${TTL} * ${TTL}" | bc)
   if [ ! -f "/tmp/images.$DATE.json" ]; then
-    if [ -n "${VERBOSE}" ]; then echo "${APP##*/} $$ -- ${IMAGE_ID} -- updating images database ${DEVICE_NAME}" >&2; fi
+    if [ -n "${VERBOSE}" ]; then echo "${0##*/} $$ -- ${IMAGE_ID} -- updating images database ${DEVICE_NAME}" >&2; fi
     rm -f "/tmp/images".*.json
     curl "http://${AAH_LAN_SERVER}/CGI/aah-images.cgi?db=${DEVICE_NAME}" > "/tmp/images.${DATE}.json"
     jq -c '.' "/tmp/images.${DATE}.json"
@@ -407,4 +407,4 @@ fi
 ##
 ## ALL DONE
 ##
-if [ -n "${DEBUG}" ]; then echo "${APP##*/} $$ -- END: $*" $(date) >&2; fi
+if [ -n "${DEBUG}" ]; then echo "${0##*/} $$ -- END: $*" $(date) >&2; fi
