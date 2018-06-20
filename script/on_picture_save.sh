@@ -238,10 +238,12 @@ fi
 # remove tmp & originals
 rm -f "${OUTPUT}.$$" "${VR_OUTPUT}" "${DG_OUTPUT}"
 
-#
-# add date and time
-#
-if [ -s "${OUTPUT}" ]; then
+##
+## PROCESS OUTPUT
+##
+if [ ! -s "${OUTPUT}" ]; then
+  if [ -n "${DEBUG}" ]; then echo "${0##*/} $$ -- ${IMAGE_ID} -- ERROR: no output from classification" >&2; fi
+else
   if [ -n "${VERBOSE}" ]; then echo "${0##*/} $$ -- ${IMAGE_ID} -- " $(jq -c '.' "${OUTPUT}") >&2; fi
   # add datetime and bounding box information
   DATE_TIME=`echo "${IMAGE_ID}" | sed "s/\(.*\)-.*-.*/\1/"`
@@ -251,8 +253,6 @@ if [ -s "${OUTPUT}" ]; then
   HOUR=`echo "${DATE_TIME}" | sed "s/^........\(..\).*/\1/"`
   MINUTE=`echo "${DATE_TIME}" | sed "s/^..........\(..\).*/\1/"`
   SECOND=`echo "${DATE_TIME}" | sed "s/^............\(..\).*/\1/"`
-
-  
   DATE=$(echo "${YEAR}/${MONTH}/${DAY} ${HOUR}:${MINUTE}:${SECOND}" | ${dateconv} -i "%Y/%M/%D %H:%M:%S" -f "%s")
   SIZE=$(echo "${MOTION_WIDTH} * ${MOTION_HEIGHT}" | bc)
 
@@ -269,8 +269,20 @@ if [ -s "${OUTPUT}" ]; then
       sed "s/IMAGE_BOX/${IMAGE_BOX}/" > /tmp/OUTPUT.$$
       mv /tmp/OUTPUT.$$ "${OUTPUT}"
 
-else
-  if [ -n "${DEBUG}" ]; then echo "${0##*/} $$ -- ${IMAGE_ID} -- ERROR: no output from classification" >&2; fi
+  ## validate
+  CLASS=$(jq -r '.alchemy.text' "${OUTPUT}" | sed 's/ /_/g')
+  MODEL=$(jq -r '.alchemy.name' "${OUTPUT}" | sed 's/ /_/g')
+  SCORE=$(jq -r '.alchemy.score' "${OUTPUT}")
+  SCORES=$(jq -c '.visual.scores' "${OUTPUT}")
+  IMAGE_BOX=$(jq -r '.imagebox' "${OUTPUT}")
+  if [ -z "${SCORE}" ]; then SCORE='null'; fi
+  if [ -z "${SCORES}" ]; then SCORES='null'; fi
+
+  ##
+  ## ANNOTATE & CROP IMAGE
+  ##
+  image-annotate.csh "${IMAGE_FILE}" "${CLASS}" "${IMAGE_BOX}" > "${IMAGE_FILE%.*}.anno.jpeg"
+
 fi
 
 ##
@@ -302,48 +314,39 @@ fi
 ## POST to MQTT
 ##
 
-if [ -n "${MQTT_ON}" ] && [ -n "${MQTT_HOST}" ]; then
-  CLASS=$(jq -r '.alchemy.text' "${OUTPUT}" | sed 's/ /_/g')
-  MODEL=$(jq -r '.alchemy.name' "${OUTPUT}" | sed 's/ /_/g')
-  SCORE=$(jq -r '.alchemy.score' "${OUTPUT}")
-  if [ -z "${SCORE}" ]; then
-    SCORE='null'
-  fi
-  SCORES=$(jq -c '.visual.scores' "${OUTPUT}")
-  if [ -z "${SCORES}" ]; then
-    SCORES='null'
-  fi
-  IMAGE_BOX=$(jq -r '.imagebox' "${OUTPUT}")
-
-  if [ -n "${CLASS}" ] && [ -n "${MODEL}" ] && [ -n "${SCORE}" ] && [ -n "${SCORES}" ]; then
-    # calculate size
-    WHAT='"class":"'"${CLASS}"'","model":"'"${MODEL}"'","score":'"${SCORE}"',"id":"'"${IMAGE_ID}"'","imagebox":"'"${IMAGE_BOX}"'","size":'"${SIZE}"',"scores":'"${SCORES}"
-    MSG='{"device":"'"${DEVICE_NAME}"'","location":"'"${AAH_LOCATION}"'","date":'"${DATE}"','"${WHAT}"'}'
-    MQTT_TOPIC='presence/'"${AAH_LOCATION}"'/'"${CLASS}"
-    # POST JSON 
-    if [ -n "${VERBOSE}" ]; then echo "${0##*/} $$ -- ${IMAGE_ID} -- MQTT to ${MQTT_HOST} topic ${MQTT_TOPIC}" >&2; fi
-    mosquitto_pub -i "${DEVICE_NAME}" -h "${MQTT_HOST}" -t "${MQTT_TOPIC}" -m "${MSG}"
-  fi
+if [ -n "${MQTT_ON}" ] && [ -n "${MQTT_HOST}" ] && [ -n "${CLASS}" ] && [ -n "${MODEL}" ] && [ -n "${SCORE}" ] && [ -n "${SCORES}" ]; then
+  # post JSON
+  WHAT='"class":"'"${CLASS}"'","model":"'"${MODEL}"'","score":'"${SCORE}"',"id":"'"${IMAGE_ID}"'","imagebox":"'"${IMAGE_BOX}"'","size":'"${SIZE}"',"scores":'"${SCORES}"
+  MSG='{"device":"'"${DEVICE_NAME}"'","location":"'"${AAH_LOCATION}"'","date":'"${DATE}"','"${WHAT}"'}'
+  MQTT_TOPIC='presence/'"${AAH_LOCATION}"'/'"${CLASS}"
+  if [ -n "${VERBOSE}" ]; then echo "${0##*/} $$ -- ${IMAGE_ID} -- MQTT to ${MQTT_HOST} topic ${MQTT_TOPIC}" >&2; fi
+  mosquitto_pub -i "${DEVICE_NAME}" -h "${MQTT_HOST}" -t "${MQTT_TOPIC}" -m "${MSG}"
 
   # POST IMAGE/<LOCATION>/<ENTITY>
   MQTT_TOPIC='image-classified/'"${AAH_LOCATION}"'/'"${CLASS}"
   mosquitto_pub -i "${DEVICE_NAME}" -h "${MQTT_HOST}" -t "${MQTT_TOPIC}" -f "${IMAGE_FILE}"
 
-  # ANNOTATE & CROP IMAGE
-  image-annotate.csh "${IMAGE_FILE}" "${CLASS}" "${IMAGE_BOX}" > "${IMAGE_FILE}.$$"
-
   # test if annotated image created
-  if [ -s "${IMAGE_FILE}.$$" ]; then
+  if [ -s "${IMAGE_FILE%.*}.anno.jpeg" ]; then
     MQTT_TOPIC='image-annotated/'"${AAH_LOCATION}"
-    mosquitto_pub -i "${DEVICE_NAME}" -h "${MQTT_HOST}" -t "${MQTT_TOPIC}" -f "${IMAGE_FILE}.$$"
-    rm -f "${IMAGE_FILE}.$$"
+    mosquitto_pub -i "${DEVICE_NAME}" -h "${MQTT_HOST}" -t "${MQTT_TOPIC}" -f "${IMAGE_FILE%.*}.anno.jpeg"
   else
     if [ -n "${DEBUG}" ]; then echo "${0##*/} $$ -- ${IMAGE_ID} -- no image for ${MQTT_TOPIC}" >&2; fi
   fi
+  rm -f "${IMAGE_FILE}.$$"
 
   # test if cropped image created as side-effect
-  if [ -s "${IMAGE_FILE%.*}.jpeg" ]; then
+  if [ -s "${IMAGE_FILE%.*}.crop.jpeg" ]; then
     MQTT_TOPIC='image-cropped/'"${AAH_LOCATION}"
+    mosquitto_pub -i "${DEVICE_NAME}" -h "${MQTT_HOST}" -t "${MQTT_TOPIC}" -f "${IMAGE_FILE%.*}.jpeg"
+  else
+    if [ -n "${DEBUG}" ]; then echo "${0##*/} $$ -- ${IMAGE_ID} -- no image for ${MQTT_TOPIC}" >&2; fi
+    rm -f "${IMAGE_FILE%.*}.crop.jpeg"
+  fi
+
+  # test if composed image created as side-effect
+  if [ -s "${IMAGE_FILE%.*}.jpeg" ]; then
+    MQTT_TOPIC='image-composed/'"${AAH_LOCATION}"
     mosquitto_pub -i "${DEVICE_NAME}" -h "${MQTT_HOST}" -t "${MQTT_TOPIC}" -f "${IMAGE_FILE%.*}.jpeg"
   else
     if [ -n "${DEBUG}" ]; then echo "${0##*/} $$ -- ${IMAGE_ID} -- no image for ${MQTT_TOPIC}" >&2; fi
@@ -354,7 +357,7 @@ fi
 ##
 ## make a noise
 ##
-if [ -z "${TALKTOME_OFF}" ] && [ -n "${WATSON_TTS_URL}" ] && [ -n "${WATSON_TTS_CREDS}" ]; then
+if [ -s "${OUTPUT}" ] && [ -z "${TALKTOME_OFF}" ] && [ -n "${WATSON_TTS_URL}" ] && [ -n "${WATSON_TTS_CREDS}" ]; then
     # what entity to discuss/say
     WHAT=`jq -j '.alchemy.text' "${OUTPUT}"`
     # should be a lookup aah_whatToSay(<where>,<when>,[<entity>],<whom>?)
@@ -376,7 +379,7 @@ fi
 ##
 ## send an email
 ##
-if [ -n "${EMAILME_ON}" ] && [ -n "${GMAIL_ACCOUNT}" ] && [ -n "${GMAIL_CREDS}" ] && [ -n "${EMAIL_ADDRESS}" ]; then
+if [ -s "${OUTPUT}" ] && [ -n "${EMAILME_ON}" ] && [ -n "${GMAIL_ACCOUNT}" ] && [ -n "${GMAIL_CREDS}" ] && [ -n "${EMAIL_ADDRESS}" ]; then
     if [ ! -f "${WHAT}.txt" ]; then
         echo "From: ${AAH_LOCATION}" > "${WHAT}.txt"
         echo "Subject: ${WHAT}" >> "${WHAT}.txt"
