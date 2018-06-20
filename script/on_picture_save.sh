@@ -289,7 +289,7 @@ if [ -z "${CLOUDANT_OFF}" ] && [ -s "${OUTPUT}" ] && [ -n "${CLOUDANT_URL}" ] &&
       if [ "${SUCCESS}" == "true" ]; then
         if [ -n "${VERBOSE}" ]; then echo "${0##*/} $$ -- ${IMAGE_ID} -- success posting database: ${DEVICE_NAME}" >&2; fi
       else
-        if [ -n "${DEBUG}" ]; then echo "${0##*/} $$ -- ${IMAGE_ID} -- failure posting to database: ${DEVICE_NAME}" >&2; fi
+        if [ -n "${DEBUG}" ]; then echo "${0##*/} $$ -- ${IMAGE_ID} -- failure posting to database: ${DEVICE_NAME} ${SUCCESS}" >&2; fi
       fi
     else
       if [ -n "${DEBUG}" ]; then echo "${0##*/} $$ -- ${IMAGE_ID} -- failure creating database: ${DEVICE_NAME}" >&2; fi
