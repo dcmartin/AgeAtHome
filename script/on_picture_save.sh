@@ -286,7 +286,7 @@ if [ -z "${CLOUDANT_OFF}" ] && [ -s "${OUTPUT}" ] && [ -n "${CLOUDANT_URL}" ] &&
     if [ ! -z "${DEVICE_DB}" ] && [ "${DEVICE_DB}" != "null" ]; then
       if [ -n "${VERBOSE}" ]; then echo "${0##*/} $$ -- ${IMAGE_ID} -- success creating database: ${DEVICE_NAME}" >&2; fi
       SUCCESS=$(curl -q -s -H "Content-type: application/json" -X PUT "$CLOUDANT_URL/${DEVICE_NAME}/${IMAGE_ID}" -d "@${OUTPUT}" | jq '.ok')
-      if [ "${SUCCESS}" != "true" ]; then
+      if [ "${SUCCESS}" == "true" ]; then
         if [ -n "${VERBOSE}" ]; then echo "${0##*/} $$ -- ${IMAGE_ID} -- success posting database: ${DEVICE_NAME}" >&2; fi
       else
         if [ -n "${DEBUG}" ]; then echo "${0##*/} $$ -- ${IMAGE_ID} -- failure posting to database: ${DEVICE_NAME}" >&2; fi
