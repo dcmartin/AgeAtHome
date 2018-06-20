@@ -136,7 +136,7 @@ if [ -z "${VR_OFF}" ] && [ -n "${VR_APIKEY}" ] && [ -n "${VR_VERSION}" ] && [ -n
     fi
     if [ -n "${VERBOSE}" ]; then echo "${0##*/} $$ -- ${IMAGE_ID} -- Watson Visual Recognition using classifier ${VR_CLASSIFIER}"; fi
     # make the call
-    curl -s -q -L \
+    curl -s -q -f -L \
         --header "X-Watson-Learning-Opt-Out: true" \
         -F "images_file=@$IMAGE_FILE" \
 	-o "${VR_OUTPUT}" \
@@ -163,7 +163,7 @@ if [ -n "${DIGITS_SERVER_URL}" ] && [ -n "${DIGITS_JOB_ID}" ]; then
   CMD="models/images/classification/classify_one.json"
   # get inference
   if [ -n "${VERBOSE}" ]; then echo "${0##*/} $$ -- ${IMAGE_ID} -- DIGITS using classifier ${DIGITS_JOB_ID}"; fi
-  curl -s -q -L -X POST \
+  curl -s -q -f -L -X POST \
       -F "image_file=@$IMAGE_FILE" \
       -F "job_id=${DIGITS_JOB_ID}" \
       -o "${DG_OUTPUT}" \
@@ -278,14 +278,14 @@ fi
 ##
 
 if [ -z "${CLOUDANT_OFF}" ] && [ -s "${OUTPUT}" ] && [ -n "${CLOUDANT_URL}" ] && [ -n "${DEVICE_NAME}" ]; then
-    DEVICE_DB=$(curl -q -s -X GET "${CLOUDANT_URL}/${DEVICE_NAME}" | jq '.db_name')
+    DEVICE_DB=$(curl -q -s -f -L -X GET "${CLOUDANT_URL}/${DEVICE_NAME}" | jq '.db_name')
     if [ "${DEVICE_DB}" == "null" ]; then
-	SUCCESS=$(curl -q -s -X PUT "${CLOUDANT_URL}/${DEVICE_NAME}" | jq '.ok')
+	SUCCESS=$(curl -q -s -f -L -X PUT "${CLOUDANT_URL}/${DEVICE_NAME}" | jq '.ok')
         if [ "${SUCCESS}" == "true" ]; then DEVICE_DB="${DEVICE_NAME}"; else DEVICE_DB=""; fi
     fi
     if [ ! -z "${DEVICE_DB}" ] && [ "${DEVICE_DB}" != "null" ]; then
       if [ -n "${VERBOSE}" ]; then echo "${0##*/} $$ -- ${IMAGE_ID} -- success creating database: ${DEVICE_NAME}" >&2; fi
-      SUCCESS=$(curl -q -s -H "Content-type: application/json" -X PUT "$CLOUDANT_URL/${DEVICE_NAME}/${IMAGE_ID}" -d "@${OUTPUT}" | jq '.ok')
+      SUCCESS=$(curl -q -s -f -L -H "Content-type: application/json" -X PUT "$CLOUDANT_URL/${DEVICE_NAME}/${IMAGE_ID}" -d "@${OUTPUT}" | jq '.ok')
       if [ "${SUCCESS}" == "true" ]; then
         if [ -n "${VERBOSE}" ]; then echo "${0##*/} $$ -- ${IMAGE_ID} -- success posting database: ${DEVICE_NAME}" >&2; fi
       else
@@ -364,7 +364,7 @@ if [ -z "${TALKTOME_OFF}" ] && [ -n "${WATSON_TTS_URL}" ] && [ -n "${WATSON_TTS_
 	SPEAK="${WHAT_TO_SAY} ${WHAT}"
     fi
     if [ ! -f "${WHAT}.wav" ]; then
-	curl -s -q -L -X POST \
+	curl -s -q -f -L -X POST \
 	  --header "Content-Type: application/json" \
 	  --header "Accept: audio/wav" \
 	  --data '{"text":"'"${SPEAK}"'"}' \
@@ -392,11 +392,17 @@ if [ -n "${AAH_LAN_SERVER}" ]; then
   TTL=1800
   SECONDS=$(date "+%s")
   DATE=$(echo "${SECONDS} / ${TTL} * ${TTL}" | bc)
-  if [ ! -f "/tmp/images.$DATE.json" ]; then
+  OUT="/tmp/images.$DATE.json"
+  if [ ! -s "${OUT}" ]; then
     if [ -n "${VERBOSE}" ]; then echo "${0##*/} $$ -- ${IMAGE_ID} -- updating images database ${DEVICE_NAME}" >&2; fi
     rm -f "/tmp/images".*.json
-    curl "http://${AAH_LAN_SERVER}/CGI/aah-images.cgi?db=${DEVICE_NAME}" > "/tmp/images.${DATE}.json"
-    jq -c '.' "/tmp/images.${DATE}.json"
+    curl -s -q -f -L "http://${AAH_LAN_SERVER}/CGI/aah-images.cgi?db=${DEVICE_NAME}&limit=1" -o "${OUT}"
+    if [ -s "${OUT}" ]; then 
+      if [ -n "${VERBOSE}" ]; then jq -c '.' "/tmp/images.${DATE}.json" >&2; fi
+    else
+      if [ -n "${DEBUG}" ]; then echo "${0##*/} $$ -- ${IMAGE_ID} -- no images reported ${DEVICE_NAME}" >&2; fi
+      rm -f "${OUT}"
+    fi
   fi
 fi
 
