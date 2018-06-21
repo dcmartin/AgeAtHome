@@ -292,11 +292,12 @@ fi
 if [ -z "${CLOUDANT_OFF}" ] && [ -s "${OUTPUT}" ] && [ -n "${CLOUDANT_URL}" ] && [ -n "${DEVICE_NAME}" ]; then
     DEVICE_DB=$(curl -q -s -f -L -X GET "${CLOUDANT_URL}/${DEVICE_NAME}" | jq '.db_name')
     if [ "${DEVICE_DB}" == "null" ]; then
+        if [ -n "${VERBOSE}" ]; then echo "${0##*/} $$ -- ${IMAGE_ID} -- creating database ${DEVICE_NAME}" >&2; fi
 	SUCCESS=$(curl -q -s -f -L -X PUT "${CLOUDANT_URL}/${DEVICE_NAME}" | jq '.ok')
         if [ "${SUCCESS}" == "true" ]; then DEVICE_DB="${DEVICE_NAME}"; else DEVICE_DB=""; fi
     fi
     if [ ! -z "${DEVICE_DB}" ] && [ "${DEVICE_DB}" != "null" ]; then
-      if [ -n "${VERBOSE}" ]; then echo "${0##*/} $$ -- ${IMAGE_ID} -- success creating database: ${DEVICE_NAME}" >&2; fi
+      if [ -n "${VERBOSE}" ]; then echo "${0##*/} $$ -- ${IMAGE_ID} -- database exists ${DEVICE_NAME}" >&2; fi
       SUCCESS=$(curl -q -s -f -L -H "Content-type: application/json" -X PUT "$CLOUDANT_URL/${DEVICE_NAME}/${IMAGE_ID}" -d "@${OUTPUT}" | jq '.ok')
       if [ "${SUCCESS}" == "true" ]; then
         if [ -n "${VERBOSE}" ]; then echo "${0##*/} $$ -- ${IMAGE_ID} -- success posting database: ${DEVICE_NAME}" >&2; fi

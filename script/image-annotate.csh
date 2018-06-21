@@ -31,22 +31,28 @@ switch ($file:e)
       breaksw
 endsw
 
+## define output
 set out = "$file:r.$$.$file:e"
 
 set xywh = ( `echo "$crop" | sed "s/\(.*\)x\(.*\)\([+-]\)\(.*\)\([+-]\)\(.*\)/\3\4 \5\6 \1 \2/"` )
 if ($?xywh == 0) then
-  if ($?VERBOSE) echo "$0:t $$ -- $file:t:r -- BAD CROP ($crop)" >&! /dev/stderr
+  if ($?DEBUG) echo "$0:t $$ -- $file:t:r -- BAD CROP ($crop)" >&! /dev/stderr
   exit(1)
 else if ($#xywh != 4) then
-  if ($?VERBOSE) echo "$0:t $$ -- $file:t:r -- INVALID CROP ($crop) ($xywh)" >&! /dev/stderr
+  if ($?DEBUG) echo "$0:t $$ -- $file:t:r -- INVALID CROP ($crop) ($xywh)" >&! /dev/stderr
   exit(1)
 else
   if ($?VERBOSE) echo "$0:t $$ -- $file:t:r -- GOOD CROP ($crop) ($xywh)" >&! /dev/stderr
 endif
 
 
+###
+### process full frame
+###
+
 if ($file:e == "jpg") then
 
+  ## parse imagebox
   set x = `echo "0 $xywh[1]" | bc`
   if ($?x == 0) @ x = 0
   if ($#x == 0) @ x = 0
@@ -61,20 +67,17 @@ if ($file:e == "jpg") then
   set h = $xywh[4]
   if ($?h == 0) @ h = $CAMERA_IMAGE_HEIGHT
   if ($h <= 0 || $h > $CAMERA_IMAGE_HEIGHT) @ h = $CAMERA_IMAGE_HEIGHT
-
+  ## calculate extant
   @ ew = $x + $w
   @ eh = $y + $h
   set target = ( $x $y $ew $eh )
-
-  if ($?VERBOSE) echo "$0:t $$ -- $file:t:r -- calculated bounding box ($x $y $w $h)" >&! /dev/stderr
-
-  # calculate centroid of movement bounding box
+  ## calculate centroid of movement
   @ cx = `echo "$x + ( $w / 2 )" | bc`
   @ cy = $y + ( $h / 2 )
 
-  if ($?VERBOSE) echo "$0:t $$ -- $file:t:r -- centroid ($cx $cy) extant ($w $h)" >&! /dev/stderr
+  if ($?VERBOSE) echo "$0:t $$ -- $file:t:r -- bounding box (x=$x y=$y w=$w h=$h); target (ex=$ew ey=$eh) centroid (x=$cx y=$cy)" >&! /dev/stderr
 
-  # subtract off half of model size
+  ## calculate cropped area 
   @ sx = $cx - ( $MODEL_IMAGE_WIDTH / 2 )
   if ($sx < 0) @ sx = 0
   @ sy = $cy - ( $MODEL_IMAGE_HEIGHT / 2 )
@@ -86,7 +89,7 @@ if ($file:e == "jpg") then
   if ($sx + $sw > $CAMERA_IMAGE_WIDTH) @ sx = $CAMERA_IMAGE_WIDTH - $sw
   if ($sy + $sh > $CAMERA_IMAGE_HEIGHT) @ sy = $CAMERA_IMAGE_HEIGHT - $sh
 
-  if ($?VERBOSE) echo "$0:t $$ -- $file:t:r -- Start ($sx $sy) Extant ($sw $sh)" >&! /dev/stderr
+  if ($?VERBOSE) echo "$0:t $$ -- $file:t:r -- cropped image (x=$sx y=$sy w=$sw h=$sh)" >&! /dev/stderr
 
   # cropped rectangle of MODEL_IMAGE_WIDTH x MODEL_IMAGE_HEIGHT
   @ rw = $sx + $sw
@@ -96,6 +99,10 @@ if ($file:e == "jpg") then
   set xform = "$sw"x"$sh"+"$sx"+"$sy"
 
   if ($?VERBOSE) echo "$0:t $$ -- $file:t:r -- Rect ($rect) Xform ($xform)" >&! /dev/stderr
+
+  ##
+  ## transform image into cropped form
+  ##
   if ($?CAMERA_MODEL_TRANSFORM) then
     switch ($CAMERA_MODEL_TRANSFORM)
       case "RESIZE":
@@ -103,49 +110,56 @@ if ($file:e == "jpg") then
         breaksw
       case "CROP":
         if ($?VERBOSE) echo "$0:t $$ -- $file:t:r -- transforming sing $CAMERA_MODEL_TRANSFORM" >&! /dev/stderr
-        set cropped = "$file:r.$$.jpeg"
+        set cropped = "$file:r.$xform.jpeg"
         convert \
  	  -crop "$xform" "$file" \
 	  -gravity center \
 	  -background gray \
           "$cropped"
-        if (-e "$cropped") then
+        if (! -s "$cropped") then
+          if ($?DEBUG) echo "$0:t $$ -- $file:r:t -- failed to crop image" >&! /dev/stderr
+        else
           set random = "$cropped:r.random.jpeg"
           convert -size "$CAMERA_IMAGE_WIDTH"'x'"$CAMERA_IMAGE_HEIGHT" 'xc:' '+noise' Random "$random"
-          if (-e "$random") then
+          if (! -e "$random") then
+            if ($?DEBUG) echo "$0:t $$ -- $file:r:t -- failed to create random background $random" >&! /dev/stderr
+          else
             set composed = "$file:r.jpeg"
             composite -compose src -geometry +"$sx"+"$sy" "$cropped" "$random" "$composed"
-            if (! -e "$composed") unset composed
-            /bin/rm -f "$random" "$cropped"
-          else
-            if ($?VERBOSE) echo "$0:t $$ -- $file:r:t -- RANDOM failed: $random" >&! /dev/stderr
+            if (! -s "$composed") then
+              if ($?DEBUG) echo "$0:t $$ -- $file:r:t -- failed to compose cropped on random" >&! /dev/stderr
+              rm -f "$composed"
+              unset composed
+            else
+              if ($?VERBOSE) echo "$0:t $$ -- $file:r:t -- successfully composed cropped image and random background" >&! /dev/stderr
+            endif
+            /bin/rm -f "$random" # "$cropped"
           endif
-          if ($?composed) then
-            if ($?VERBOSE) echo "$0:t $$ -- $file:r:t -- SUCCESS composed ($composed)" >&! /dev/stderr
-          else
-            if ($?VERBOSE) echo "$0:t $$ -- $file:r:t -- FAILURE composing" >&! /dev/stderr
-          endif
-        else
-          if ($?VERBOSE) echo "$0:t $$ -- $file:r:t -- FAILURE TO CROP ($cropped)" >&! /dev/stderr
         endif
         breaksw
       default:
-        if ($?VERBOSE) echo "$0:t $$ -- $file:r:t -- invalid CAMERA_MODEL_TRANSFORM ($CAMERA_MODEL_TRANSFORM)" >&! /dev/stderr
+        if ($?DEBUG) echo "$0:t $$ -- $file:r:t -- invalid CAMERA_MODEL_TRANSFORM ($CAMERA_MODEL_TRANSFORM)" >&! /dev/stderr
         breaksw
-  endsw
+    endsw
+  else
+    if ($?VERBOSE) echo "$0:t $$ -- $file:r:t -- undefined: CAMERA_MODEL_TRANSFORM" >&! /dev/stderr
+  endif
 else
-  if ($?VERBOSE) echo "$0:t $$ -- $file:r:t -- no CAMERA_MODEL_TRANSFORM specified" >&! /dev/stderr
+  if ($?VERBOSE) echo "$0:t $$ -- $file:r:t -- not a full frame image ($file:e)" >&! /dev/stderr
 endif
 
+##
+## annotate image with text label
+##
 if ($?IMAGE_ANNOTATE_TEXT) then
   if ($?VERBOSE) echo "$0:t $$ -- $file:r:t -- annotating image (IMAGE_ANNOTATE_TEXT=$IMAGE_ANNOTATE_TEXT)" >&! /dev/stderr
   if ($?IMAGE_ANNOTATE_FONT == 0) then
     set fonts = ( `convert -list font | awk -F': ' '/glyphs/ { print $2 }' | sort | uniq` )
     if ($#fonts == 0) then
-      if ($?VERBOSE) echo "$0:t $$ -- $file:r:t -- found no fonts using convert(1) to list fonts" >&! /dev/stderr
+      if ($?DEBUG) echo "$0:t $$ -- $file:r:t -- no fonts found using convert to list fonts" >&! /dev/stderr
       set fonts = ( `fc-list | awk -F: '{ print $1 }' | sort | uniq` )
       if ($#fonts == 0) then
-        if ($?VERBOSE) echo "$0:t $$ -- $file:r:t -- found no fonts using fc-list(1) to list fonts" >&! /dev/stderr
+        if ($?DEBUG) echo "$0:t $$ -- $file:r:t -- no fonts found using fc-list to list fonts" >&! /dev/stderr
       endif 
     endif
     # use the first font
@@ -155,7 +169,7 @@ if ($?IMAGE_ANNOTATE_TEXT) then
     set font = "$IMAGE_ANNOTATE_FONT"
   endif
   if ($?font) then
-    # attempt to write the "$class" annotation
+    # attempt to write the "$class" annotation and outline imagebox in white
     convert \
       -font "$font" \
       -pointsize "$psize" -size "$csize" xc:none -gravity center -stroke black -strokewidth 2 -annotate 0 "$class" \
@@ -163,9 +177,14 @@ if ($?IMAGE_ANNOTATE_TEXT) then
       "$file" \
       +swap -gravity south -geometry +0-3 -composite -fill none -stroke white -strokewidth 3 -draw "rectangle $rect" \
       "$out" >&! /dev/stderr
+  else
+    if ($?DEBUG) echo "$0:t $$ -- $file:r:t -- no fonts found; image annotation disabled" >&! /dev/stderr
   endif
 endif
 
+##
+## draw a rectangle around the target (MODEL_IMAGE_WIDTH x MODEL_IMAGE_WIDTH) in red
+##
 if (-e "$out") then
   if ($?VERBOSE) echo "$0:t $$ -- $file:r:t -- trying to convert $file into $out" >&! /dev/stderr
   convert "$out" -fill none -stroke red -strokewidth 3 -draw "rectangle $target" "$out.$$" >&! /dev/stderr
@@ -174,17 +193,15 @@ else
   if ($?VERBOSE) echo "$0:t $$ -- $file:r:t -- failed to convert $file into $out" >&! /dev/stderr
 endif
 
+output:
+
 if (-e "$out") then
   if ($?VERBOSE) echo "$0:t $$ -- $file:r:t -- OUTPUT SUCCESSFUL $out ($class $rect)" >&! /dev/stderr
-  /bin/dd if="$out"
+  /bin/dd if="$out" of=/dev/stdout >& /dev/null
   /bin/rm -f "$out"
   exit 0
-else if (-e "$file") then
-  if ($?VERBOSE) echo "$0:t $$ -- $file:r:t -- OUTPUT FAILURE $out" >&! /dev/stderr
-  /bin/rm -f "$out"
-  exit 1
-else if (! -e "$file") then
-  if ($?VERBOSE) echo "$0:t ($$) -- $file:r:t -- NO INPUT" >&! /dev/stderr
+else
+  if ($?DEBUG) echo "$0:t ($$) -- $file:r:t -- FAILURE" >&! /dev/stderr
   /bin/rm -f "$out"
   exit 1
 endif
