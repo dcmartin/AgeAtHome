@@ -320,17 +320,18 @@ if [ -n "${MQTT_ON}" ] && [ -n "${MQTT_HOST}" ] && [ -n "${CLASS}" ] && [ -n "${
   WHAT='"class":"'"${CLASS}"'","model":"'"${MODEL}"'","score":'"${SCORE}"',"id":"'"${IMAGE_ID}"'","imagebox":"'"${IMAGE_BOX}"'","size":'"${SIZE}"',"scores":'"${SCORES}"
   MSG='{"device":"'"${DEVICE_NAME}"'","location":"'"${AAH_LOCATION}"'","date":'"${DATE}"','"${WHAT}"'}'
   MQTT_TOPIC='presence/'"${AAH_LOCATION}"'/'"${CLASS}"
-  if [ -n "${VERBOSE}" ]; then echo "${0##*/} $$ -- ${IMAGE_ID} -- MQTT to ${MQTT_HOST} topic ${MQTT_TOPIC}" >&2; fi
+  if [ -n "${VERBOSE}" ]; then echo "${0##*/} $$ -- ${IMAGE_ID} -- MQTT ${MSG} to ${MQTT_HOST} topic ${MQTT_TOPIC}" >&2; fi
   mosquitto_pub -i "${DEVICE_NAME}" -h "${MQTT_HOST}" -t "${MQTT_TOPIC}" -m "${MSG}"
 
   # POST IMAGE/<LOCATION>/<ENTITY>
   MQTT_TOPIC='image-classified/'"${AAH_LOCATION}"'/'"${CLASS}"
+  if [ -n "${VERBOSE}" ]; then echo "${0##*/} $$ -- ${IMAGE_ID} -- MQTT image to ${MQTT_HOST} topic ${MQTT_TOPIC}" >&2; fi
   mosquitto_pub -i "${DEVICE_NAME}" -h "${MQTT_HOST}" -t "${MQTT_TOPIC}" -f "${IMAGE_FILE}"
 
   # test if annotated image created
   MQTT_TOPIC='image-annotated/'"${AAH_LOCATION}"
   if [ -s "${IMAGE_FILE%.*}.anno.jpeg" ]; then
-    if [ -n "${VERBOSE}" ]; then echo "${0##*/} $$ -- ${IMAGE_ID} -- MQTT to ${MQTT_HOST} topic ${MQTT_TOPIC}" >&2; fi
+    if [ -n "${VERBOSE}" ]; then echo "${0##*/} $$ -- ${IMAGE_ID} -- MQTT ${IMAGE_FILE%.*}.anno.jpeg to ${MQTT_HOST} topic ${MQTT_TOPIC}" >&2; fi
     mosquitto_pub -i "${DEVICE_NAME}" -h "${MQTT_HOST}" -t "${MQTT_TOPIC}" -f "${IMAGE_FILE%.*}.anno.jpeg"
   else
     if [ -n "${DEBUG}" ]; then echo "${0##*/} $$ -- ${IMAGE_ID} -- no image for ${MQTT_TOPIC}" >&2; fi
@@ -340,7 +341,7 @@ if [ -n "${MQTT_ON}" ] && [ -n "${MQTT_HOST}" ] && [ -n "${CLASS}" ] && [ -n "${
   # test if cropped image created as side-effect
   MQTT_TOPIC='image-cropped/'"${AAH_LOCATION}"
   if [ -s "${IMAGE_FILE%.*}.crop.jpeg" ]; then
-    if [ -n "${VERBOSE}" ]; then echo "${0##*/} $$ -- ${IMAGE_ID} -- MQTT to ${MQTT_HOST} topic ${MQTT_TOPIC}" >&2; fi
+    if [ -n "${VERBOSE}" ]; then echo "${0##*/} $$ -- ${IMAGE_ID} -- MQTT ${IMAGE_FILE%.*}.crop.jpeg to ${MQTT_HOST} topic ${MQTT_TOPIC}" >&2; fi
     mosquitto_pub -i "${DEVICE_NAME}" -h "${MQTT_HOST}" -t "${MQTT_TOPIC}" -f "${IMAGE_FILE%.*}.crop.jpeg"
   else
     if [ -n "${DEBUG}" ]; then echo "${0##*/} $$ -- ${IMAGE_ID} -- no image for ${MQTT_TOPIC}" >&2; fi
@@ -350,7 +351,7 @@ if [ -n "${MQTT_ON}" ] && [ -n "${MQTT_HOST}" ] && [ -n "${CLASS}" ] && [ -n "${
   # test if composed image created as side-effect
   MQTT_TOPIC='image-composed/'"${AAH_LOCATION}"
   if [ -s "${IMAGE_FILE%.*}.jpeg" ]; then
-    if [ -n "${VERBOSE}" ]; then echo "${0##*/} $$ -- ${IMAGE_ID} -- MQTT to ${MQTT_HOST} topic ${MQTT_TOPIC}" >&2; fi
+    if [ -n "${VERBOSE}" ]; then echo "${0##*/} $$ -- ${IMAGE_ID} -- MQTT ${IMAGE_FILE%.*}.jpeg to ${MQTT_HOST} topic ${MQTT_TOPIC}" >&2; fi
     mosquitto_pub -i "${DEVICE_NAME}" -h "${MQTT_HOST}" -t "${MQTT_TOPIC}" -f "${IMAGE_FILE%.*}.jpeg"
   else
     if [ -n "${DEBUG}" ]; then echo "${0##*/} $$ -- ${IMAGE_ID} -- no image for ${MQTT_TOPIC}" >&2; fi
