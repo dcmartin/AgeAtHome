@@ -109,7 +109,7 @@ if ($file:e == "jpg") then
         if ($?VERBOSE) echo "$0:t $$ -- $file:t:r -- UNIMPLEMENTED: CAMERA_MODEL_TRANSFORM=$CAMERA_MODEL_TRANSFORM" >&! /dev/stderr
         breaksw
       case "CROP":
-        if ($?VERBOSE) echo "$0:t $$ -- $file:t:r -- transforming sing $CAMERA_MODEL_TRANSFORM" >&! /dev/stderr
+        if ($?VERBOSE) echo "$0:t $$ -- $file:t:r -- transforming using $CAMERA_MODEL_TRANSFORM" >&! /dev/stderr
         set cropped = "$file:r.$xform.jpeg"
         convert \
  	  -crop "$xform" "$file" \
