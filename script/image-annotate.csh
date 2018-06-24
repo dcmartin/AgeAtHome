@@ -31,8 +31,6 @@ switch ($file:e)
       breaksw
 endsw
 
-## define output
-set out = "$file:r.$$.$file:e"
 
 set xywh = ( `echo "$crop" | sed "s/\(.*\)x\(.*\)\([+-]\)\(.*\)\([+-]\)\(.*\)/\3\4 \5\6 \1 \2/"` )
 if ($?xywh == 0) then
@@ -169,6 +167,8 @@ if ($?IMAGE_ANNOTATE_TEXT) then
     set font = "$IMAGE_ANNOTATE_FONT"
   endif
   if ($?font) then
+    ## define output
+    set annotated = "$file:r.$$.anno.jpeg"
     # attempt to write the "$class" annotation and outline imagebox in white
     convert \
       -font "$font" \
@@ -176,32 +176,34 @@ if ($?IMAGE_ANNOTATE_TEXT) then
       -background none -shadow "100x3+0+0" +repage -stroke none -fill white -annotate 0 "$class" \
       "$file" \
       +swap -gravity south -geometry +0-3 -composite -fill none -stroke white -strokewidth 3 -draw "rectangle $rect" \
-      "$out" >&! /dev/stderr
+      "$annotated" >&! /dev/stderr
   else
     if ($?DEBUG) echo "$0:t $$ -- $file:r:t -- no fonts found; image annotation disabled" >&! /dev/stderr
   endif
+else
+  if ($?VERBOSE) echo "$0:t $$ -- $file:r:t -- image annotation disabled (IMAGE_ANNOTATE_TEXT=$IMAGE_ANNOTATE_TEXT)" >&! /dev/stderr
 endif
 
 ##
 ## draw a rectangle around the target (MODEL_IMAGE_WIDTH x MODEL_IMAGE_WIDTH) in red
 ##
-if (-e "$out") then
-  if ($?VERBOSE) echo "$0:t $$ -- $file:r:t -- trying to convert $file into $out" >&! /dev/stderr
-  convert "$out" -fill none -stroke red -strokewidth 3 -draw "rectangle $target" "$out.$$" >&! /dev/stderr
-  mv "$out.$$" "$out"
+if (-e "$annotated") then
+  if ($?VERBOSE) echo "$0:t $$ -- $file:r:t -- trying to convert $file into $annotated" >&! /dev/stderr
+  convert "$annotated" -fill none -stroke red -strokewidth 3 -draw "rectangle $target" "$annotated.$$" >&! /dev/stderr
+  mv "$annotated.$$" "$annotated"
 else
-  if ($?VERBOSE) echo "$0:t $$ -- $file:r:t -- failed to convert $file into $out" >&! /dev/stderr
+  if ($?VERBOSE) echo "$0:t $$ -- $file:r:t -- failed to convert $file into $annotated" >&! /dev/stderr
 endif
 
 output:
 
-if (-e "$out") then
-  if ($?VERBOSE) echo "$0:t $$ -- $file:r:t -- OUTPUT SUCCESSFUL $out ($class $rect)" >&! /dev/stderr
-  /bin/dd if="$out" of=/dev/stdout >& /dev/null
-  /bin/rm -f "$out"
+if (-e "$annotated") then
+  if ($?VERBOSE) echo "$0:t $$ -- $file:r:t -- OUTPUT SUCCESSFUL $annotated ($class $rect)" >&! /dev/stderr
+  /bin/dd if="$annotated" of=/dev/stdout >& /dev/null
+  /bin/rm -f "$annotated"
   exit 0
 else
   if ($?DEBUG) echo "$0:t ($$) -- $file:r:t -- FAILURE" >&! /dev/stderr
-  /bin/rm -f "$out"
+  /bin/rm -f "$annotated"
   exit 1
 endif
