@@ -72,7 +72,7 @@ if ($file:e == "jpg") then
   @ cx = `echo "$x + ( $w / 2 )" | bc`
   @ cy = $y + ( $h / 2 )
 
-  if ($?VERBOSE) echo "$0:t $$ -- $file:t:r -- bounding box (x=$x y=$y w=$w h=$h); target (ex=$ew ey=$eh) centroid (x=$cx y=$cy)" >&! /dev/stderr
+  if ($?VERBOSE) echo "$0:t $$ -- $file:t:r -- bounding box (x=$x y=$y w=$w h=$h); target ($target)" >&! /dev/stderr
 
   ## calculate cropped area 
   @ sx = $cx - ( $MODEL_IMAGE_WIDTH / 2 )
@@ -150,6 +150,7 @@ endif
 ##
 ## annotate image with text label
 ##
+set annojpeg = "$file:r.$$.anno.jpeg"
 if ($?IMAGE_ANNOTATE_TEXT) then
   if ($?IMAGE_ANNOTATE_FONT == 0) then
     set fonts = ( `convert -list font | awk -F': ' '/glyphs/ { print $2 }' | sort | uniq` )
@@ -167,14 +168,14 @@ if ($?IMAGE_ANNOTATE_TEXT) then
     set font = "$IMAGE_ANNOTATE_FONT"
   endif
   if ($?font) then
-    set annojpeg = "$file:r.$$.anno.jpeg"
     # attempt to write the "$class" annotation and outline imagebox in white
     convert \
       -font "$font" \
       -pointsize "$psize" -size "$csize" xc:none -gravity center -stroke black -strokewidth 2 -annotate 0 "$class" \
       -background none -shadow "100x3+0+0" +repage -stroke none -fill white -annotate 0 "$class" \
       "$file" \
-      +swap -gravity south -geometry +0-3 -composite -fill none -stroke white -strokewidth 3 -draw "rectangle $rect" \
+      +swap -gravity south -geometry +0-3 \
+      -composite -fill none -stroke white -strokewidth 3 -draw "rectangle $rect" \
       "$annojpeg" >&! /dev/stderr
     if (! -s "$annojpeg") then
       if ($?DEBUG) echo "$0:t $$ -- $file:r:t -- failure to annotate $class onto $annojpeg" >&! /dev/stderr
@@ -192,18 +193,19 @@ endif
 ##
 ## draw a rectangle around the target (MODEL_IMAGE_WIDTH x MODEL_IMAGE_WIDTH) in red
 ##
-if (! -s "$annojpeg") then
-  if ($?DEBUG) echo "$0:t $$ -- $file:r:t -- failed to convert $file into $annojpeg" >&! /dev/stderr
-else
+if (-s "$annojpeg") then
   set out = "/tmp/$annojpeg:t.$$.$annojpeg:e"
   convert "$annojpeg" -fill none -stroke red -strokewidth 3 -draw "rectangle $target" "$out" >&! /dev/stderr
   if (! -s "$out") then
-    if ($?VERBOSE) echo "$0:t $$ -- $file:r:t -- success drawing red rectangle onto $annojpeg" >&! /dev/stderr
+    if ($?VERBOSE) echo "$0:t $$ -- $file:r:t -- success drawing red rectangle" >&! /dev/stderr
     mv -f "$out" "$annojpeg"
   else
-    if ($?DEBUG) echo "$0:t $$ -- $file:r:t -- failure drawing red rectangle onto $annojpeg" >&! /dev/stderr
+    if ($?DEBUG) echo "$0:t $$ -- $file:r:t -- failure drawing red rectangle ($target)" >&! /dev/stderr
     rm -f "$out"
   endif
+else
+  if ($?DEBUG) echo "$0:t $$ -- $file:r:t -- could not find annotated image ($annojpeg)" >&! /dev/stderr
+  rm -f "$annojpeg"
 endif
 
 output:
@@ -213,6 +215,6 @@ if (-s "$annojpeg") then
   exit 0
 else
   if ($?DEBUG) echo "$0:t ($$) -- $file:r:t -- FAILURE" >&! /dev/stderr
-  /bin/rm -f "$annojpeg"
+  rm -f "$annojpeg"
   exit 1
 endif

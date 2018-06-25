@@ -280,15 +280,14 @@ else
   ##
   ## ANNOTATE & CROP IMAGE
   ##
-  COMPJPEG="${IMAGE_FILE%.*}".jpeg
-  CROPJPEG="${IMAGE_FILE%.*}".crop.jpeg
-  ANNOJPEG="${IMAGE_FILE%.*}".anno.jpeg
-  image-annotate.csh "${IMAGE_FILE}" "${CLASS}" "${IMAGE_BOX}" # > "${ANNOJPEG}"
-
-  if [ ! -s "${COMPJPEG}" ]; then
-     if [ -n "${DEBUG}" ]; then echo "${0##*/} $$ -- ${IMAGE_ID} -- failure composing: ${COMPJPEG}" >&2; fi
+  image-annotate.csh "${IMAGE_FILE}" "${CLASS}" "${IMAGE_BOX}"
+  if ($status == 0) then
+    if [ -n "${DEBUG}" ]; then echo "${0##*/} $$ -- ${IMAGE_ID} -- successfully composed: ${COMPJPEG}" >&2; fi
+    COMPJPEG="${IMAGE_FILE%.*}".jpeg
+    CROPJPEG="${IMAGE_FILE%.*}".crop.jpeg
+    ANNOJPEG="${IMAGE_FILE%.*}".anno.jpeg
   else
-     if [ -n "${DEBUG}" ]; then echo "${0##*/} $$ -- ${IMAGE_ID} -- successfully composed: ${COMPJPEG}" >&2; fi
+    if [ -n "${DEBUG}" ]; then echo "${0##*/} $$ -- ${IMAGE_ID} -- failure composing: ${COMPJPEG}" >&2; fi
   fi
 
 fi
@@ -332,7 +331,7 @@ if [ -n "${MQTT_ON}" ] && [ -n "${MQTT_HOST}" ] && [ -n "${CLASS}" ] && [ -n "${
   mosquitto_pub -i "${DEVICE_NAME}" -h "${MQTT_HOST}" -t "${MQTT_TOPIC}" -m "${MSG}"
 
   # test if annotated image created
-  if [ -s "${ANNOJPEG}" ]; then
+  if [ -n ${ANNOJPEG} ] && [ -s "${ANNOJPEG}" ]; then
     MQTT_TOPIC='image-annotated/'"${AAH_LOCATION}"
     if [ -n "${VERBOSE}" ]; then echo "${0##*/} $$ -- ${IMAGE_ID} -- MQTT ${ANNOJPEG} to ${MQTT_HOST} topic ${MQTT_TOPIC}" >&2; fi
     mosquitto_pub -i "${DEVICE_NAME}" -h "${MQTT_HOST}" -t "${MQTT_TOPIC}" -f "${ANNOJPEG}"
@@ -341,7 +340,7 @@ if [ -n "${MQTT_ON}" ] && [ -n "${MQTT_HOST}" ] && [ -n "${CLASS}" ] && [ -n "${
   fi
 
   # test if cropped image created as side-effect
-  if [ -s "${CROPJPEG}" ]; then
+  if [ -n ${CROPJPEG} ] && [ -s "${CROPJPEG}" ]; then
     MQTT_TOPIC='image-cropped/'"${AAH_LOCATION}"
     if [ -n "${VERBOSE}" ]; then echo "${0##*/} $$ -- ${IMAGE_ID} -- MQTT ${CROPJPEG} to ${MQTT_HOST} topic ${MQTT_TOPIC}" >&2; fi
     mosquitto_pub -i "${DEVICE_NAME}" -h "${MQTT_HOST}" -t "${MQTT_TOPIC}" -f "${CROPJPEG}"
@@ -350,7 +349,7 @@ if [ -n "${MQTT_ON}" ] && [ -n "${MQTT_HOST}" ] && [ -n "${CLASS}" ] && [ -n "${
   fi
 
   # test if composed image created as side-effect
-  if [ -s "${COMPJPEG}" ]; then
+  if [ -n $COMPJPEG ] && [ -s "${COMPJPEG}" ]; then
     MQTT_TOPIC='image-composite/'"${AAH_LOCATION}"
     if [ -n "${VERBOSE}" ]; then echo "${0##*/} $$ -- ${IMAGE_ID} -- MQTT ${COMPJPEG} to ${MQTT_HOST} topic ${MQTT_TOPIC}" >&2; fi
     mosquitto_pub -i "${DEVICE_NAME}" -h "${MQTT_HOST}" -t "${MQTT_TOPIC}" -f "${COMPJPEG}"
