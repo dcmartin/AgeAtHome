@@ -239,6 +239,7 @@ rm -f "${OUTPUT}.$$" "${VR_OUTPUT}" "${DG_OUTPUT}"
 ##
 ## PROCESS OUTPUT
 ##
+
 if [ ! -s "${OUTPUT}" ]; then
   if [ -n "${DEBUG}" ]; then echo "${0##*/} $$ -- ${IMAGE_ID} -- ERROR: no output from classification" >&2; fi
 else
@@ -279,13 +280,15 @@ else
   ##
   ## ANNOTATE & CROP IMAGE
   ##
+  COMPJPEG="${IMAGE_FILE%.*}".jpeg
+  CROPJPEG="${IMAGE_FILE%.*}".crop.jpeg
   ANNOJPEG="${IMAGE_FILE%.*}".anno.jpeg
-  image-annotate.csh "${IMAGE_FILE}" "${CLASS}" "${IMAGE_BOX}" > "${ANNOJPEG}"
-  if [ ! -s "${ANNOJPEG}" ]; then
-     if [ -n "${DEBUG}" ]; then echo "${0##*/} $$ -- ${IMAGE_ID} -- failure annotating ${ANNOJPEG}" >&2; fi
-     rm -f "${ANNOJPEG}"
+  image-annotate.csh "${IMAGE_FILE}" "${CLASS}" "${IMAGE_BOX}" # > "${ANNOJPEG}"
+
+  if [ ! -s "${COMPJPEG}" ]; then
+     if [ -n "${DEBUG}" ]; then echo "${0##*/} $$ -- ${IMAGE_ID} -- failure composing: ${COMPJPEG}" >&2; fi
   else
-     if [ -n "${DEBUG}" ]; then echo "${0##*/} $$ -- ${IMAGE_ID} -- annotated into ${ANNOJPEG}" >&2; fi
+     if [ -n "${DEBUG}" ]; then echo "${0##*/} $$ -- ${IMAGE_ID} -- successfully composed: ${COMPJPEG}" >&2; fi
   fi
 
 fi
@@ -328,41 +331,32 @@ if [ -n "${MQTT_ON}" ] && [ -n "${MQTT_HOST}" ] && [ -n "${CLASS}" ] && [ -n "${
   if [ -n "${VERBOSE}" ]; then echo "${0##*/} $$ -- ${IMAGE_ID} -- MQTT ${MSG} to ${MQTT_HOST} topic ${MQTT_TOPIC}" >&2; fi
   mosquitto_pub -i "${DEVICE_NAME}" -h "${MQTT_HOST}" -t "${MQTT_TOPIC}" -m "${MSG}"
 
-  # POST IMAGE/<LOCATION>/<ENTITY>
-  MQTT_TOPIC='image-classified/'"${AAH_LOCATION}"'/'"${CLASS}"
-  if [ -n "${VERBOSE}" ]; then echo "${0##*/} $$ -- ${IMAGE_ID} -- MQTT image to ${MQTT_HOST} topic ${MQTT_TOPIC}" >&2; fi
-  mosquitto_pub -i "${DEVICE_NAME}" -h "${MQTT_HOST}" -t "${MQTT_TOPIC}" -f "${IMAGE_FILE}"
-
   # test if annotated image created
-  MQTT_TOPIC='image-annotated/'"${AAH_LOCATION}"
   if [ -s "${ANNOJPEG}" ]; then
+    MQTT_TOPIC='image-annotated/'"${AAH_LOCATION}"
     if [ -n "${VERBOSE}" ]; then echo "${0##*/} $$ -- ${IMAGE_ID} -- MQTT ${ANNOJPEG} to ${MQTT_HOST} topic ${MQTT_TOPIC}" >&2; fi
     mosquitto_pub -i "${DEVICE_NAME}" -h "${MQTT_HOST}" -t "${MQTT_TOPIC}" -f "${ANNOJPEG}"
   else
-    if [ -n "${DEBUG}" ]; then echo "${0##*/} $$ -- ${IMAGE_ID} -- no image ${ANNOJPEG} for ${MQTT_TOPIC}" >&2; fi
+    if [ -n "${DEBUG}" ]; then echo "${0##*/} $$ -- ${IMAGE_ID} -- no annotated image: ${ANNOJPEG}" >&2; fi
   fi
-  # rm -f "${ANNOJPEG}"
 
   # test if cropped image created as side-effect
-  MQTT_TOPIC='image-cropped/'"${AAH_LOCATION}"
-  CROPJPEG="${IMAGE_FILE%.*}".crop.jpeg
   if [ -s "${CROPJPEG}" ]; then
+    MQTT_TOPIC='image-cropped/'"${AAH_LOCATION}"
     if [ -n "${VERBOSE}" ]; then echo "${0##*/} $$ -- ${IMAGE_ID} -- MQTT ${CROPJPEG} to ${MQTT_HOST} topic ${MQTT_TOPIC}" >&2; fi
     mosquitto_pub -i "${DEVICE_NAME}" -h "${MQTT_HOST}" -t "${MQTT_TOPIC}" -f "${CROPJPEG}"
   else
-    if [ -n "${DEBUG}" ]; then echo "${0##*/} $$ -- ${IMAGE_ID} -- no image ${CROPJPEG} for ${MQTT_TOPIC}" >&2; fi
+    if [ -n "${DEBUG}" ]; then echo "${0##*/} $$ -- ${IMAGE_ID} -- no cropped image: ${CROPJPEG}" >&2; fi
   fi
-  # rm -f "${CROPJPEG}"
 
   # test if composed image created as side-effect
-  MQTT_TOPIC='image-composed/'"${AAH_LOCATION}"
-  if [ -s "${IMAGE_FILE%.*}.jpeg" ]; then
-    if [ -n "${VERBOSE}" ]; then echo "${0##*/} $$ -- ${IMAGE_ID} -- MQTT ${IMAGE_FILE%.*}.jpeg to ${MQTT_HOST} topic ${MQTT_TOPIC}" >&2; fi
-    mosquitto_pub -i "${DEVICE_NAME}" -h "${MQTT_HOST}" -t "${MQTT_TOPIC}" -f "${IMAGE_FILE%.*}.jpeg"
+  if [ -s "${COMPJPEG}" ]; then
+    MQTT_TOPIC='image-composite/'"${AAH_LOCATION}"
+    if [ -n "${VERBOSE}" ]; then echo "${0##*/} $$ -- ${IMAGE_ID} -- MQTT ${COMPJPEG} to ${MQTT_HOST} topic ${MQTT_TOPIC}" >&2; fi
+    mosquitto_pub -i "${DEVICE_NAME}" -h "${MQTT_HOST}" -t "${MQTT_TOPIC}" -f "${COMPJPEG}"
   else
-    if [ -n "${DEBUG}" ]; then echo "${0##*/} $$ -- ${IMAGE_ID} -- no image for ${MQTT_TOPIC}" >&2; fi
+    if [ -n "${DEBUG}" ]; then echo "${0##*/} $$ -- ${IMAGE_ID} -- no composed image" >&2; fi
   fi
-  # rm -f "${IMAGE_FILE%.*}.jpeg"
 fi
 
 ##

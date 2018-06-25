@@ -125,14 +125,14 @@ if ($file:e == "jpg") then
           if (! -s "$randjpeg") then
             if ($?DEBUG) echo "$0:t $$ -- $file:r:t -- failed to create random background $randjpeg" >&! /dev/stderr
           else
-            set composed = "$file:r.jpeg"
-            composite -compose src -geometry +"$sx"+"$sy" "$cropjpeg" "$randjpeg" "$composed"
-            if (! -s "$composed") then
-              if ($?DEBUG) echo "$0:t $$ -- $file:r:t -- failed to compose cropped on random" >&! /dev/stderr
-              rm -f "$composed"
-              unset composed
+            set compjpeg = "$file:r.jpeg"
+            composite -compose src -geometry +"$sx"+"$sy" "$cropjpeg" "$randjpeg" "$compjpeg"
+            if (! -s "$compjpeg") then
+              if ($?DEBUG) echo "$0:t $$ -- $file:r:t -- failed to compose: $compjpeg" >&! /dev/stderr
+              rm -f "$compjpeg"
+              unset compjpeg
             else
-              if ($?VERBOSE) echo "$0:t $$ -- $file:r:t -- successfully composed cropped image and random background" >&! /dev/stderr
+              if ($?VERBOSE) echo "$0:t $$ -- $file:r:t -- successfully composed: $compjpeg" >&! /dev/stderr
             endif
             /bin/rm -f "$randjpeg" # "$cropjpeg"
           endif
@@ -167,7 +167,6 @@ if ($?IMAGE_ANNOTATE_TEXT) then
     set font = "$IMAGE_ANNOTATE_FONT"
   endif
   if ($?font) then
-    ## define output
     set annojpeg = "$file:r.$$.anno.jpeg"
     # attempt to write the "$class" annotation and outline imagebox in white
     convert \
@@ -211,8 +210,6 @@ output:
 
 if (-s "$annojpeg") then
   if ($?VERBOSE) echo "$0:t $$ -- $file:r:t -- annotated ($class $rect) to $annojpeg" >&! /dev/stderr
-  /bin/dd if="$annojpeg"
-  /bin/rm -f "$annojpeg"
   exit 0
 else
   if ($?DEBUG) echo "$0:t ($$) -- $file:r:t -- FAILURE" >&! /dev/stderr
