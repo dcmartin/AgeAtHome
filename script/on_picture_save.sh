@@ -1,7 +1,7 @@
 #!/bin/bash
 
 DEBUG=true
-VERBOSE=true
+#VERBOSE=true
 
 ###
 ### dateutils REQUIRED
@@ -99,8 +99,6 @@ if [ -n "${MOTION_INTERVAL}" ]; then
 else
   if [ -n "${DEBUG}" ]; then echo "${0##*/} $$ -- ${IMAGE_ID} -- MOTION_INTERVAL not defined" >&2; fi
 fi
-
-if [ -n "${DEBUG}" ]; then echo "${0##*/} $$ -- ${IMAGE_ID} -- CHECKPOINT ${NOW}" >&2; fi
 
 ##
 ## CALCULATE MOTION BOX
@@ -281,7 +279,14 @@ else
   ##
   ## ANNOTATE & CROP IMAGE
   ##
-  image-annotate.csh "${IMAGE_FILE}" "${CLASS}" "${IMAGE_BOX}" > "${IMAGE_FILE%.*}.anno.jpeg"
+  ANNOJPEG="${IMAGE_FILE%.*}".anno.jpeg
+  image-annotate.csh "${IMAGE_FILE}" "${CLASS}" "${IMAGE_BOX}" > "${ANNOJPEG}"
+  if [ ! -s "${ANNOJPEG}" ]; then
+     if [ -n "${DEBUG}" ]; then echo "${0##*/} $$ -- ${IMAGE_ID} -- failure annotating ${ANNOJPEG}" >&2; fi
+     rm -f "${ANNOJPEG}"
+  else
+     if [ -n "${DEBUG}" ]; then echo "${0##*/} $$ -- ${IMAGE_ID} -- annotated into ${ANNOJPEG}" >&2; fi
+  fi
 
 fi
 
@@ -330,23 +335,24 @@ if [ -n "${MQTT_ON}" ] && [ -n "${MQTT_HOST}" ] && [ -n "${CLASS}" ] && [ -n "${
 
   # test if annotated image created
   MQTT_TOPIC='image-annotated/'"${AAH_LOCATION}"
-  if [ -s "${IMAGE_FILE%.*}.anno.jpeg" ]; then
-    if [ -n "${VERBOSE}" ]; then echo "${0##*/} $$ -- ${IMAGE_ID} -- MQTT ${IMAGE_FILE%.*}.anno.jpeg to ${MQTT_HOST} topic ${MQTT_TOPIC}" >&2; fi
-    mosquitto_pub -i "${DEVICE_NAME}" -h "${MQTT_HOST}" -t "${MQTT_TOPIC}" -f "${IMAGE_FILE%.*}.anno.jpeg"
+  if [ -s "${ANNOJPEG}" ]; then
+    if [ -n "${VERBOSE}" ]; then echo "${0##*/} $$ -- ${IMAGE_ID} -- MQTT ${ANNOJPEG} to ${MQTT_HOST} topic ${MQTT_TOPIC}" >&2; fi
+    mosquitto_pub -i "${DEVICE_NAME}" -h "${MQTT_HOST}" -t "${MQTT_TOPIC}" -f "${ANNOJPEG}"
   else
-    if [ -n "${DEBUG}" ]; then echo "${0##*/} $$ -- ${IMAGE_ID} -- no image for ${MQTT_TOPIC}" >&2; fi
+    if [ -n "${DEBUG}" ]; then echo "${0##*/} $$ -- ${IMAGE_ID} -- no image ${ANNOJPEG} for ${MQTT_TOPIC}" >&2; fi
   fi
-  # rm -f "${IMAGE_FILE%.*}.anno.jpeg"
+  # rm -f "${ANNOJPEG}"
 
   # test if cropped image created as side-effect
   MQTT_TOPIC='image-cropped/'"${AAH_LOCATION}"
-  if [ -s "${IMAGE_FILE%.*}.crop.jpeg" ]; then
-    if [ -n "${VERBOSE}" ]; then echo "${0##*/} $$ -- ${IMAGE_ID} -- MQTT ${IMAGE_FILE%.*}.crop.jpeg to ${MQTT_HOST} topic ${MQTT_TOPIC}" >&2; fi
-    mosquitto_pub -i "${DEVICE_NAME}" -h "${MQTT_HOST}" -t "${MQTT_TOPIC}" -f "${IMAGE_FILE%.*}.crop.jpeg"
+  CROPJPEG="${IMAGE_FILE%.*}".crop.jpeg
+  if [ -s "${CROPJPEG}" ]; then
+    if [ -n "${VERBOSE}" ]; then echo "${0##*/} $$ -- ${IMAGE_ID} -- MQTT ${CROPJPEG} to ${MQTT_HOST} topic ${MQTT_TOPIC}" >&2; fi
+    mosquitto_pub -i "${DEVICE_NAME}" -h "${MQTT_HOST}" -t "${MQTT_TOPIC}" -f "${CROPJPEG}"
   else
-    if [ -n "${DEBUG}" ]; then echo "${0##*/} $$ -- ${IMAGE_ID} -- no image for ${MQTT_TOPIC}" >&2; fi
+    if [ -n "${DEBUG}" ]; then echo "${0##*/} $$ -- ${IMAGE_ID} -- no image ${CROPJPEG} for ${MQTT_TOPIC}" >&2; fi
   fi
-  # rm -f "${IMAGE_FILE%.*}.crop.jpeg"
+  # rm -f "${CROPJPEG}"
 
   # test if composed image created as side-effect
   MQTT_TOPIC='image-composed/'"${AAH_LOCATION}"

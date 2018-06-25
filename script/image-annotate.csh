@@ -101,29 +101,33 @@ if ($file:e == "jpg") then
   ##
   ## transform image into cropped form
   ##
-  if ($?CAMERA_MODEL_TRANSFORM) then
+  if ($?CAMERA_MODEL_TRANSFORM == 0) then
+    if ($?DEBUG) echo "$0:t $$ -- $file:r:t -- undefined: CAMERA_MODEL_TRANSFORM" >&! /dev/stderr
+  else
+    if ($?DEBUG) echo "$0:t $$ -- $file:r:t -- CAMERA_MODEL_TRANSFORM is $CAMERA_MODEL_TRANSFORM" >&! /dev/stderr
     switch ($CAMERA_MODEL_TRANSFORM)
-      case "RESIZE":
-        if ($?VERBOSE) echo "$0:t $$ -- $file:t:r -- UNIMPLEMENTED: CAMERA_MODEL_TRANSFORM=$CAMERA_MODEL_TRANSFORM" >&! /dev/stderr
+      case "SIZE":
+        set sizejpeg = "$file:r.size.jpeg"
+        if ($?VERBOSE) echo "$0:t $$ -- $file:t:r -- UNIMPLEMENTED: $CAMERA_MODEL_TRANSFORM" >&! /dev/stderr
         breaksw
       case "CROP":
-        if ($?VERBOSE) echo "$0:t $$ -- $file:t:r -- transforming using $CAMERA_MODEL_TRANSFORM" >&! /dev/stderr
-        set cropped = "$file:r.$xform.jpeg"
+        set cropjpeg = "$file:r.crop.jpeg"
+        if ($?VERBOSE) echo "$0:t $$ -- $file:t:r -- transform ($CAMERA_MODEL_TRANSFORM) into $cropjpeg " >&! /dev/stderr
         convert \
  	  -crop "$xform" "$file" \
 	  -gravity center \
 	  -background gray \
-          "$cropped"
-        if (! -s "$cropped") then
-          if ($?DEBUG) echo "$0:t $$ -- $file:r:t -- failed to crop image" >&! /dev/stderr
+          "$cropjpeg"
+        if (! -s "$cropjpeg") then
+          if ($?DEBUG) echo "$0:t $$ -- $file:r:t -- failed to create cropped image ($cropjpeg)" >&! /dev/stderr
         else
-          set random = "$cropped:r.random.jpeg"
-          convert -size "$CAMERA_IMAGE_WIDTH"'x'"$CAMERA_IMAGE_HEIGHT" 'xc:' '+noise' Random "$random"
-          if (! -e "$random") then
-            if ($?DEBUG) echo "$0:t $$ -- $file:r:t -- failed to create random background $random" >&! /dev/stderr
+          set randjpeg = "/tmp/$0:t.rand.$$.jpeg"
+          convert -size "$CAMERA_IMAGE_WIDTH"'x'"$CAMERA_IMAGE_HEIGHT" 'xc:' '+noise' Random "$randjpeg"
+          if (! -s "$randjpeg") then
+            if ($?DEBUG) echo "$0:t $$ -- $file:r:t -- failed to create random background $randjpeg" >&! /dev/stderr
           else
             set composed = "$file:r.jpeg"
-            composite -compose src -geometry +"$sx"+"$sy" "$cropped" "$random" "$composed"
+            composite -compose src -geometry +"$sx"+"$sy" "$cropjpeg" "$randjpeg" "$composed"
             if (! -s "$composed") then
               if ($?DEBUG) echo "$0:t $$ -- $file:r:t -- failed to compose cropped on random" >&! /dev/stderr
               rm -f "$composed"
@@ -131,7 +135,7 @@ if ($file:e == "jpg") then
             else
               if ($?VERBOSE) echo "$0:t $$ -- $file:r:t -- successfully composed cropped image and random background" >&! /dev/stderr
             endif
-            /bin/rm -f "$random" # "$cropped"
+            /bin/rm -f "$randjpeg" # "$cropjpeg"
           endif
         endif
         breaksw
@@ -139,8 +143,6 @@ if ($file:e == "jpg") then
         if ($?DEBUG) echo "$0:t $$ -- $file:r:t -- invalid CAMERA_MODEL_TRANSFORM ($CAMERA_MODEL_TRANSFORM)" >&! /dev/stderr
         breaksw
     endsw
-  else
-    if ($?VERBOSE) echo "$0:t $$ -- $file:r:t -- undefined: CAMERA_MODEL_TRANSFORM" >&! /dev/stderr
   endif
 else
   if ($?VERBOSE) echo "$0:t $$ -- $file:r:t -- not a full frame image ($file:e)" >&! /dev/stderr
@@ -168,7 +170,7 @@ if ($?IMAGE_ANNOTATE_TEXT) then
   endif
   if ($?font) then
     ## define output
-    set annotated = "$file:r.$$.anno.jpeg"
+    set annojpeg = "$file:r.$$.anno.jpeg"
     # attempt to write the "$class" annotation and outline imagebox in white
     convert \
       -font "$font" \
@@ -176,7 +178,7 @@ if ($?IMAGE_ANNOTATE_TEXT) then
       -background none -shadow "100x3+0+0" +repage -stroke none -fill white -annotate 0 "$class" \
       "$file" \
       +swap -gravity south -geometry +0-3 -composite -fill none -stroke white -strokewidth 3 -draw "rectangle $rect" \
-      "$annotated" >&! /dev/stderr
+      "$annojpeg" >&! /dev/stderr
   else
     if ($?DEBUG) echo "$0:t $$ -- $file:r:t -- no fonts found; image annotation disabled" >&! /dev/stderr
   endif
@@ -187,23 +189,23 @@ endif
 ##
 ## draw a rectangle around the target (MODEL_IMAGE_WIDTH x MODEL_IMAGE_WIDTH) in red
 ##
-if (-e "$annotated") then
-  if ($?VERBOSE) echo "$0:t $$ -- $file:r:t -- trying to convert $file into $annotated" >&! /dev/stderr
-  convert "$annotated" -fill none -stroke red -strokewidth 3 -draw "rectangle $target" "$annotated.$$" >&! /dev/stderr
-  mv "$annotated.$$" "$annotated"
+if (-s "$annojpeg") then
+  if ($?VERBOSE) echo "$0:t $$ -- $file:r:t -- trying to convert $file into $annojpeg" >&! /dev/stderr
+  convert "$annojpeg" -fill none -stroke red -strokewidth 3 -draw "rectangle $target" "$annojpeg.$$" >&! /dev/stderr
+  mv "$annojpeg.$$" "$annojpeg"
 else
-  if ($?VERBOSE) echo "$0:t $$ -- $file:r:t -- failed to convert $file into $annotated" >&! /dev/stderr
+  if ($?DEBUG) echo "$0:t $$ -- $file:r:t -- failed to convert $file into $annojpeg" >&! /dev/stderr
 endif
 
 output:
 
-if (-e "$annotated") then
-  if ($?VERBOSE) echo "$0:t $$ -- $file:r:t -- OUTPUT SUCCESSFUL $annotated ($class $rect)" >&! /dev/stderr
-  /bin/dd if="$annotated" of=/dev/stdout >& /dev/null
-  /bin/rm -f "$annotated"
+if (-s "$annojpeg") then
+  if ($?VERBOSE) echo "$0:t $$ -- $file:r:t -- annotated ($class $rect) to $annojpeg" >&! /dev/stderr
+  /bin/dd if="$annojpeg" of=/dev/stdout >& /dev/null
+  /bin/rm -f "$annojpeg"
   exit 0
 else
   if ($?DEBUG) echo "$0:t ($$) -- $file:r:t -- FAILURE" >&! /dev/stderr
-  /bin/rm -f "$annotated"
+  /bin/rm -f "$annojpeg"
   exit 1
 endif
