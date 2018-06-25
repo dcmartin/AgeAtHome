@@ -201,6 +201,7 @@ if (-s "$annojpeg") then
     mv -f "$out" "$annojpeg"
   else
     if ($?DEBUG) echo "$0:t $$ -- $file:r:t -- failure drawing red rectangle ($target)" >&! /dev/stderr
+    echo convert "$annojpeg" -fill none -stroke red -strokewidth 3 -draw "rectangle $target" "$out" >&! /dev/stderr
     rm -f "$out"
   endif
 else

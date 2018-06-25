@@ -280,12 +280,11 @@ else
   ##
   ## ANNOTATE & CROP IMAGE
   ##
-  image-annotate.csh "${IMAGE_FILE}" "${CLASS}" "${IMAGE_BOX}"
-  if ($status == 0) then
-    if [ -n "${DEBUG}" ]; then echo "${0##*/} $$ -- ${IMAGE_ID} -- successfully composed: ${COMPJPEG}" >&2; fi
+  if image-annotate.csh "${IMAGE_FILE}" "${CLASS}" "${IMAGE_BOX}"; then
     COMPJPEG="${IMAGE_FILE%.*}".jpeg
     CROPJPEG="${IMAGE_FILE%.*}".crop.jpeg
     ANNOJPEG="${IMAGE_FILE%.*}".anno.jpeg
+    if [ -n "${DEBUG}" ]; then echo "${0##*/} $$ -- ${IMAGE_ID} -- successfully composed: ${COMPJPEG}" >&2; fi
   else
     if [ -n "${DEBUG}" ]; then echo "${0##*/} $$ -- ${IMAGE_ID} -- failure composing: ${COMPJPEG}" >&2; fi
   fi
