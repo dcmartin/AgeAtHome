@@ -16,7 +16,7 @@ if (! -e "$file") then
   if ($?VERBOSE) echo "$0:t $$ -- files does not exist: $file" >&! /dev/stderr
   exit(1) 
 else
-  if ($?VERBOSE) echo "$0:t $$ -- $file:t:r -- START" >&! /dev/stderr
+  if ($?VERBOSE) echo "$0:t $$ -- $file:t:r -- START ($*)" >&! /dev/stderr
 endif
 
 switch ($file:e)
@@ -30,7 +30,6 @@ switch ($file:e)
       set psize = "48"
       breaksw
 endsw
-
 
 set xywh = ( `echo "$crop" | sed "s/\(.*\)x\(.*\)\([+-]\)\(.*\)\([+-]\)\(.*\)/\3\4 \5\6 \1 \2/"` )
 if ($?xywh == 0) then
@@ -152,7 +151,6 @@ endif
 ## annotate image with text label
 ##
 if ($?IMAGE_ANNOTATE_TEXT) then
-  if ($?VERBOSE) echo "$0:t $$ -- $file:r:t -- annotating image (IMAGE_ANNOTATE_TEXT=$IMAGE_ANNOTATE_TEXT)" >&! /dev/stderr
   if ($?IMAGE_ANNOTATE_FONT == 0) then
     set fonts = ( `convert -list font | awk -F': ' '/glyphs/ { print $2 }' | sort | uniq` )
     if ($#fonts == 0) then
@@ -179,6 +177,12 @@ if ($?IMAGE_ANNOTATE_TEXT) then
       "$file" \
       +swap -gravity south -geometry +0-3 -composite -fill none -stroke white -strokewidth 3 -draw "rectangle $rect" \
       "$annojpeg" >&! /dev/stderr
+    if (! -s "$annojpeg") then
+      if ($?DEBUG) echo "$0:t $$ -- $file:r:t -- failure to annotate $class onto $annojpeg" >&! /dev/stderr
+      rm -f "$annojpeg"
+    else
+      if ($?DEBUG) echo "$0:t $$ -- $file:r:t -- success annotating $class onto $annojpeg" >&! /dev/stderr
+    endif
   else
     if ($?DEBUG) echo "$0:t $$ -- $file:r:t -- no fonts found; image annotation disabled" >&! /dev/stderr
   endif
@@ -189,19 +193,25 @@ endif
 ##
 ## draw a rectangle around the target (MODEL_IMAGE_WIDTH x MODEL_IMAGE_WIDTH) in red
 ##
-if (-s "$annojpeg") then
-  if ($?VERBOSE) echo "$0:t $$ -- $file:r:t -- trying to convert $file into $annojpeg" >&! /dev/stderr
-  convert "$annojpeg" -fill none -stroke red -strokewidth 3 -draw "rectangle $target" "$annojpeg.$$" >&! /dev/stderr
-  mv "$annojpeg.$$" "$annojpeg"
-else
+if (! -s "$annojpeg") then
   if ($?DEBUG) echo "$0:t $$ -- $file:r:t -- failed to convert $file into $annojpeg" >&! /dev/stderr
+else
+  set out = "/tmp/$annojpeg:t.$$.$annojpeg:e"
+  convert "$annojpeg" -fill none -stroke red -strokewidth 3 -draw "rectangle $target" "$out" >&! /dev/stderr
+  if (! -s "$out") then
+    if ($?VERBOSE) echo "$0:t $$ -- $file:r:t -- success drawing red rectangle onto $annojpeg" >&! /dev/stderr
+    mv -f "$out" "$annojpeg"
+  else
+    if ($?DEBUG) echo "$0:t $$ -- $file:r:t -- failure drawing red rectangle onto $annojpeg" >&! /dev/stderr
+    rm -f "$out"
+  endif
 endif
 
 output:
 
 if (-s "$annojpeg") then
   if ($?VERBOSE) echo "$0:t $$ -- $file:r:t -- annotated ($class $rect) to $annojpeg" >&! /dev/stderr
-  /bin/dd if="$annojpeg" of=/dev/stdout >& /dev/null
+  /bin/dd if="$annojpeg"
   /bin/rm -f "$annojpeg"
   exit 0
 else
