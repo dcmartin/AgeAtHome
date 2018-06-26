@@ -1,10 +1,9 @@
 #!/bin/tcsh -b
-set file = $1
-set class = $2
-set crop = $3
 
 setenv DEBUG true
 setenv VERBOSE true
+
+if ($?DEBUG) echo "$0:t $$ -- START ($*)" >&! /dev/stderr
 
 if ($?CAMERA_IMAGE_WIDTH == 0) setenv CAMERA_IMAGE_WIDTH 640
 if ($?CAMERA_IMAGE_HEIGHT == 0) setenv CAMERA_IMAGE_HEIGHT 480
@@ -12,14 +11,43 @@ if ($?MODEL_IMAGE_WIDTH == 0) setenv MODEL_IMAGE_WIDTH 224
 if ($?MODEL_IMAGE_HEIGHT == 0) setenv MODEL_IMAGE_HEIGHT 224
 if ($?CAMERA_MODEL_TRANSFORM == 0) setenv CAMERA_MODEL_TRANSFORM "CROP"
 
-if (! -e "$file") then
-  if ($?VERBOSE) echo "$0:t $$ -- files does not exist: $file" >&! /dev/stderr
-  exit(1) 
+###
+### PROCESS ARGS
+###
+
+if ($#argv == 3) then
+  set file = $1
+  set crop = $2
+  set class = $3
 else
-  if ($?VERBOSE) echo "$0:t $$ -- $file:t:r -- START ($*)" >&! /dev/stderr
+  if ($?DEBUG) echo "$0:t $$ -- INVALID ARGUMENTS ($*)" >&! /dev/stderr
+  goto output
 endif
 
-switch ($file:e)
+## test
+if (! -s "$file") then
+  if ($?DEBUG) echo "$0:t $$ -- does not exist: $file"; exiting >&! /dev/stderr
+  goto output
+else
+  if ($?VERBOSE) echo "$0:t $$ -- found image $ID as $file" >&! /dev/stderr
+  set json = $file:r.json
+  if (! -s "$json") then
+    if ($?DEBUG) echo "$0:t $$ -- does not exist: $json; exiting" >&! /dev/stderr
+    goto output
+  endif
+  set json = ( `jq '.' "$json"` )
+endif
+
+###
+### process full frame
+###
+
+if ($file:e != "jpg") then
+  if ($?VERBOSE) echo "$0:t $$ -- $file:r:t -- not a full frame image ($file:e)" >&! /dev/stderr
+  goto output
+else
+  # this is a hack which is not used
+  switch ($file:e)
     case "jpeg": # 224x224 image
 	set csize = "200x20"
 	set psize = "18"
@@ -29,8 +57,11 @@ switch ($file:e)
       set csize = "600x40"
       set psize = "48"
       breaksw
-endsw
+  endsw
+endif
 
+
+## parse imagebox
 set xywh = ( `echo "$crop" | sed "s/\(.*\)x\(.*\)\([+-]\)\(.*\)\([+-]\)\(.*\)/\3\4 \5\6 \1 \2/"` )
 if ($?xywh == 0) then
   if ($?DEBUG) echo "$0:t $$ -- $file:t:r -- BAD CROP ($crop)" >&! /dev/stderr
@@ -43,108 +74,98 @@ else
 endif
 
 
-###
-### process full frame
-###
+set x = `echo "0 $xywh[1]" | bc`
+if ($?x == 0) @ x = 0
+if ($#x == 0) @ x = 0
+if ($x < 0 || $x > $CAMERA_IMAGE_WIDTH) @ x = 0
+set y = `echo "0 $xywh[2]" | bc`
+if ($?y == 0) @ y = 0
+if ($#y == 0) @ y = 0
+if ($y < 0 || $y > $CAMERA_IMAGE_HEIGHT) @ y = 0
+set w = $xywh[3]
+if ($?w == 0) @ w = $CAMERA_IMAGE_WIDTH
+if ($w <= 0 || $w > $CAMERA_IMAGE_WIDTH) @ w = $CAMERA_IMAGE_WIDTH
+set h = $xywh[4]
+if ($?h == 0) @ h = $CAMERA_IMAGE_HEIGHT
+if ($h <= 0 || $h > $CAMERA_IMAGE_HEIGHT) @ h = $CAMERA_IMAGE_HEIGHT
+## calculate extant
+@ ew = $x + $w
+@ eh = $y + $h
+set target = ( $x $y $ew $eh )
+## calculate centroid of movement
+@ cx = `echo "$x + ( $w / 2 )" | bc`
+@ cy = $y + ( $h / 2 )
 
-if ($file:e == "jpg") then
+if ($?VERBOSE) echo "$0:t $$ -- $file:t:r -- bounding box (x=$x y=$y w=$w h=$h); target ($target)" >&! /dev/stderr
 
-  ## parse imagebox
-  set x = `echo "0 $xywh[1]" | bc`
-  if ($?x == 0) @ x = 0
-  if ($#x == 0) @ x = 0
-  if ($x < 0 || $x > $CAMERA_IMAGE_WIDTH) @ x = 0
-  set y = `echo "0 $xywh[2]" | bc`
-  if ($?y == 0) @ y = 0
-  if ($#y == 0) @ y = 0
-  if ($y < 0 || $y > $CAMERA_IMAGE_HEIGHT) @ y = 0
-  set w = $xywh[3]
-  if ($?w == 0) @ w = $CAMERA_IMAGE_WIDTH
-  if ($w <= 0 || $w > $CAMERA_IMAGE_WIDTH) @ w = $CAMERA_IMAGE_WIDTH
-  set h = $xywh[4]
-  if ($?h == 0) @ h = $CAMERA_IMAGE_HEIGHT
-  if ($h <= 0 || $h > $CAMERA_IMAGE_HEIGHT) @ h = $CAMERA_IMAGE_HEIGHT
-  ## calculate extant
-  @ ew = $x + $w
-  @ eh = $y + $h
-  set target = ( $x $y $ew $eh )
-  ## calculate centroid of movement
-  @ cx = `echo "$x + ( $w / 2 )" | bc`
-  @ cy = $y + ( $h / 2 )
+## calculate cropped area 
+@ sx = $cx - ( $MODEL_IMAGE_WIDTH / 2 )
+if ($sx < 0) @ sx = 0
+@ sy = $cy - ( $MODEL_IMAGE_HEIGHT / 2 )
+if ($sy < 0) @ sy = 0
+# adjust for scale
+@ sw = $MODEL_IMAGE_WIDTH
+@ sh = $MODEL_IMAGE_HEIGHT
+# adjust if past edge
+if ($sx + $sw > $CAMERA_IMAGE_WIDTH) @ sx = $CAMERA_IMAGE_WIDTH - $sw
+if ($sy + $sh > $CAMERA_IMAGE_HEIGHT) @ sy = $CAMERA_IMAGE_HEIGHT - $sh
 
-  if ($?VERBOSE) echo "$0:t $$ -- $file:t:r -- bounding box (x=$x y=$y w=$w h=$h); target ($target)" >&! /dev/stderr
+if ($?VERBOSE) echo "$0:t $$ -- $file:t:r -- cropped image (x=$sx y=$sy w=$sw h=$sh)" >&! /dev/stderr
 
-  ## calculate cropped area 
-  @ sx = $cx - ( $MODEL_IMAGE_WIDTH / 2 )
-  if ($sx < 0) @ sx = 0
-  @ sy = $cy - ( $MODEL_IMAGE_HEIGHT / 2 )
-  if ($sy < 0) @ sy = 0
-  # adjust for scale
-  @ sw = $MODEL_IMAGE_WIDTH
-  @ sh = $MODEL_IMAGE_HEIGHT
-  # adjust if past edge
-  if ($sx + $sw > $CAMERA_IMAGE_WIDTH) @ sx = $CAMERA_IMAGE_WIDTH - $sw
-  if ($sy + $sh > $CAMERA_IMAGE_HEIGHT) @ sy = $CAMERA_IMAGE_HEIGHT - $sh
+# cropped rectangle of MODEL_IMAGE_WIDTH x MODEL_IMAGE_HEIGHT
+@ rw = $sx + $sw
+@ rh = $sy + $sh
+set rect = ( $sx $sy $rw $rh )
 
-  if ($?VERBOSE) echo "$0:t $$ -- $file:t:r -- cropped image (x=$sx y=$sy w=$sw h=$sh)" >&! /dev/stderr
+set xform = "$sw"x"$sh"+"$sx"+"$sy"
 
-  # cropped rectangle of MODEL_IMAGE_WIDTH x MODEL_IMAGE_HEIGHT
-  @ rw = $sx + $sw
-  @ rh = $sy + $sh
-  set rect = ( $sx $sy $rw $rh )
+if ($?VERBOSE) echo "$0:t $$ -- $file:t:r -- Rect ($rect) Xform ($xform)" >&! /dev/stderr
 
-  set xform = "$sw"x"$sh"+"$sx"+"$sy"
-
-  if ($?VERBOSE) echo "$0:t $$ -- $file:t:r -- Rect ($rect) Xform ($xform)" >&! /dev/stderr
-
-  ##
-  ## transform image into cropped form
-  ##
-  if ($?CAMERA_MODEL_TRANSFORM == 0) then
-    if ($?DEBUG) echo "$0:t $$ -- $file:r:t -- undefined: CAMERA_MODEL_TRANSFORM" >&! /dev/stderr
-  else
-    if ($?DEBUG) echo "$0:t $$ -- $file:r:t -- CAMERA_MODEL_TRANSFORM is $CAMERA_MODEL_TRANSFORM" >&! /dev/stderr
-    switch ($CAMERA_MODEL_TRANSFORM)
-      case "SIZE":
-        set sizejpeg = "$file:r.size.jpeg"
-        if ($?VERBOSE) echo "$0:t $$ -- $file:t:r -- UNIMPLEMENTED: $CAMERA_MODEL_TRANSFORM" >&! /dev/stderr
-        breaksw
-      case "CROP":
-        set cropjpeg = "$file:r.crop.jpeg"
-        if ($?VERBOSE) echo "$0:t $$ -- $file:t:r -- transform ($CAMERA_MODEL_TRANSFORM) into $cropjpeg " >&! /dev/stderr
-        convert \
- 	  -crop "$xform" "$file" \
-	  -gravity center \
-	  -background gray \
-          "$cropjpeg"
-        if (! -s "$cropjpeg") then
-          if ($?DEBUG) echo "$0:t $$ -- $file:r:t -- failed to create cropped image ($cropjpeg)" >&! /dev/stderr
-        else
-          set randjpeg = "/tmp/$0:t.rand.$$.jpeg"
-          convert -size "$CAMERA_IMAGE_WIDTH"'x'"$CAMERA_IMAGE_HEIGHT" 'xc:' '+noise' Random "$randjpeg"
-          if (! -s "$randjpeg") then
-            if ($?DEBUG) echo "$0:t $$ -- $file:r:t -- failed to create random background $randjpeg" >&! /dev/stderr
-          else
-            set compjpeg = "$file:r.jpeg"
-            composite -compose src -geometry +"$sx"+"$sy" "$cropjpeg" "$randjpeg" "$compjpeg"
-            if (! -s "$compjpeg") then
-              if ($?DEBUG) echo "$0:t $$ -- $file:r:t -- failed to compose: $compjpeg" >&! /dev/stderr
-              rm -f "$compjpeg"
-              unset compjpeg
-            else
-              if ($?VERBOSE) echo "$0:t $$ -- $file:r:t -- successfully composed: $compjpeg" >&! /dev/stderr
-            endif
-            /bin/rm -f "$randjpeg" # "$cropjpeg"
-          endif
-        endif
-        breaksw
-      default:
-        if ($?DEBUG) echo "$0:t $$ -- $file:r:t -- invalid CAMERA_MODEL_TRANSFORM ($CAMERA_MODEL_TRANSFORM)" >&! /dev/stderr
-        breaksw
-    endsw
-  endif
+##
+## transform image into cropped form
+##
+if ($?CAMERA_MODEL_TRANSFORM == 0) then
+  if ($?DEBUG) echo "$0:t $$ -- $file:r:t -- undefined: CAMERA_MODEL_TRANSFORM" >&! /dev/stderr
 else
-  if ($?VERBOSE) echo "$0:t $$ -- $file:r:t -- not a full frame image ($file:e)" >&! /dev/stderr
+  if ($?DEBUG) echo "$0:t $$ -- $file:r:t -- CAMERA_MODEL_TRANSFORM is $CAMERA_MODEL_TRANSFORM" >&! /dev/stderr
+  switch ($CAMERA_MODEL_TRANSFORM)
+    case "SIZE":
+      set sizejpeg = "$file:r.size.jpeg"
+      if ($?VERBOSE) echo "$0:t $$ -- $file:t:r -- UNIMPLEMENTED: $CAMERA_MODEL_TRANSFORM" >&! /dev/stderr
+      breaksw
+    case "CROP":
+      set cropjpeg = "$file:r.crop.jpeg"
+      if ($?VERBOSE) echo "$0:t $$ -- $file:t:r -- transform ($CAMERA_MODEL_TRANSFORM) into $cropjpeg " >&! /dev/stderr
+      convert \
+	-crop "$xform" "$file" \
+	-gravity center \
+	-background gray \
+	"$cropjpeg"
+      if (! -s "$cropjpeg") then
+	if ($?DEBUG) echo "$0:t $$ -- $file:r:t -- failed to create cropped image ($cropjpeg)" >&! /dev/stderr
+      else
+	set randjpeg = "/tmp/$0:t.rand.$$.jpeg"
+	convert -size "$CAMERA_IMAGE_WIDTH"'x'"$CAMERA_IMAGE_HEIGHT" 'xc:' '+noise' Random "$randjpeg"
+	if (! -s "$randjpeg") then
+	  if ($?DEBUG) echo "$0:t $$ -- $file:r:t -- failed to create random background $randjpeg" >&! /dev/stderr
+	else
+	  set compjpeg = "$file:r.jpeg"
+	  composite -compose src -geometry +"$sx"+"$sy" "$cropjpeg" "$randjpeg" "$compjpeg"
+	  if (! -s "$compjpeg") then
+	    if ($?DEBUG) echo "$0:t $$ -- $file:r:t -- failed to compose: $compjpeg" >&! /dev/stderr
+	    rm -f "$compjpeg"
+	    unset compjpeg
+	  else
+	    if ($?VERBOSE) echo "$0:t $$ -- $file:r:t -- successfully composed: $compjpeg" >&! /dev/stderr
+	  endif
+	  /bin/rm -f "$randjpeg" # "$cropjpeg"
+	endif
+      endif
+      breaksw
+    default:
+      if ($?DEBUG) echo "$0:t $$ -- $file:r:t -- invalid CAMERA_MODEL_TRANSFORM ($CAMERA_MODEL_TRANSFORM)" >&! /dev/stderr
+      breaksw
+  endsw
 endif
 
 ##
@@ -211,11 +232,13 @@ endif
 
 output:
 
-if (-s "$annojpeg") then
-  if ($?VERBOSE) echo "$0:t $$ -- $file:r:t -- annotated ($class $rect) to $annojpeg" >&! /dev/stderr
-  exit 0
-else
-  if ($?DEBUG) echo "$0:t ($$) -- $file:r:t -- FAILURE" >&! /dev/stderr
-  rm -f "$annojpeg"
-  exit 1
+if ($?annojpeg) then
+  if (-s "$annojpeg") then
+    if ($?VERBOSE) echo "$0:t $$ -- $file:r:t -- annotated ($class $rect) to $annojpeg" >&! /dev/stderr
+    exit 0
+  endif
 endif
+
+if ($?DEBUG) echo "$0:t ($$) -- $file:r:t -- FAILURE" >&! /dev/stderr
+rm -f "$annojpeg"
+exit 1
