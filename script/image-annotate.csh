@@ -196,7 +196,7 @@ endif
 if (-s "$annojpeg") then
   set out = "/tmp/$annojpeg:t.$$.$annojpeg:e"
   convert "$annojpeg" -fill none -stroke red -strokewidth 3 -draw "rectangle $target" "$out" >&! /dev/stderr
-  if (! -s "$out") then
+  if (-s "$out") then
     if ($?VERBOSE) echo "$0:t $$ -- $file:r:t -- success drawing red rectangle" >&! /dev/stderr
     mv -f "$out" "$annojpeg"
   else
