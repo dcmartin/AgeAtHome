@@ -1,4 +1,4 @@
-#!/bin/csh -fb
+#!/bin/tcsh -b
 # control IFF perform motion conditional testing
 if ($?ON_MOTION_DETECT == 0) then
     exit

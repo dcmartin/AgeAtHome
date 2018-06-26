@@ -28,20 +28,15 @@ MOTION_WIDTH=$6
 MOTION_HEIGHT=$7
 
 if [ -z "${IMAGE_FILE}" ]; then
-  if [ -n "${DEBUG}" ]; then echo "${0##*/} $$ -- FAILURE $*" $(date) >&2; fi
-  exit
+  if [ -n "${DEBUG}" ]; then echo "${0##*/} $$ -- no image file ($*)" $(date) >&2; fi
+  goto output
+else
+  # drop prefix path
+  IMAGE_ID=`echo "${OUTPUT##*/}"`
+  # drop extension
+  IMAGE_ID=`echo "${IMAGE_ID%.*}"`
+  if [ -n "${VERBOSE}" ]; then echo "${0##*/} $$ -- event ${EVENT}; at (${MOTION_MIDX},${MOTION_MIDY},${MOTION_WIDTH},${MOTION_HEIGHT}); in ${IMAGE_ID}" $(date) >&2; fi
 fi
-
-##
-## PREPARE OUTPUT
-##
-
-# assign output file for JSON
-OUTPUT="${IMAGE_FILE%.*}.json"
-# drop prefix path
-IMAGE_ID=`echo "${OUTPUT##*/}"`
-# drop extension
-IMAGE_ID=`echo "${IMAGE_ID%.*}"`
 
 ##
 ## POST IMAGE 
@@ -99,6 +94,8 @@ if [ -n "${MOTION_INTERVAL}" ]; then
 else
   if [ -n "${DEBUG}" ]; then echo "${0##*/} $$ -- ${IMAGE_ID} -- MOTION_INTERVAL not defined" >&2; fi
 fi
+if [ -z "${NOW}" ]; then
+fi
 
 ##
 ## CALCULATE MOTION BOX
@@ -114,6 +111,15 @@ IMAGE_BOX="${MOTION_WIDTH}x${MOTION_HEIGHT}+${MOTION_X}+${MOTION_Y}"
 
 if [ -n "${DEBUG}" ]; then echo "${0##*/} $$ -- ${IMAGE_ID} -- EVENT: ${EVENT} BOX: ${IMAGE_BOX} X: ${MOTION_X} Y: ${MOTION_Y} W: ${MOTION_WIDTH} H: ${MOTION_HEIGHT}" >&2; fi
 
+##
+## PREPARE CLASSIFICATION OUTPUT
+##
+
+# assign output file for JSON
+OUTPUT="${IMAGE_FILE%.*}.json"
+echo '{"date":'"${NOW}"',"imagebox":"'"${IMAGE_BOX}"'"}' > "${OUTPUT}"
+
+if image-classify.csh "${IMAGE_FILE}" "${OUTPUT}"
 ##
 ## VISUAL RECOGNITION
 ##
@@ -232,17 +238,22 @@ else
     echo '"visual":{"image":"'${IMAGE_ID}.jpg'","scores":[{"classifier_id":"NA","name":"NA","score":0}]' >> "${OUTPUT}.$$"
     echo '}}' >> "${OUTPUT}"
 fi
+rm -f "${OUTPUT}.$$"
 
-# remove tmp & originals
-rm -f "${OUTPUT}.$$" "${VR_OUTPUT}" "${DG_OUTPUT}"
+
+if [ ! -s "${OUTPUT}" ]; then
+  if [ -n "${DEBUG}" ]; then echo "${0##*/} $$ -- ${IMAGE_ID} -- ERROR: no output from classification" >&2; fi
+  goto output
+else
+  # cleanup
+  rm -f  "${VR_OUTPUT}" "${DG_OUTPUT}"
+fi
+
 
 ##
 ## PROCESS OUTPUT
 ##
 
-if [ ! -s "${OUTPUT}" ]; then
-  if [ -n "${DEBUG}" ]; then echo "${0##*/} $$ -- ${IMAGE_ID} -- ERROR: no output from classification" >&2; fi
-else
   if [ -n "${VERBOSE}" ]; then echo "${0##*/} $$ -- ${IMAGE_ID} -- " $(jq -c '.' "${OUTPUT}") >&2; fi
   # add datetime and bounding box information
   DATE_TIME=`echo "${IMAGE_ID}" | sed "s/\(.*\)-.*-.*/\1/"`
@@ -266,7 +277,7 @@ else
       sed "s/DATE/${DATE}/" | \
       sed "s/SIZE/${SIZE}/" | \
       sed "s/IMAGE_BOX/${IMAGE_BOX}/" > /tmp/OUTPUT.$$
-      mv /tmp/OUTPUT.$$ "${OUTPUT}"
+  mv /tmp/OUTPUT.$$ "${OUTPUT}"
 
   ## validate
   CLASS=$(jq -r '.alchemy.text' "${OUTPUT}" | sed 's/ /_/g')
@@ -277,10 +288,11 @@ else
   if [ -z "${SCORE}" ]; then SCORE='null'; fi
   if [ -z "${SCORES}" ]; then SCORES='null'; fi
 
+
   ##
   ## ANNOTATE & CROP IMAGE
   ##
-  if image-annotate.csh "${IMAGE_FILE}" "${CLASS}" "${IMAGE_BOX}"; then
+  if image-annotate.csh "${IMAGE_FILE}" "${IMAGE_BOX}" "${CLASS}"; then
     COMPJPEG="${IMAGE_FILE%.*}".jpeg
     CROPJPEG="${IMAGE_FILE%.*}".crop.jpeg
     ANNOJPEG="${IMAGE_FILE%.*}".anno.jpeg
@@ -289,7 +301,6 @@ else
     if [ -n "${DEBUG}" ]; then echo "${0##*/} $$ -- ${IMAGE_ID} -- failure composing: ${COMPJPEG}" >&2; fi
   fi
 
-fi
 
 ##
 ## CLOUDANT
@@ -349,7 +360,7 @@ if [ -n "${MQTT_ON}" ] && [ -n "${MQTT_HOST}" ] && [ -n "${CLASS}" ] && [ -n "${
 
   # test if composed image created as side-effect
   if [ -n $COMPJPEG ] && [ -s "${COMPJPEG}" ]; then
-    MQTT_TOPIC='image-composite/'"${AAH_LOCATION}"
+    MQTT_TOPIC='image-composed/'"${AAH_LOCATION}"
     if [ -n "${VERBOSE}" ]; then echo "${0##*/} $$ -- ${IMAGE_ID} -- MQTT ${COMPJPEG} to ${MQTT_HOST} topic ${MQTT_TOPIC}" >&2; fi
     mosquitto_pub -i "${DEVICE_NAME}" -h "${MQTT_HOST}" -t "${MQTT_TOPIC}" -f "${COMPJPEG}"
   else
