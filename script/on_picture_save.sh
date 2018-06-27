@@ -94,8 +94,6 @@ if [ -n "${MOTION_INTERVAL}" ]; then
 else
   if [ -n "${DEBUG}" ]; then echo "${0##*/} $$ -- ${IMAGE_ID} -- MOTION_INTERVAL not defined" >&2; fi
 fi
-if [ -z "${NOW}" ]; then
-fi
 
 ##
 ## CALCULATE MOTION BOX
