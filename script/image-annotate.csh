@@ -29,7 +29,7 @@ if (! -s "$file") then
   if ($?DEBUG) echo "$0:t $$ -- does not exist: $file"; exiting >&! /dev/stderr
   goto output
 else
-  if ($?VERBOSE) echo "$0:t $$ -- found image $ID as $file" >&! /dev/stderr
+  if ($?VERBOSE) echo "$0:t $$ -- found image $file" >&! /dev/stderr
   set json = $file:r.json
   if (! -s "$json") then
     if ($?DEBUG) echo "$0:t $$ -- does not exist: $json; exiting" >&! /dev/stderr
