@@ -115,9 +115,7 @@ if [ -n "${DEBUG}" ]; then echo "${0##*/} $$ -- ${IMAGE_ID} -- EVENT: ${EVENT} B
 
 # assign output file for JSON
 OUTPUT="${IMAGE_FILE%.*}.json"
-echo '{"date":'"${NOW}"',"imagebox":"'"${IMAGE_BOX}"'"}' > "${OUTPUT}"
 
-if image-classify.csh "${IMAGE_FILE}" "${OUTPUT}"
 ##
 ## VISUAL RECOGNITION
 ##
