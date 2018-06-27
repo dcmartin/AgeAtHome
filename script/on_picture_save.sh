@@ -1,7 +1,7 @@
 #!/bin/bash
 
 DEBUG=true
-#VERBOSE=true
+VERBOSE=true
 
 ###
 ### dateutils REQUIRED
@@ -29,10 +29,10 @@ MOTION_HEIGHT=$7
 
 if [ -z "${IMAGE_FILE}" ]; then
   if [ -n "${DEBUG}" ]; then echo "${0##*/} $$ -- no image file ($*)" $(date) >&2; fi
-  goto output
+  exit
 else
   # drop prefix path
-  IMAGE_ID=`echo "${OUTPUT##*/}"`
+  IMAGE_ID=`echo "${IMAGE_FILE##*/}"`
   # drop extension
   IMAGE_ID=`echo "${IMAGE_ID%.*}"`
   if [ -n "${VERBOSE}" ]; then echo "${0##*/} $$ -- event ${EVENT}; at (${MOTION_MIDX},${MOTION_MIDY},${MOTION_WIDTH},${MOTION_HEIGHT}); in ${IMAGE_ID}" $(date) >&2; fi
@@ -209,7 +209,7 @@ if [ -s "${VR_OUTPUT}" ]; then
     fi
     # process consolidated scores into sorted list
     if [ -s "${DG_OUTPUT}" ]; then
-	if [ -n "${DEBUG}" ]; then echo "${0##*/} $$ -- ${IMAGE_ID} -- calculating TOP1 from WVR & DIGITS" >&2; fi
+	if [ -n "${VERBOSE}" ]; then echo "${0##*/} $$ -- ${IMAGE_ID} -- calculating TOP1 from WVR & DIGITS" >&2; fi
         # pick top1 across all classification results; sorted by score
         TOP1=$(jq -r '.visual.scores|sort_by(.score)[-1]|{"text":.classifier_id,"name":.name,"score":.score}' "${OUTPUT}.$$")
 	# change output to indicate (potentially) new top1
@@ -239,9 +239,10 @@ rm -f "${OUTPUT}.$$"
 
 if [ ! -s "${OUTPUT}" ]; then
   if [ -n "${DEBUG}" ]; then echo "${0##*/} $$ -- ${IMAGE_ID} -- ERROR: no output from classification" >&2; fi
-  goto output
+  exit
 else
   # cleanup
+  if [ -n "${VERBOSE}" ]; then echo "${0##*/} $$ -- ${IMAGE_ID} -- classification:" $(jq -c '.' "${OUTPUT}") >&2; fi
   rm -f  "${VR_OUTPUT}" "${DG_OUTPUT}"
 fi
 
@@ -250,53 +251,29 @@ fi
 ## PROCESS OUTPUT
 ##
 
-  if [ -n "${VERBOSE}" ]; then echo "${0##*/} $$ -- ${IMAGE_ID} -- " $(jq -c '.' "${OUTPUT}") >&2; fi
-  # add datetime and bounding box information
-  DATE_TIME=`echo "${IMAGE_ID}" | sed "s/\(.*\)-.*-.*/\1/"`
-  YEAR=`echo "${DATE_TIME}" | sed "s/^\(....\).*/\1/"`
-  MONTH=`echo "${DATE_TIME}" | sed "s/^....\(..\).*/\1/"`
-  DAY=`echo "${DATE_TIME}" | sed "s/^......\(..\).*/\1/"`
-  HOUR=`echo "${DATE_TIME}" | sed "s/^........\(..\).*/\1/"`
-  MINUTE=`echo "${DATE_TIME}" | sed "s/^..........\(..\).*/\1/"`
-  SECOND=`echo "${DATE_TIME}" | sed "s/^............\(..\).*/\1/"`
-  DATE=$(echo "${YEAR}/${MONTH}/${DAY} ${HOUR}:${MINUTE}:${SECOND}" | ${dateconv} -i "%Y/%M/%D %H:%M:%S" -f "%s")
-  SIZE=$(echo "${MOTION_WIDTH} * ${MOTION_HEIGHT}" | bc)
+# add datetime and bounding box information
+DATE_TIME=`echo "${IMAGE_ID}" | sed "s/\(.*\)-.*-.*/\1/"`
+YEAR=`echo "${DATE_TIME}" | sed "s/^\(....\).*/\1/"`
+MONTH=`echo "${DATE_TIME}" | sed "s/^....\(..\).*/\1/"`
+DAY=`echo "${DATE_TIME}" | sed "s/^......\(..\).*/\1/"`
+HOUR=`echo "${DATE_TIME}" | sed "s/^........\(..\).*/\1/"`
+MINUTE=`echo "${DATE_TIME}" | sed "s/^..........\(..\).*/\1/"`
+SECOND=`echo "${DATE_TIME}" | sed "s/^............\(..\).*/\1/"`
+DATE=$(echo "${YEAR}/${MONTH}/${DAY} ${HOUR}:${MINUTE}:${SECOND}" | ${dateconv} -i "%Y/%M/%D %H:%M:%S" -f "%s")
+SIZE=$(echo "${MOTION_WIDTH} * ${MOTION_HEIGHT}" | bc)
 
-  cat "${OUTPUT}" | \
-      sed 's/^{/{"year":"YEAR","month":"MONTH","day":"DAY","hour":"HOUR","minute":"MINUTE","second":"SECOND","date":DATE,"size":SIZE,"imagebox":"IMAGE_BOX",/' | \
-      sed "s/YEAR/${YEAR}/" | \
-      sed "s/MONTH/${MONTH}/" | \
-      sed "s/DAY/${DAY}/" | \
-      sed "s/HOUR/${HOUR}/" | \
-      sed "s/MINUTE/${MINUTE}/" | \
-      sed "s/SECOND/${SECOND}/" | \
-      sed "s/DATE/${DATE}/" | \
-      sed "s/SIZE/${SIZE}/" | \
-      sed "s/IMAGE_BOX/${IMAGE_BOX}/" > /tmp/OUTPUT.$$
-  mv /tmp/OUTPUT.$$ "${OUTPUT}"
-
-  ## validate
-  CLASS=$(jq -r '.alchemy.text' "${OUTPUT}" | sed 's/ /_/g')
-  MODEL=$(jq -r '.alchemy.name' "${OUTPUT}" | sed 's/ /_/g')
-  SCORE=$(jq -r '.alchemy.score' "${OUTPUT}")
-  SCORES=$(jq -c '.visual.scores' "${OUTPUT}")
-  IMAGE_BOX=$(jq -r '.imagebox' "${OUTPUT}")
-  if [ -z "${SCORE}" ]; then SCORE='null'; fi
-  if [ -z "${SCORES}" ]; then SCORES='null'; fi
-
-
-  ##
-  ## ANNOTATE & CROP IMAGE
-  ##
-  if image-annotate.csh "${IMAGE_FILE}" "${IMAGE_BOX}" "${CLASS}"; then
-    COMPJPEG="${IMAGE_FILE%.*}".jpeg
-    CROPJPEG="${IMAGE_FILE%.*}".crop.jpeg
-    ANNOJPEG="${IMAGE_FILE%.*}".anno.jpeg
-    if [ -n "${DEBUG}" ]; then echo "${0##*/} $$ -- ${IMAGE_ID} -- successfully composed: ${COMPJPEG}" >&2; fi
-  else
-    if [ -n "${DEBUG}" ]; then echo "${0##*/} $$ -- ${IMAGE_ID} -- failure composing: ${COMPJPEG}" >&2; fi
-  fi
-
+cat "${OUTPUT}" | \
+    sed 's/^{/{"year":"YEAR","month":"MONTH","day":"DAY","hour":"HOUR","minute":"MINUTE","second":"SECOND","date":DATE,"size":SIZE,"imagebox":"IMAGE_BOX",/' | \
+    sed "s/YEAR/${YEAR}/" | \
+    sed "s/MONTH/${MONTH}/" | \
+    sed "s/DAY/${DAY}/" | \
+    sed "s/HOUR/${HOUR}/" | \
+    sed "s/MINUTE/${MINUTE}/" | \
+    sed "s/SECOND/${SECOND}/" | \
+    sed "s/DATE/${DATE}/" | \
+    sed "s/SIZE/${SIZE}/" | \
+    sed "s/IMAGE_BOX/${IMAGE_BOX}/" > /tmp/OUTPUT.$$
+mv /tmp/OUTPUT.$$ "${OUTPUT}"
 
 ##
 ## CLOUDANT
@@ -324,6 +301,19 @@ else
   if [ -n "${DEBUG}" ]; then echo "${0##*/} $$ -- ${IMAGE_ID} -- DISABLED: database (${DEVICE_NAME})" >&2; fi
 fi
 
+
+##
+## get specifics from OUTPUT
+##
+
+IMAGE_BOX=$(jq -r '.imagebox' "${OUTPUT}")
+CLASS=$(jq -r '.alchemy.text' "${OUTPUT}" | sed 's/ /_/g')
+MODEL=$(jq -r '.alchemy.name' "${OUTPUT}" | sed 's/ /_/g')
+SCORE=$(jq -r '.alchemy.score' "${OUTPUT}")
+SCORES=$(jq -c '.visual.scores' "${OUTPUT}")
+if [ -z "${SCORE}" ]; then SCORE='null'; fi
+if [ -z "${SCORES}" ]; then SCORES='null'; fi
+
 ##
 ## POST to MQTT
 ##
@@ -335,33 +325,46 @@ if [ -n "${MQTT_ON}" ] && [ -n "${MQTT_HOST}" ] && [ -n "${CLASS}" ] && [ -n "${
   MQTT_TOPIC='presence/'"${AAH_LOCATION}"'/'"${CLASS}"
   if [ -n "${VERBOSE}" ]; then echo "${0##*/} $$ -- ${IMAGE_ID} -- MQTT ${MSG} to ${MQTT_HOST} topic ${MQTT_TOPIC}" >&2; fi
   mosquitto_pub -i "${DEVICE_NAME}" -h "${MQTT_HOST}" -t "${MQTT_TOPIC}" -m "${MSG}"
+fi
 
-  # test if annotated image created
-  if [ -n ${ANNOJPEG} ] && [ -s "${ANNOJPEG}" ]; then
+##
+## ANNOTATE & CROP IMAGE
+##
+
+if image-annotate.csh "${IMAGE_FILE}" "${IMAGE_BOX}" "${CLASS}"; then
+  COMPJPEG="${IMAGE_FILE%.*}".jpeg
+  CROPJPEG="${IMAGE_FILE%.*}".crop.jpeg
+  ANNOJPEG="${IMAGE_FILE%.*}".anno.jpeg
+  if [ -n "${DEBUG}" ]; then echo "${0##*/} $$ -- ${IMAGE_ID} -- successfully composed: ${COMPJPEG}" >&2; fi
+else
+  if [ -n "${DEBUG}" ]; then echo "${0##*/} $$ -- ${IMAGE_ID} -- failure composing: ${COMPJPEG}" >&2; fi
+fi
+
+# test if annotated image created
+if [ -n ${ANNOJPEG} ] && [ -s "${ANNOJPEG}" ]; then
     MQTT_TOPIC='image-annotated/'"${AAH_LOCATION}"
     if [ -n "${VERBOSE}" ]; then echo "${0##*/} $$ -- ${IMAGE_ID} -- MQTT ${ANNOJPEG} to ${MQTT_HOST} topic ${MQTT_TOPIC}" >&2; fi
     mosquitto_pub -i "${DEVICE_NAME}" -h "${MQTT_HOST}" -t "${MQTT_TOPIC}" -f "${ANNOJPEG}"
-  else
+else
     if [ -n "${DEBUG}" ]; then echo "${0##*/} $$ -- ${IMAGE_ID} -- no annotated image: ${ANNOJPEG}" >&2; fi
-  fi
+fi
 
-  # test if cropped image created as side-effect
-  if [ -n ${CROPJPEG} ] && [ -s "${CROPJPEG}" ]; then
+# test if cropped image created as side-effect
+if [ -n ${CROPJPEG} ] && [ -s "${CROPJPEG}" ]; then
     MQTT_TOPIC='image-cropped/'"${AAH_LOCATION}"
     if [ -n "${VERBOSE}" ]; then echo "${0##*/} $$ -- ${IMAGE_ID} -- MQTT ${CROPJPEG} to ${MQTT_HOST} topic ${MQTT_TOPIC}" >&2; fi
     mosquitto_pub -i "${DEVICE_NAME}" -h "${MQTT_HOST}" -t "${MQTT_TOPIC}" -f "${CROPJPEG}"
-  else
+else
     if [ -n "${DEBUG}" ]; then echo "${0##*/} $$ -- ${IMAGE_ID} -- no cropped image: ${CROPJPEG}" >&2; fi
-  fi
+fi
 
-  # test if composed image created as side-effect
-  if [ -n $COMPJPEG ] && [ -s "${COMPJPEG}" ]; then
+# test if composed image created as side-effect
+if [ -n $COMPJPEG ] && [ -s "${COMPJPEG}" ]; then
     MQTT_TOPIC='image-composed/'"${AAH_LOCATION}"
     if [ -n "${VERBOSE}" ]; then echo "${0##*/} $$ -- ${IMAGE_ID} -- MQTT ${COMPJPEG} to ${MQTT_HOST} topic ${MQTT_TOPIC}" >&2; fi
     mosquitto_pub -i "${DEVICE_NAME}" -h "${MQTT_HOST}" -t "${MQTT_TOPIC}" -f "${COMPJPEG}"
-  else
+else
     if [ -n "${DEBUG}" ]; then echo "${0##*/} $$ -- ${IMAGE_ID} -- no composed image" >&2; fi
-  fi
 fi
 
 ##
