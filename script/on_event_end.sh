@@ -59,7 +59,7 @@ if ($?MOTION_TARGET_DIR && $?MOTION_INTERVAL) then
     @ p = $#jsons - 1
     if ($p) then
       set PREV = `echo "$jpgs[$p]:t:r" | sed 's/\(.*\)-.*-.*/\1/'`
-      set PREV = `$dateconv -i '%Y%m%d%H%M%S' $NOW -f "%s"`
+      set PREV = `$dateconv -i '%Y%m%d%H%M%S' $PREV -f "%s"`
       @ DELAY = $LAST - $PREV
       if ($?VERBOSE) echo "$0:t $$ -- previous JSON is $DELAY seconds older" >& /dev/stderr
     else
