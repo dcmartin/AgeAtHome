@@ -171,7 +171,7 @@ endif
 ##
 ## annotate image with text label
 ##
-set annojpeg = "$file:r.$$.anno.jpeg"
+set annojpeg = "$file:r.anno.jpeg"
 if ($?IMAGE_ANNOTATE_TEXT) then
   if ($?IMAGE_ANNOTATE_FONT == 0) then
     set fonts = ( `convert -list font | awk -F': ' '/glyphs/ { print $2 }' | sort | uniq` )
@@ -239,6 +239,6 @@ if ($?annojpeg) then
   endif
 endif
 
-if ($?DEBUG) echo "$0:t ($$) -- $file:r:t -- FAILURE" >&! /dev/stderr
+if ($?DEBUG) echo "$0:t $$ -- $file:r:t -- FAILURE" >&! /dev/stderr
 rm -f "$annojpeg"
 exit 1
