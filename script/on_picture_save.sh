@@ -71,10 +71,10 @@ if [ -n "${MOTION_INTERVAL}" ]; then
 	  INTERVAL=$(echo "$NOW - $LAST" | bc)
 	  if [ -n "${INTERVAL}" ]; then
 	    if [ $INTERVAL -le $MOTION_INTERVAL ]; then
-	      if [ -n "${DEBUG}" ]; then echo "${0##*/} $$ -- ${IMAGE_ID} -- SKIPPING ${INTERVAL} <= ${MOTION_INTERVAL}" >&2; fi
+	      if [ -n "${DEBUG}" ]; then echo "${0##*/} $$ -- ${IMAGE_ID} -- ${INTERVAL} <= ${MOTION_INTERVAL}; exiting" >&2; fi
 	      exit
 	    else
-	      if [ -n "${DEBUG}" ]; then echo "${0##*/} $$ -- ${IMAGE_ID} -- PROCEEDING ${INTERVAL} > ${MOTION_INTERVAL}" >&2; fi
+	      if [ -n "${VERBOSE}" ]; then echo "${0##*/} $$ -- ${IMAGE_ID} -- ${INTERVAL} > ${MOTION_INTERVAL}; proceeding..." >&2; fi
 	    fi
 	  else
 	    if [ -n "${DEBUG}" ]; then echo "${0##*/} $$ -- ${IMAGE_ID} -- INTERVAL not defined" >&2; fi
