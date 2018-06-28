@@ -99,9 +99,9 @@ endif
 ###
 
 if ($#frames) then
-  if ($?VERBOSE) echo "$0:t $$ -- frames = $#frames"` >& /dev/stderr
+  if ($?VERBOSE) echo "$0:t $$ -- frames = $#frames" >& /dev/stderr
 else
-  if ($?DEBUG) echo "$0:t $$ -- zero frames"` >& /dev/stderr
+  if ($?DEBUG) echo "$0:t $$ -- zero frames" >& /dev/stderr
   goto done
 endif
 
