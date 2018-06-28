@@ -1,12 +1,17 @@
 #!/bin/tcsh -b
-# control IFF perform motion conditional testing
-if ($?ON_MOTION_DETECT == 0) then
-    exit
-endif
+
+setenv DEBUG true
+unsetenv VERBOSE true
 
 if ($?DEBUG) echo "+++ BEGIN: $0:t $* ($$)" `date` >& /dev/stderr
+
 # get start
 set SECONDS = `date +%s`
+
+# control IFF perform motion conditional testing
+if ($?ON_MOTION_DETECT == 0) then
+  goto done
+endif
 
 # activity interval (in minutes; of events; 96 per day)
 set INTERVAL = 15

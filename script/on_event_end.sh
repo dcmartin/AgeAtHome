@@ -9,7 +9,7 @@ setenv VERBOSE
 
 if ($?DEVICE_NAME == 0) then
   setenv MOTION_TARGET_DIR /var/lib/motion
-  setenv MOTION_EVENT_GAP 30
+  setenv MOTION_INTERVAL 30
   setenv MQTT_HOST 192.168.1.40
   setenv MQTT_ON true
   setenv AAH_LOCATION test
@@ -43,16 +43,32 @@ else
 endif
 
 ##
-## PROCESS MOTION_EVENT_GAP
+## PROCESS MOTION_INTERVAL
 ##
 
-if ($?MOTION_TARGET_DIR && $?MOTION_EVENT_GAP) then
+if ($?MOTION_TARGET_DIR && $?MOTION_INTERVAL) then
   set DIR = $MOTION_TARGET_DIR
   set jsons = ( `echo "$DIR"/*.json` )
   set jpgs = ( `echo "$DIR"/*.jpg` )
 
   set LAST = `echo "$jsons[$#jsons]:t:r" | sed 's/\(.*\)-.*-.*/\1/'`
   set LAST = `$dateconv -i '%Y%m%d%H%M%S' $LAST -f "%s"`
+  @ last = $LAST - $MOTION_INTERVAL
+
+  if ($#jsons) then
+    @ p = $#jsons - 1
+    if ($p) then
+      set PREV = `echo "$jpgs[$p]:t:r" | sed 's/\(.*\)-.*-.*/\1/'`
+      set PREV = `$dateconv -i '%Y%m%d%H%M%S' $NOW -f "%s"`
+      @ DELAY = $LAST - $PREV
+      if ($?VERBOSE) echo "$0:t $$ -- previous JSON is $DELAY seconds older" >& /dev/stderr
+    else
+      if ($?DEBUG) echo "$0:t $$ -- no previous JSON; $#jsons" >& /dev/stderr
+    endif
+  else
+    if ($?DEBUG) echo "$0:t $$ -- zero JSON found" >& /dev/stderr
+    goto done
+  endif 
 
   @ i = $#jpgs
   set frames = ()
@@ -61,24 +77,33 @@ if ($?MOTION_TARGET_DIR && $?MOTION_EVENT_GAP) then
     set NOW = `$dateconv -i '%Y%m%d%H%M%S' $NOW -f "%s"`
 
     @ INTERVAL = $NOW - $LAST
-    if ( $INTERVAL > $MOTION_EVENT_GAP) then
-      if ($?VERBOSE) echo "$0:t $$ -- $jpgs[$i] - INTERVAL $INTERVAL > $MOTION_EVENT_GAP" >& /dev/stderr
+    if ( $INTERVAL > $MOTION_INTERVAL) then
+      # too new
+      if ($?VERBOSE) echo "$0:t $$ -- $jpgs[$i] - INTERVAL $INTERVAL > $MOTION_INTERVAL; too new" >& /dev/stderr
     else if ( $INTERVAL >= 0) then
-      if ($?VERBOSE) echo "$0:t $$ -- $jpgs[$i] - INTERVAL $INTERVAL <= $MOTION_EVENT_GAP" >& /dev/stderr
+      if ($?VERBOSE) echo "$0:t $$ -- $jpgs[$i] - INTERVAL = $INTERVAL; adding frame" >& /dev/stderr
+      # add frames in order since processing last to first
       set frames = ( $jpgs[$i] $frames )
     else
+      if ($?VERBOSE) echo "$0:t $$ -- $jpgs[$i] - INTERVAL = $INTERVAL; breaking at $i" >& /dev/stderr
       break
     endif
     @ i--
   end
-  else
-    if ($?DEBUG) echo "$0:t $$ -- insufficient jpgs" >& /dev/stderr
-  endif
 else
-  if ($?DEBUG) echo "$0:t $$ -- not defined" >& /dev/stderr
+  if ($?DEBUG) echo "$0:t $$ -- MOTION_TARGET_DIR ($?MOTION_TARGET_DIR) || MOTION_INTERVAL ($?MOTION_INTERVAL) not defined" >& /dev/stderr
 endif
 
-if ($?DEBUG) echo "$0:t $$ -- FRAMES: $#frames" >& /dev/stderr
+###
+### TEST FRAMES
+###
+
+if ($#frames) then
+  if ($?VERBOSE) echo "$0:t $$ -- frames = $#frames"` >& /dev/stderr
+else
+  if ($?DEBUG) echo "$0:t $$ -- zero frames"` >& /dev/stderr
+  goto done
+endif
 
 ###
 ### PROCESS FRAMES
@@ -87,11 +112,11 @@ if ($?DEBUG) echo "$0:t $$ -- FRAMES: $#frames" >& /dev/stderr
 setenv TMP /tmp
 setenv TMP $TMP/$0:t:r.$$
 mkdir -p $TMP
+onintr cleanup
 
-set LASTJPG = $frames[$#frames]
 set LASTJSON = $jsons[$#jsons]
 
-if ($?DEBUG) echo "$0:t $$ -- LASTJPG = $LASTJPG" `jq -r '.' "$LASTJSON"` >& /dev/stderr
+if ($?DEBUG) echo "$0:t $$ -- LASTJPG = $frames[$#frames]; LASTJSON = $LASTJSON"` >& /dev/stderr
 
 ##
 ## VARIABLE PROCESSING
@@ -118,13 +143,13 @@ set ms = `echo "$fps / 60.0 * 100.0" | bc -l`
 ##
 ## MAKE AVERAGE FRAME
 ##
-set average = $TMP/$LASTJPG:t:r-average.png
+set average = $TMP/$LASTJSON:t:r-average.png
 convert $frames -average $average
 if ($?VERBOSE) echo "$0:t $$ -- average = $average"
 
 ## optionally make blended image
 if ($?NO_BLEND_IMAGES == 0) then
-  set blend = $TMP/$LASTJPG:t:r-blend.png
+  set blend = $TMP/$LASTJSON:t:r-blend.png
   convert $frames -compose blend -define 'compose:args=50' -alpha on -composite $blend
 endif
 
@@ -177,7 +202,7 @@ endif
 ## COMPOSITE KEY FRAMES AGAINST AVERAGE USING MASK
 ##
 
-set composite = $TMP/$LASTJPG:t:r-composite.jpg
+set composite = $TMP/$LASTJSON:t:r-composite.jpg
 if ($?NO_COMPOSITE == 0) then
   cp "$average" "$composite"
   @ i = 1
@@ -197,12 +222,12 @@ endif
 ## PRODUCE ANIMATED GIF of FRAMES
 ##
 
-set gif = $TMP/$LASTJPG:t:r.gif
+set gif = $TMP/$LASTJSON:t:r.gif
 convert -loop 0 -delay $ms $kframes $gif
 
 # optionally produce animated mask
 if ($?GIF_MASK) then
-  set mask = $TMP/$LASTJPG:t:r.mask.gif
+  set mask = $TMP/$LASTJSON:t:r.mask.gif
   convert -loop 1 -delay $ms $kdiffs $mask
 endif
 rm -f $diffs
