@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# DEBUG=true
+DEBUG=true
 # VERBOSE=true
 
 ###
@@ -42,7 +42,7 @@ fi
 ## POST IMAGE 
 ##
 if [ -n "${MQTT_ON}" ] && [ -s "${IMAGE_FILE}" ] && [ -n "${MQTT_HOST}" ]; then
-  if [ -n "${DEBUG}" ]; then echo "${0##*/} $$ -- ${IMAGE_ID} -- MQTT post to host $MQTT_HOST on topic image/${AAH_LOCATION}" >&2; fi
+  if [ -n "${VERBOSE}" ]; then echo "${0##*/} $$ -- ${IMAGE_ID} -- MQTT post to host $MQTT_HOST on topic image/${AAH_LOCATION}" >&2; fi
   mosquitto_pub -i "${DEVICE_NAME}" -h "${MQTT_HOST}" -t 'image/'"${AAH_LOCATION}" -f "${IMAGE_FILE}"
 fi
 
@@ -107,7 +107,7 @@ MOTION_Y=`echo "${MOTION_MIDY} - ( ${MOTION_HEIGHT} / 2 )" | bc`
 if [[ ${MOTION_Y} -lt 0 ]]; then MOTION_Y=0; fi
 IMAGE_BOX="${MOTION_WIDTH}x${MOTION_HEIGHT}+${MOTION_X}+${MOTION_Y}"
 
-if [ -n "${DEBUG}" ]; then echo "${0##*/} $$ -- ${IMAGE_ID} -- EVENT: ${EVENT} BOX: ${IMAGE_BOX} X: ${MOTION_X} Y: ${MOTION_Y} W: ${MOTION_WIDTH} H: ${MOTION_HEIGHT}" >&2; fi
+if [ -n "${VERBOSE}" ]; then echo "${0##*/} $$ -- ${IMAGE_ID} -- EVENT: ${EVENT} BOX: ${IMAGE_BOX} X: ${MOTION_X} Y: ${MOTION_Y} W: ${MOTION_WIDTH} H: ${MOTION_HEIGHT}" >&2; fi
 
 ##
 ## PREPARE CLASSIFICATION OUTPUT
@@ -335,7 +335,7 @@ if image-annotate.csh "${IMAGE_FILE}" "${IMAGE_BOX}" "${CLASS}"; then
   COMPJPEG="${IMAGE_FILE%.*}".jpeg
   CROPJPEG="${IMAGE_FILE%.*}".crop.jpeg
   ANNOJPEG="${IMAGE_FILE%.*}".anno.jpeg
-  if [ -n "${DEBUG}" ]; then echo "${0##*/} $$ -- ${IMAGE_ID} -- successfully composed: ${COMPJPEG}" >&2; fi
+  if [ -n "${VERBOSE}" ]; then echo "${0##*/} $$ -- ${IMAGE_ID} -- successfully composed: ${COMPJPEG}" >&2; fi
 else
   if [ -n "${DEBUG}" ]; then echo "${0##*/} $$ -- ${IMAGE_ID} -- failure composing: ${COMPJPEG}" >&2; fi
 fi

@@ -1,7 +1,7 @@
-#!/bin/csh -fb
+#!/bin/tcsh -b
 
-unsetenv DEBUG
-unsetenv VERBOSE
+setenv DEBUG
+setenv VERBOSE
 
 ##
 ## DEVICE_NAME only specified in production
@@ -27,7 +27,7 @@ endif
 # %M - The minute as a decimal number (range 00 to 59). 
 # %S - The second as a decimal number (range 00 to 61). 
 
-if ($?DEBUG) echo "$0:t $$ -- START ($1)" `date` >&! /dev/stderr
+if ($?DEBUG) echo "$0:t $$ -- START" `date` >&! /dev/stderr
 
 ###
 ### dateutils REQUIRED
