@@ -1,7 +1,7 @@
 #!/bin/bash
 
-DEBUG=true
-VERBOSE=true
+# DEBUG=true
+# VERBOSE=true
 
 ###
 ### dateutils REQUIRED
