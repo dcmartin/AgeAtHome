@@ -261,7 +261,8 @@ DAY=`echo "${DATE_TIME}" | sed "s/^......\(..\).*/\1/"`
 HOUR=`echo "${DATE_TIME}" | sed "s/^........\(..\).*/\1/"`
 MINUTE=`echo "${DATE_TIME}" | sed "s/^..........\(..\).*/\1/"`
 SECOND=`echo "${DATE_TIME}" | sed "s/^............\(..\).*/\1/"`
-DATE=$(echo "${YEAR}/${MONTH}/${DAY} ${HOUR}:${MINUTE}:${SECOND}" | ${dateconv} -i "%Y/%M/%D %H:%M:%S" -f "%s")
+# DATE=$(echo "${YEAR}/${MONTH}/${DAY} ${HOUR}:${MINUTE}:${SECOND}" | ${dateconv} -i "%Y/%M/%D %H:%M:%S" -f "%s")
+DATE=$(date +%s)
 SIZE=$(echo "${MOTION_WIDTH} * ${MOTION_HEIGHT}" | bc)
 
 cat "${OUTPUT}" | \
