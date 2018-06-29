@@ -116,7 +116,7 @@ onintr cleanup
 
 set LASTJSON = $jsons[$#jsons]
 
-if ($?DEBUG) echo "$0:t $$ -- LASTJPG = $frames[$#frames]; LASTJSON = $LASTJSON"` >& /dev/stderr
+if ($?DEBUG) echo "$0:t $$ -- LASTJPG = $frames[$#frames]; LASTJSON = $LASTJSON" >& /dev/stderr
 
 ##
 ## VARIABLE PROCESSING
