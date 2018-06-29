@@ -1,7 +1,7 @@
 #!/bin/bash
 
 DEBUG=true
-# VERBOSE=true
+VERBOSE=true
 
 ###
 ### dateutils REQUIRED
@@ -41,9 +41,11 @@ fi
 ##
 ## POST IMAGE 
 ##
-if [ -n "${MQTT_ON}" ] && [ -s "${IMAGE_FILE}" ] && [ -n "${MQTT_HOST}" ]; then
+if [ -n "${MQTT_ON}" ] && [ -n "${IMAGE_ID}" ] && [ -n "${MQTT_HOST}" ]; then
   if [ -n "${VERBOSE}" ]; then echo "${0##*/} $$ -- ${IMAGE_ID} -- MQTT post to host $MQTT_HOST on topic image/${AAH_LOCATION}" >&2; fi
   mosquitto_pub -i "${DEVICE_NAME}" -h "${MQTT_HOST}" -t 'image/'"${AAH_LOCATION}" -f "${IMAGE_FILE}"
+else
+  if [ -n "${DEBUG}" ]; then echo "${0##*/} $$ -- not posting ${IMAGE_FILE} to MQTT" $(date) >&2; fi
 fi
 
 ##
@@ -322,9 +324,11 @@ if [ -n "${MQTT_ON}" ] && [ -n "${MQTT_HOST}" ] && [ -n "${CLASS}" ] && [ -n "${
   # post JSON
   WHAT='"class":"'"${CLASS}"'","model":"'"${MODEL}"'","score":'"${SCORE}"',"id":"'"${IMAGE_ID}"'","imagebox":"'"${IMAGE_BOX}"'","size":'"${SIZE}"',"scores":'"${SCORES}"
   MSG='{"device":"'"${DEVICE_NAME}"'","location":"'"${AAH_LOCATION}"'","date":'"${DATE}"','"${WHAT}"'}'
-  MQTT_TOPIC='presence/'"${AAH_LOCATION}"'/'"${CLASS}"
+  MQTT_TOPIC='presence/'"${AAH_LOCATION}"
   if [ -n "${VERBOSE}" ]; then echo "${0##*/} $$ -- ${IMAGE_ID} -- MQTT ${MSG} to ${MQTT_HOST} topic ${MQTT_TOPIC}" >&2; fi
   mosquitto_pub -i "${DEVICE_NAME}" -h "${MQTT_HOST}" -t "${MQTT_TOPIC}" -m "${MSG}"
+else
+  if [ -n "${DEBUG}" ]; then echo "${0##*/} $$ -- not posting ${OUTPUT} to MQTT" $(date) >&2; fi
 fi
 
 ##
