@@ -54,50 +54,13 @@ RUN cd /usr/src \
 	&& make distclean
 
 #
-# FLEX
-#
-#RUN cd /usr/src \
-#	&& curl -L "https://github.com/westes/flex/releases/download/v2.6.4/flex-2.6.4.tar.gz" > flex.gz \
-#	&& tar xzvf flex.gz \
-#	&& cd flex-2.6.4 \ 
-#	&& ./configure \
-#	&& make \
-#	&& make install \
-#	&& make distclean
-#
-##
-## GPERF
-##
-#RUN cd /usr/src \
-#	&& curl -L "http://ftp.gnu.org/pub/gnu/gperf/gperf-3.1.tar.gz" > gperf.gz \
-#	&& tar xzvf gperf.gz \
-#	&& cd gperf-3.1 \ 
-#	&& autoreconf -i \
-#	&& ./configure \
-#	&& make \
-#	&& mv src/gperf /usr/local/bin \
-#	&& make distclean
-#
-##
-## DATEUTILS
-##
-#RUN cd /usr/src \
-#	&& git clone "https://github.com/hroptatyr/dateutils.git" \
-#	&& cd dateutils \
-#	&& autoreconf -i \
-#	&& ./configure \
-#	&& cd src \
-#	&& make \
-#	&& mv src/lex.yy.c src/dexpr-scanner.c \
-#        && make \
-#	&& make install
-
-#
 # VSFTPD
 #
 RUN echo "anon_root=/var/lib/motion" >> /etc/vsftpd.conf \
       && sed -i -e"s/^.*listen=.*$/listen=YES/" /etc/vsftpd.conf \
       && sed -i -e"s/^.*listen_ipv6=.*$/listen_ipv6=NO/" /etc/vsftpd.conf \
+      && sed -i -e"s/^.*anon_upload_enable=.*$/anon_upload_enable=YES/" /etc/vsftpd.conf \
+      && sed -i -e"s/^.*write_enable=.*$/write_enable=YES/" /etc/vsftpd.conf \
       && sed -i -e"s/^.*anonymous_enable=.*$/anonymous_enable=YES/" /etc/vsftpd.conf
 
 #
@@ -105,23 +68,6 @@ RUN echo "anon_root=/var/lib/motion" >> /etc/vsftpd.conf \
 #
 RUN apt-get install -q -y --no-install-recommends \
     mosquitto-clients
-
-#
-# H264
-#
-# RUN cd /usr/src && git clone git://git.videolan.org/x264 && cd x264 && ./configure --host=arm-unknown-linux-gnueabi --enable-static --disable-opencl && make install
-
-#
-# FFMPEG
-# https://github.com/FFmpeg/FFmpeg.git (OLD)
-#
-# RUN cd /usr/src &&  git clone https://git.ffmpeg.org/ffmpeg.git ffmpeg && cd ffmpeg && ./configure --arch=armel --target-os=linux --enable-gpl --enable-libx264 --enable-nonfree && make install
-
-#
-# POCKET SPHINX
-#
-# RUN curl -L "https://sourceforge.net/projects/cmusphinx/files/sphinxbase/5prealpha/sphinxbase-5prealpha.tar.gz/download" | tar xzvf - 
-# RUN curl -L "https://sourceforge.net/projects/cmusphinx/files/pocketsphinx/5prealpha/pocketsphinx-5prealpha.tar.gz/download" | tar xzvf - 
 
 #
 # ALSA (http://julius.sourceforge.jp/forum/viewtopic.php?f=9&t=66)
