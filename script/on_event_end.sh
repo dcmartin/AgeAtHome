@@ -157,25 +157,26 @@ endif
 ## COLLECT KEY FRAMES (PIXEL CHANGE > AVERAGE)
 ##
 
+set diffs = ()
+## CALCULATE FRAME CHANGES & AVERAGE PIXEL CHANGE
+ @ t = 0
+ @ i = 1
+ set ps = ()
+ while ( $i <= $#frames )
+   set diffs = ( $diffs $TMP/$frames[$i]:t-mask.jpg)
+   # calculate difference
+   set p = ( `compare -metric fuzz -fuzz "$fuzz"'%' $frames[$i] $average -compose src -highlight-color white -lowlight-color black $diffs[$#diffs] |& awk '{ print $1 }'` )
+   if ($?VERBOSE) echo "$0:t $$ -- DIFF $frames[$i]:t:r; change = $p; $diffs[$#diffs]" >& /dev/stderr
+   # keep track of differences
+   set ps = ( $ps $p:r )
+   @ t += $ps[$#ps]
+   @ i++
+ end
+ # CALCULATE AVERAGE CHANGE
+ @ a = ( `echo "$t / $#ps" | bc` )
+ if ($?DEBUG) echo "$0:t $$ -- AVERAGE: ($a) @ FUZZ: $fuzz %" >& /dev/stderr
+
 if ($?KEY_FRAMES) then
-  ## CALCULATE FRAME CHANGES & AVERAGE PIXEL CHANGE
-  @ t = 0
-  @ i = 1
-  set ps = ()
-  set diffs = ()
-  while ( $i <= $#frames )
-    set diffs = ( $diffs $TMP/$frames[$i]:t-mask.jpg)
-    # calculate difference
-    set p = ( `compare -metric fuzz -fuzz "$fuzz"'%' $frames[$i] $average -compose src -highlight-color white -lowlight-color black $diffs[$#diffs] |& awk '{ print $1 }'` )
-    if ($?VERBOSE) echo "$0:t $$ -- DIFF $frames[$i]:t:r; change = $p; $diffs[$#diffs]" >& /dev/stderr
-    # keep track of differences
-    set ps = ( $ps $p:r )
-    @ t += $ps[$#ps]
-    @ i++
-  end
-  # CALCULATE AVERAGE CHANGE
-  @ a = ( `echo "$t / $#ps" | bc` )
-  if ($?DEBUG) echo "$0:t $$ -- AVERAGE: ($a) @ FUZZ: $fuzz %" >& /dev/stderr
   # collect key frames exceeding average change
   set kframes = ()
   set kdiffs = ()
