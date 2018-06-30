@@ -57,9 +57,9 @@ RUN cd /usr/src \
 # VSFTPD
 #
 RUN echo "anon_root=/var/lib/motion" >> /etc/vsftpd.conf \
+      && echo "anon_upload_enable=YES" >> /etc/vsftpd.conf \
       && sed -i -e"s/^.*listen=.*$/listen=YES/" /etc/vsftpd.conf \
       && sed -i -e"s/^.*listen_ipv6=.*$/listen_ipv6=NO/" /etc/vsftpd.conf \
-      && sed -i -e"s/^.*anon_upload_enable=.*$/anon_upload_enable=YES/" /etc/vsftpd.conf \
       && sed -i -e"s/^.*write_enable=.*$/write_enable=YES/" /etc/vsftpd.conf \
       && sed -i -e"s/^.*anonymous_enable=.*$/anonymous_enable=YES/" /etc/vsftpd.conf
 
