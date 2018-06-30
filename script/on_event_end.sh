@@ -52,14 +52,14 @@ if ($?MOTION_TARGET_DIR && $?MOTION_INTERVAL) then
   set jpgs = ( `echo "$DIR"/*.jpg` )
 
   set LAST = `echo "$jsons[$#jsons]:t:r" | sed 's/\(.*\)-.*-.*/\1/'`
-  set LAST = `$dateconv -i '%Y%m%d%H%M%S' $LAST -f "%s"`
+  set LAST = `$dateconv -i '%Y%m%d%H%M%S' $LAST -f "%s" --zone "$TIMEZONE"`
   @ last = $LAST - $MOTION_INTERVAL
 
   if ($#jsons) then
     @ p = $#jsons - 1
     if ($p) then
       set PREV = `echo "$jpgs[$p]:t:r" | sed 's/\(.*\)-.*-.*/\1/'`
-      set PREV = `$dateconv -i '%Y%m%d%H%M%S' $PREV -f "%s"`
+      set PREV = `$dateconv -i '%Y%m%d%H%M%S' $PREV -f "%s" --zone "$TIMEZONE"`
       @ DELAY = $LAST - $PREV
       if ($?VERBOSE) echo "$0:t $$ -- previous JSON is $DELAY seconds older" >& /dev/stderr
     else
@@ -74,7 +74,7 @@ if ($?MOTION_TARGET_DIR && $?MOTION_INTERVAL) then
   set frames = ()
   while ($i)
     set NOW = `echo "$jpgs[$i]:t:r" | sed 's/\(.*\)-.*-.*/\1/'`
-    set NOW = `$dateconv -i '%Y%m%d%H%M%S' $NOW -f "%s"`
+    set NOW = `$dateconv -i '%Y%m%d%H%M%S' $NOW -f "%s" --zone "$TIMEZONE"`
 
     @ INTERVAL = $NOW - $LAST
     if ( $INTERVAL > $MOTION_INTERVAL) then
@@ -143,26 +143,28 @@ set ms = `echo "$fps / 60.0 * 100.0" | bc -l`
 ##
 ## MAKE AVERAGE FRAME
 ##
-set average = $TMP/$LASTJSON:t:r-average.png
+set average = $TMP/$LASTJSON:t:r-average.jpg
 convert $frames -average $average
 if ($?VERBOSE) echo "$0:t $$ -- average = $average"
 
 ## optionally make blended image
 if ($?NO_BLEND_IMAGES == 0) then
-  set blend = $TMP/$LASTJSON:t:r-blend.png
+  set blend = $TMP/$LASTJSON:t:r-blend.jpg
   convert $frames -compose blend -define 'compose:args=50' -alpha on -composite $blend
 endif
 
 ##
-## CALCULATE FRAME CHANGES & AVERAGE PIXEL CHANGE
+## COLLECT KEY FRAMES (PIXEL CHANGE > AVERAGE)
 ##
 
-@ t = 0
-@ i = 1
-set ps = ()
-set diffs = ()
-while ( $i <= $#frames )
-    set diffs = ( $diffs $TMP/$frames[$i]:t-mask.jpg )
+if ($?KEY_FRAMES) then
+  ## CALCULATE FRAME CHANGES & AVERAGE PIXEL CHANGE
+  @ t = 0
+  @ i = 1
+  set ps = ()
+  set diffs = ()
+  while ( $i <= $#frames )
+    set diffs = ( $diffs $TMP/$frames[$i]:t-mask.jpg)
     # calculate difference
     set p = ( `compare -metric fuzz -fuzz "$fuzz"'%' $frames[$i] $average -compose src -highlight-color white -lowlight-color black $diffs[$#diffs] |& awk '{ print $1 }'` )
     if ($?VERBOSE) echo "$0:t $$ -- DIFF $frames[$i]:t:r; change = $p; $diffs[$#diffs]" >& /dev/stderr
@@ -170,16 +172,11 @@ while ( $i <= $#frames )
     set ps = ( $ps $p:r )
     @ t += $ps[$#ps]
     @ i++
-end
-# CALCULATE AVERAGE CHANGE
-@ a = ( `echo "$t / $#ps" | bc` )
-if ($?DEBUG) echo "$0:t $$ -- AVERAGE: ($a) @ FUZZ: $fuzz %" >& /dev/stderr
-
-##
-## COLLECT KEY FRAMES (PIXEL CHANGE > AVERAGE)
-##
-
-if ($?KEY_FRAMES) then
+  end
+  # CALCULATE AVERAGE CHANGE
+  @ a = ( `echo "$t / $#ps" | bc` )
+  if ($?DEBUG) echo "$0:t $$ -- AVERAGE: ($a) @ FUZZ: $fuzz %" >& /dev/stderr
+  # collect key frames exceeding average change
   set kframes = ()
   set kdiffs = ()
   @ i = 1
@@ -192,7 +189,7 @@ if ($?KEY_FRAMES) then
     endif
     @ i++
   end
-  if ($?DEBUG) echo "$0:t $$ -- total key frames $#kframes" >& /dev/stderr
+  if ($?DEBUG) echo "$0:t $$ -- key frames $#kframes of total frames $#frames" >& /dev/stderr
 else
   set kframes = ( $frames )
   set kdiffs = ( $diffs )
@@ -222,28 +219,36 @@ endif
 ## PRODUCE ANIMATED GIF of FRAMES
 ##
 
-set gif = $TMP/$LASTJSON:t:r.gif
-convert -loop 0 -delay $ms $kframes $gif
+if ($?NO_GIF == 0) then
+  set gif = $TMP/$LASTJSON:t:r.gif
+  convert -loop 0 -delay $ms $kframes $gif
+endif
 
 # optionally produce animated mask
-if ($?GIF_MASK) then
+if ($?NO_GIF_MASK == 0) then
   set mask = $TMP/$LASTJSON:t:r.mask.gif
-  convert -loop 1 -delay $ms $kdiffs $mask
+  convert -loop 0 -delay $ms $kdiffs $mask
 endif
-rm -f $diffs
 
 ##
 ## POST TO MQTT
 ##
 
 if ($?MQTT_ON && $?MQTT_HOST && $?AAH_LOCATION) then
+  set MQTT_TOPIC = 'image-average/'"$AAH_LOCATION"
+  mosquitto_pub -i "$DEVICE_NAME" -r -h "$MQTT_HOST" -t "$MQTT_TOPIC" -f "$average"
+  set MQTT_TOPIC = 'image-blend/'"$AAH_LOCATION"
+  mosquitto_pub -i "$DEVICE_NAME" -r -h "$MQTT_HOST" -t "$MQTT_TOPIC" -f "$blend"
   set MQTT_TOPIC = 'image-composite/'"$AAH_LOCATION"
   mosquitto_pub -i "$DEVICE_NAME" -r -h "$MQTT_HOST" -t "$MQTT_TOPIC" -f "$composite"
   set MQTT_TOPIC = 'image-animated/'"$AAH_LOCATION"
   mosquitto_pub -i "$DEVICE_NAME" -r -h "$MQTT_HOST" -t "$MQTT_TOPIC" -f "$gif"
+  set MQTT_TOPIC = 'image-mask/'"$AAH_LOCATION"
+  mosquitto_pub -i "$DEVICE_NAME" -r -h "$MQTT_HOST" -t "$MQTT_TOPIC" -f "$mask"
 endif
 
 cleanup:
+  # remove all the output
   rm -fr $TMP
 
 done:

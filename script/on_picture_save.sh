@@ -67,8 +67,8 @@ if [ -n "${MOTION_INTERVAL}" ]; then
       LAST=$(echo "${LAST%.*}")
       LAST=$(echo $LAST| sed 's/\(.*\)-.*-.*/\1/')
       if [ -n "${LAST}" ] && [ -n "${NOW}" ]; then
-	NOW=$($dateconv -i '%Y%m%d%H%M%S' $NOW -f "%s")
-	LAST=$($dateconv -i '%Y%m%d%H%M%S' $LAST -f "%s")
+	NOW=$($dateconv -i '%Y%m%d%H%M%S' $NOW -f "%s" --zone "${TIMEZONE}")
+	LAST=$($dateconv -i '%Y%m%d%H%M%S' $LAST -f "%s" --zone "${TIMEZONE}")
 	if [ -n "${LAST}" ] && [ -n "${NOW}" ]; then
 	  INTERVAL=$(echo "$NOW - $LAST" | bc)
 	  if [ -n "${INTERVAL}" ]; then
@@ -261,8 +261,7 @@ DAY=`echo "${DATE_TIME}" | sed "s/^......\(..\).*/\1/"`
 HOUR=`echo "${DATE_TIME}" | sed "s/^........\(..\).*/\1/"`
 MINUTE=`echo "${DATE_TIME}" | sed "s/^..........\(..\).*/\1/"`
 SECOND=`echo "${DATE_TIME}" | sed "s/^............\(..\).*/\1/"`
-# DATE=$(echo "${YEAR}/${MONTH}/${DAY} ${HOUR}:${MINUTE}:${SECOND}" | ${dateconv} -i "%Y/%M/%D %H:%M:%S" -f "%s")
-DATE=$(date +%s)
+DATE=$(echo "${YEAR}/${MONTH}/${DAY} ${HOUR}:${MINUTE}:${SECOND}" | ${dateconv} -i "%Y/%M/%D %H:%M:%S" -f "%s" --zone "${TIMEZONE}")
 SIZE=$(echo "${MOTION_WIDTH} * ${MOTION_HEIGHT}" | bc)
 
 cat "${OUTPUT}" | \
