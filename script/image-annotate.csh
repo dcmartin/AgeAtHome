@@ -15,10 +15,12 @@ if ($?CAMERA_MODEL_TRANSFORM == 0) setenv CAMERA_MODEL_TRANSFORM "CROP"
 ### PROCESS ARGS
 ###
 
-if ($#argv == 3) then
+if ($#argv > 1) then
   set file = $1
   set crop = $2
-  set class = $3
+  if ($#argv > 2) then
+    set class = $3
+  endif
 else
   if ($?DEBUG) echo "$0:t $$ -- INVALID ARGUMENTS ($*)" >&! /dev/stderr
   goto output
@@ -60,7 +62,6 @@ else
   endsw
 endif
 
-
 ## parse imagebox
 set xywh = ( `echo "$crop" | sed "s/\(.*\)x\(.*\)\([+-]\)\(.*\)\([+-]\)\(.*\)/\3\4 \5\6 \1 \2/"` )
 if ($?xywh == 0) then
@@ -72,7 +73,6 @@ else if ($#xywh != 4) then
 else
   if ($?VERBOSE) echo "$0:t $$ -- $file:t:r -- GOOD CROP ($crop) ($xywh)" >&! /dev/stderr
 endif
-
 
 set x = `echo "0 $xywh[1]" | bc`
 if ($?x == 0) @ x = 0
@@ -172,7 +172,7 @@ endif
 ## annotate image with text label
 ##
 set annojpeg = "$file:r.anno.jpeg"
-if ($?IMAGE_ANNOTATE_TEXT) then
+if ($?IMAGE_ANNOTATE_TEXT && $?class) then
   if ($?IMAGE_ANNOTATE_FONT == 0) then
     set fonts = ( `convert -list font | awk -F': ' '/glyphs/ { print $2 }' | sort | uniq` )
     if ($#fonts == 0) then
