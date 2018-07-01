@@ -262,8 +262,10 @@ HOUR=`echo "${DATE_TIME}" | sed "s/^........\(..\).*/\1/"`
 MINUTE=`echo "${DATE_TIME}" | sed "s/^..........\(..\).*/\1/"`
 SECOND=`echo "${DATE_TIME}" | sed "s/^............\(..\).*/\1/"`
 THEN=$(echo "${YEAR}/${MONTH}/${DAY} ${HOUR}:${MINUTE}:${SECOND}" | ${dateconv} -i "%Y/%M/%D %H:%M:%S" -f "%s" --zone "${TIMEZONE}")
+THEN2=$(echo "${YEAR}/${MONTH}/${DAY} ${HOUR}:${MINUTE}:${SECOND}" | ${dateconv} -i "%Y/%M/%D %H:%M:%S" -f "%s")
 DATE=$(date +%s)
 if [ -n "${DEBUG}" ]; then echo "${0##*/} $$ -- ${IMAGE_ID} -- TIME DIFFERENTIAL NOW=${DATE} - THEN ${THEN} = " $(echo "${THEN} - ${DATE}" | bc) >&2; fi
+if [ -n "${DEBUG}" ]; then echo "${0##*/} $$ -- ${IMAGE_ID} -- TIME DIFFERENTIAL NOW=${DATE} - THEN2 ${THEN2} = " $(echo "${THEN2} - ${DATE}" | bc) >&2; fi
 SIZE=$(echo "${MOTION_WIDTH} * ${MOTION_HEIGHT}" | bc)
 
 cat "${OUTPUT}" | \
