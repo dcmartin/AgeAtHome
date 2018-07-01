@@ -263,7 +263,7 @@ MINUTE=`echo "${DATE_TIME}" | sed "s/^..........\(..\).*/\1/"`
 SECOND=`echo "${DATE_TIME}" | sed "s/^............\(..\).*/\1/"`
 THEN=$(echo "${YEAR}/${MONTH}/${DAY} ${HOUR}:${MINUTE}:${SECOND}" | ${dateconv} -i "%Y/%M/%D %H:%M:%S" -f "%s" --zone "${TIMEZONE}")
 NOW=$(date +%s)
-if [ -n "${DEBUG}" ]; then echo "${0##*/} $$ -- ${IMAGE_ID} -- TIME DIFFERENTIAL (THEN - NOW) = " $(echo "${THEN} - ${NOW} | bc) >&2; fi
+if [ -n "${DEBUG}" ]; then echo "${0##*/} $$ -- ${IMAGE_ID} -- TIME DIFFERENTIAL (THEN - NOW) = " $(echo "${THEN} - ${NOW}" | bc) >&2; fi
 DATE=${NOW}
 SIZE=$(echo "${MOTION_WIDTH} * ${MOTION_HEIGHT}" | bc)
 
