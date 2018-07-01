@@ -261,7 +261,10 @@ DAY=`echo "${DATE_TIME}" | sed "s/^......\(..\).*/\1/"`
 HOUR=`echo "${DATE_TIME}" | sed "s/^........\(..\).*/\1/"`
 MINUTE=`echo "${DATE_TIME}" | sed "s/^..........\(..\).*/\1/"`
 SECOND=`echo "${DATE_TIME}" | sed "s/^............\(..\).*/\1/"`
-DATE=$(echo "${YEAR}/${MONTH}/${DAY} ${HOUR}:${MINUTE}:${SECOND}" | ${dateconv} -i "%Y/%M/%D %H:%M:%S" -f "%s" --zone "${TIMEZONE}")
+THEN=$(echo "${YEAR}/${MONTH}/${DAY} ${HOUR}:${MINUTE}:${SECOND}" | ${dateconv} -i "%Y/%M/%D %H:%M:%S" -f "%s" --zone "${TIMEZONE}")
+NOW=$(date +%s)
+if [ -n "${DEBUG}" ]; then echo "${0##*/} $$ -- ${IMAGE_ID} -- TIME DIFFERENTIAL (THEN - NOW) = " $(echo "${THEN} - ${NOW} | bc) >&2; fi
+DATE=${NOW}
 SIZE=$(echo "${MOTION_WIDTH} * ${MOTION_HEIGHT}" | bc)
 
 cat "${OUTPUT}" | \
@@ -418,7 +421,7 @@ if [ -n "${AAH_LAN_SERVER}" ]; then
     rm -f "/tmp/images".*.json
     curl -s -q -f -L "http://${AAH_LAN_SERVER}/CGI/aah-images.cgi?db=${DEVICE_NAME}&limit=1" -o "${OUT}"
     if [ -s "${OUT}" ]; then 
-      if [ -n "${VERBOSE}" ]; then jq -c '.' "/tmp/images.${DATE}.json" >&2; fi
+      if [ -n "${VERBOSE}" ]; then jq -c '.' "${OUT}" >&2; fi
     else
       if [ -n "${DEBUG}" ]; then echo "${0##*/} $$ -- ${IMAGE_ID} -- no images reported ${DEVICE_NAME}" >&2; fi
       rm -f "${OUT}"
