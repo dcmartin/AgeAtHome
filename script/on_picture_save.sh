@@ -1,7 +1,9 @@
 #!/bin/bash
 
 DEBUG=true
-VERBOSE=true
+# VERBOSE=true
+
+if [ -n "${DEBUG}" ]; then echo "${0##*/} $$ -- BEGIN: $*" $(date) >&2; fi
 
 ###
 ### dateutils REQUIRED
@@ -15,8 +17,6 @@ else
   echo "No date converter; install dateutils" >&2
   exit 1
 fi
-
-if [ -n "${DEBUG}" ]; then echo "${0##*/} $$ -- BEGIN: $*" $(date) >&2; fi
 
 # get arguments
 EVENT=$1
@@ -73,7 +73,7 @@ if [ -n "${MOTION_INTERVAL}" ]; then
 	  INTERVAL=$(echo "$NOW - $LAST" | bc)
 	  if [ -n "${INTERVAL}" ]; then
 	    if [ $INTERVAL -le $MOTION_INTERVAL ]; then
-	      if [ -n "${DEBUG}" ]; then echo "${0##*/} $$ -- ${IMAGE_ID} -- ${INTERVAL} <= ${MOTION_INTERVAL}; exiting" >&2; fi
+	      if [ -n "${VERBOSE}" ]; then echo "${0##*/} $$ -- ${IMAGE_ID} -- ${INTERVAL} <= ${MOTION_INTERVAL}; exiting" >&2; fi
 	      exit
 	    else
 	      if [ -n "${VERBOSE}" ]; then echo "${0##*/} $$ -- ${IMAGE_ID} -- ${INTERVAL} > ${MOTION_INTERVAL}; proceeding..." >&2; fi
@@ -98,6 +98,15 @@ else
 fi
 
 ##
+## PREPARE CLASSIFICATION OUTPUT
+##
+
+# assign output file for JSON
+OUTPUT="${IMAGE_FILE%.*}.json"
+# this should stop subsequent images from being classified until the next interval
+touch "${OUTPUT}"
+
+##
 ## CALCULATE MOTION BOX
 ##
 # X coordinate in pixels of the center point of motion. Origin is upper left corner.
@@ -110,13 +119,6 @@ if [[ ${MOTION_Y} -lt 0 ]]; then MOTION_Y=0; fi
 IMAGE_BOX="${MOTION_WIDTH}x${MOTION_HEIGHT}+${MOTION_X}+${MOTION_Y}"
 
 if [ -n "${VERBOSE}" ]; then echo "${0##*/} $$ -- ${IMAGE_ID} -- EVENT: ${EVENT} BOX: ${IMAGE_BOX} X: ${MOTION_X} Y: ${MOTION_Y} W: ${MOTION_WIDTH} H: ${MOTION_HEIGHT}" >&2; fi
-
-##
-## PREPARE CLASSIFICATION OUTPUT
-##
-
-# assign output file for JSON
-OUTPUT="${IMAGE_FILE%.*}.json"
 
 ##
 ## VISUAL RECOGNITION
@@ -248,7 +250,6 @@ else
   rm -f  "${VR_OUTPUT}" "${DG_OUTPUT}"
 fi
 
-
 ##
 ## PROCESS OUTPUT
 ##
@@ -261,11 +262,7 @@ DAY=`echo "${DATE_TIME}" | sed "s/^......\(..\).*/\1/"`
 HOUR=`echo "${DATE_TIME}" | sed "s/^........\(..\).*/\1/"`
 MINUTE=`echo "${DATE_TIME}" | sed "s/^..........\(..\).*/\1/"`
 SECOND=`echo "${DATE_TIME}" | sed "s/^............\(..\).*/\1/"`
-THEN=$(echo "${YEAR}/${MONTH}/${DAY} ${HOUR}:${MINUTE}:${SECOND}" | ${dateconv} -i "%Y/%M/%D %H:%M:%S" -f "%s" --zone "${TIMEZONE}")
-THEN2=$(echo "${YEAR}/${MONTH}/${DAY} ${HOUR}:${MINUTE}:${SECOND}" | ${dateconv} -i "%Y/%M/%D %H:%M:%S" -f "%s")
 DATE=$(date +%s)
-if [ -n "${DEBUG}" ]; then echo "${0##*/} $$ -- ${IMAGE_ID} -- TIME DIFFERENTIAL NOW=${DATE} - THEN ${THEN} = " $(echo "${THEN} - ${DATE}" | bc) >&2; fi
-if [ -n "${DEBUG}" ]; then echo "${0##*/} $$ -- ${IMAGE_ID} -- TIME DIFFERENTIAL NOW=${DATE} - THEN2 ${THEN2} = " $(echo "${THEN2} - ${DATE}" | bc) >&2; fi
 SIZE=$(echo "${MOTION_WIDTH} * ${MOTION_HEIGHT}" | bc)
 
 cat "${OUTPUT}" | \
@@ -422,7 +419,7 @@ if [ -n "${AAH_LAN_SERVER}" ]; then
     rm -f "/tmp/images".*.json
     curl -s -q -f -L "http://${AAH_LAN_SERVER}/CGI/aah-images.cgi?db=${DEVICE_NAME}&limit=1" -o "${OUT}"
     if [ -s "${OUT}" ]; then 
-      if [ -n "${VERBOSE}" ]; then jq -c '.' "${OUT}" >&2; fi
+      if [ -n "${VERBOSE}" ]; then echo "${0##*/} $$ -- ${IMAGE_ID} -- last image:" $(jq -c '.' "${OUT}") >&2; fi
     else
       if [ -n "${DEBUG}" ]; then echo "${0##*/} $$ -- ${IMAGE_ID} -- no images reported ${DEVICE_NAME}" >&2; fi
       rm -f "${OUT}"

@@ -3,6 +3,8 @@
 setenv DEBUG
 setenv VERBOSE
 
+if ($?DEBUG) echo "$0:t $$ -- START" `date` >&! /dev/stderr
+
 ##
 ## DEVICE_NAME only specified in production
 ##
@@ -26,8 +28,6 @@ endif
 # %H - The hour as a decimal number using a 24-hour clock (range 00 to 23)
 # %M - The minute as a decimal number (range 00 to 59). 
 # %S - The second as a decimal number (range 00 to 61). 
-
-if ($?DEBUG) echo "$0:t $$ -- START" `date` >&! /dev/stderr
 
 ###
 ### dateutils REQUIRED
