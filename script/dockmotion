@@ -1,7 +1,5 @@
 #!/bin/bash
 
-rm -fr /var/lib/motion/*
-
 # INITIATE DEVICE
 IPADDR=$(/bin/hostname -I | /usr/bin/awk '{ print $1 }')
 
@@ -74,6 +72,8 @@ fi
 export MOTION_TARGET_DIR
 echo "Set target_dir to ${MOTION_TARGET_DIR}"
 JSON="${JSON}"',"target_dir":"'"${MOTION_TARGET_DIR}"'"'
+rm -fr "${MOTION_TARGET_DIR}"
+mkdir -p "${MOTION_TARGET_DIR}"
 
 # MOTION_EVENT_GAP (seconds) default 60
 if [ -n "${MOTION_EVENT_GAP}" ]; then
