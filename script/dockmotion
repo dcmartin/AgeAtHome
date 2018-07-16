@@ -72,7 +72,7 @@ fi
 export MOTION_TARGET_DIR
 echo "Set target_dir to ${MOTION_TARGET_DIR}"
 JSON="${JSON}"',"target_dir":"'"${MOTION_TARGET_DIR}"'"'
-rm -fr "${MOTION_TARGET_DIR}"
+rm -fr "${MOTION_TARGET_DIR}"/*
 mkdir -p "${MOTION_TARGET_DIR}"
 
 # MOTION_EVENT_GAP (seconds) default 60
