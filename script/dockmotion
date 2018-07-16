@@ -1,5 +1,7 @@
 #!/bin/bash
 
+rm -fr /var/lib/motion/*
+
 # INITIATE DEVICE
 IPADDR=$(/bin/hostname -I | /usr/bin/awk '{ print $1 }')
 
