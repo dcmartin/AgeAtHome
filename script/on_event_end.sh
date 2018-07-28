@@ -116,7 +116,7 @@ onintr cleanup
 
 set LASTJSON = $jsons[$#jsons]
 
-if ($?DEBUG) echo "$0:t $$ -- LASTJPG = $frames[$#frames]; LASTJSON = $LASTJSON" >& /dev/stderr
+if ($?VERBOSE) echo "$0:t $$ -- LASTJPG = $frames[$#frames]; LASTJSON = $LASTJSON" >& /dev/stderr
 
 ##
 ## VARIABLE PROCESSING
@@ -174,7 +174,7 @@ set diffs = ()
  end
  # CALCULATE AVERAGE CHANGE
  @ a = ( `echo "$t / $#ps" | bc` )
- if ($?DEBUG) echo "$0:t $$ -- AVERAGE: ($a) @ FUZZ: $fuzz %" >& /dev/stderr
+ if ($?VERBOSE) echo "$0:t $$ -- AVERAGE: ($a) @ FUZZ: $fuzz %" >& /dev/stderr
 
 if ($?KEY_FRAMES) then
   # collect key frames exceeding average change
@@ -190,7 +190,7 @@ if ($?KEY_FRAMES) then
     endif
     @ i++
   end
-  if ($?DEBUG) echo "$0:t $$ -- key frames $#kframes of total frames $#frames" >& /dev/stderr
+  if ($?VERBOSE) echo "$0:t $$ -- key frames $#kframes of total frames $#frames" >& /dev/stderr
 else
   set kframes = ( $frames )
   set kdiffs = ( $diffs )
@@ -211,7 +211,7 @@ if ($?NO_COMPOSITE == 0) then
     mv -f $c $composite
     @ i++
   end
-  if ($?DEBUG) echo "$0:t $$ -- COMPOSITE: $composite" >& /dev/stderr
+  if ($?VERBOSE) echo "$0:t $$ -- COMPOSITE: $composite" >& /dev/stderr
 else
   if ($?VERBOSE) echo "$0:t $$ -- NO COMPOSITE" >& /dev/stderr
 endif
