@@ -1,7 +1,7 @@
 #!/bin/bash
 
 DEBUG=true
-# VERBOSE=true
+VERBOSE=true
 
 if [ -n "${DEBUG}" ]; then echo "${0##*/} $$ -- BEGIN: $*" $(date) >&2; fi
 
