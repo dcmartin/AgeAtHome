@@ -235,8 +235,8 @@ elif [ -s "${DG_OUTPUT}" ]; then
     echo '{"alchemy":'"${TOP1}"',"visual":{"image":"'"${IMAGE_ID}.jpg"'","scores":{"classifiers":'"${CLASSIFIERS}"'}}}' >! "${OUTPUT}"
 else
     if [ -n "${DEBUG}" ]; then echo "${0##*/} $$ -- ${IMAGE_ID} -- ERROR: no classification output" >&2; fi
-    echo '{ "alchemy":{"text":"NA","name":"NA","score":0},' > "${OUTPUT}.$$"
-    echo '"visual":{"image":"'${IMAGE_ID}.jpg'","scores":[{"classifier_id":"NA","name":"NA","score":0}]' >> "${OUTPUT}.$$"
+    echo '{ "alchemy":{"text":"NA","name":"NA","score":0},' > "${OUTPUT}"
+    echo '"visual":{"image":"'${IMAGE_ID}.jpg'","scores":[{"classifier_id":"NA","name":"NA","score":0}]' >> "${OUTPUT}"
     echo '}}' >> "${OUTPUT}"
 fi
 rm -f "${OUTPUT}.$$"
