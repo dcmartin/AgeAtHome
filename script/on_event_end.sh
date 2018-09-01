@@ -63,7 +63,7 @@ if ($?MOTION_TARGET_DIR && $?MOTION_INTERVAL) then
       @ DELAY = $LAST - $PREV
       if ($?VERBOSE) echo "$0:t $$ -- previous JSON ($jsons[$#jsons]) is $DELAY seconds older" >& /dev/stderr
     else
-      if ($?DEBUG) echo "$0:t $$ -- no previous JSON; $#jsons" >& /dev/stderr
+      if ($?DEBUG) echo "$0:t $$ -- $#jsons previous JSON: $jsons" >& /dev/stderr
     endif
   else
     if ($?DEBUG) echo "$0:t $$ -- zero JSON found" >& /dev/stderr

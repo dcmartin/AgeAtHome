@@ -144,7 +144,8 @@ if [ -z "${VR_OFF}" ] && [ -n "${VR_APIKEY}" ] && [ -n "${VR_VERSION}" ] && [ -n
         --header "X-Watson-Learning-Opt-Out: true" \
         -F "images_file=@$IMAGE_FILE" \
 	-o "${VR_OUTPUT}" \
-	"$VR_URL/$VR_VERSION/classify?api_key=$VR_APIKEY&classifier_ids=$VR_CLASSIFIER&threshold=0.0&version=$VR_DATE"
+        -u "apikey:$VR_APIKEY" \
+	"$VR_URL/$VR_VERSION/classify?classifier_ids=$VR_CLASSIFIER&threshold=0.0&version=$VR_DATE"
     if [ -s "${VR_OUTPUT}" ]; then
 	if [ -n "${VERBOSE}" ]; then echo  "${0##*/} $$ -- ${IMAGE_ID} -- SUCCESS: Watson Visual Recognition"; fi
     else
