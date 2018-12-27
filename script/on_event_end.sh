@@ -207,7 +207,7 @@ if ($?NO_COMPOSITE == 0) then
   while ( $i <= $#kframes )
     set c = $composite:r.$i.jpg
     if ($?VERBOSE) echo "$0:t $$ -- composite $kframes[$i] $composite $c" >& /dev/stderr
-    composite $kframes[$i] $composite $diffs[$i] $c
+    convert $composite $kframes[$i] $kdiffs[$i] -composite $c
     mv -f $c $composite
     @ i++
   end
