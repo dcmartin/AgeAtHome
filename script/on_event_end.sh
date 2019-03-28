@@ -163,7 +163,7 @@ set diffs = ()
  @ i = 1
  set ps = ()
  while ( $i <= $#frames )
-   set diffs = ( $diffs $TMP/$frames[$i]:t-mask.jpg)
+   set diffs = ( $diffs "$TMP/$frames[$i]:t"'-mask.jpg' )
    # calculate difference
    set p = ( `compare -metric fuzz -fuzz "$fuzz"'%' $frames[$i] $average -compose src -highlight-color white -lowlight-color black $diffs[$#diffs] |& awk '{ print $1 }'` )
    if ($?VERBOSE) echo "$0:t $$ -- DIFF $frames[$i]:t:r; change = $p; $diffs[$#diffs]" >& /dev/stderr
